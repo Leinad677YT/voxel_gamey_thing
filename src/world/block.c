@@ -385,6 +385,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
 
   { // iterate over the whole region (128x128x128), checking the 2x2x2 regions 
     aux_count = 0;
+    int aux32;
     Uint32 xx,yy,zz;
     Uint32 xxx,yyy,zzz;
     Uint32 xxxx,yyyy,zzzz;
@@ -438,11 +439,12 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
                                 }
 
                                 // set block
-                                aux_subregion_02x02x02map[aux_count/8] = checking_block;
+                                leinad_blockdata_clone(checking_block,&aux_subregion_02x02x02map[aux_count/8]);
+                                aux32++;
                             }
                             aux_count++;
                         }
-
+                        SDL_Log("%d",aux32);
   }
 
   { // iterate over the result of the 2x2x2 grouping, checking the 4x4x4 regions 
@@ -486,7 +488,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
             }
 
             // set block
-            aux_subregion_04x04x04map[i/8] = checking_block;
+            leinad_blockdata_clone(checking_block,&aux_subregion_04x04x04map[i/8]);
         }
     }
   }
@@ -532,7 +534,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
             }
 
             // set block
-            aux_subregion_08x08x08map[i/8] = checking_block;
+            leinad_blockdata_clone(checking_block,&aux_subregion_08x08x08map[i/8]);
         }
     }
   }
@@ -578,7 +580,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
                     }
 
                     // set block
-                    aux_subregion_16x16x16map[i/8] = checking_block;
+            leinad_blockdata_clone(checking_block,&aux_subregion_16x16x16map[i/8]);
                 }
             }
   }
@@ -624,7 +626,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
                 }
 
                 // set block
-                aux_subregion_32x32x32map[i/8] = checking_block;
+            leinad_blockdata_clone(checking_block,&aux_subregion_32x32x32map[i/8]);
             }
         }
   }
@@ -670,7 +672,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
                 }
 
                 // set block
-                aux_subregion_64x64x64map[i/8] = checking_block;
+            leinad_blockdata_clone(checking_block,&aux_subregion_64x64x64map[i/8]);
             }
         }
   }
