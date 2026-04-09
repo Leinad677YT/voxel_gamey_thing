@@ -1,4 +1,6 @@
 .cache/
+.vscode/
 build/
 vendored/
 CMakeCache.txt
+a.out

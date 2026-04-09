@@ -1,0 +1,2 @@
+-[ ] remake ui rendering to allow for gpu rendering
+-[ ] fix shader issues with colors being distorted (red-ish looks blue or green depending on shade)
