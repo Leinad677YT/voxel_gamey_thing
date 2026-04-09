@@ -355,7 +355,7 @@ LEINAD_FINITIALIZER leinad_chunk_t* leinad_chunk_setfromregion(leinad_region_t* 
                             for (z = zz*2; z< (zz+1)*2; z++)
                             for (x = xx*2; x< (xx+1)*2; x++)
                                 // works on the 1x1x1
-                                {chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x] = leinad_region_getblock(x,y,z, region);}
+                                {leinad_blockdata_clone(leinad_region_getblock(x,y,z, region),&chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x]);}
     
   }
     return chunk;
@@ -377,15 +377,20 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
     LEINAD_AUX struct blockdata* aux_subregion_64x64x64map = SDL_malloc(sizeof(struct blockdata) * 8);
 
     LEINAD_AUX Uint8* aux_subregion_02x02x02check = SDL_malloc(sizeof(Uint8) * 1*8*8*8*8*8);
+    SDL_memset(&aux_subregion_02x02x02check[0],0,1*8*8*8*8*8);
     LEINAD_AUX Uint8* aux_subregion_04x04x04check = SDL_malloc(sizeof(Uint8) * 1*8*8*8*8);
+    SDL_memset(&aux_subregion_04x04x04check[0],0,1*8*8*8*8);
     LEINAD_AUX Uint8* aux_subregion_08x08x08check = SDL_malloc(sizeof(Uint8) * 1*8*8*8);
+    SDL_memset(&aux_subregion_08x08x08check[0],0,1*8*8*8);
     LEINAD_AUX Uint8* aux_subregion_16x16x16check = SDL_malloc(sizeof(Uint8) * 1*8*8);
+    SDL_memset(&aux_subregion_16x16x16check[0],0,1*8*8);
     LEINAD_AUX Uint8* aux_subregion_32x32x32check = SDL_malloc(sizeof(Uint8) * 1*8);
+    SDL_memset(&aux_subregion_32x32x32check[0],0,1*8);
     LEINAD_AUX Uint8* aux_subregion_64x64x64check = SDL_malloc(sizeof(Uint8) * 1);
-
+    SDL_memset(&aux_subregion_64x64x64check[0],0,1);
+    
   { // iterate over the whole region (128x128x128), checking the 2x2x2 regions 
     aux_count = 0;
-    int aux32;
     Uint32 xx,yy,zz;
     Uint32 xxx,yyy,zzz;
     Uint32 xxxx,yyyy,zzzz;
@@ -408,7 +413,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
                             // iterates over a 2x2x2
 
                             // get first block
-                            leinad_blockdata_clone(checking_block,&chunk->block[yy*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + zz*LEINAD_REGION_RADIUS + xx]);
+                            leinad_blockdata_clone(chunk->block[yy*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + zz*LEINAD_REGION_RADIUS + xx],&checking_block);
 
                             // compare with the rest
 
@@ -439,12 +444,10 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
                                 }
 
                                 // set block
-                                leinad_blockdata_clone(checking_block,&aux_subregion_02x02x02map[aux_count/8]);
-                                aux32++;
+                                leinad_blockdata_clone(checking_block,&aux_subregion_02x02x02map[aux_count]);
                             }
                             aux_count++;
                         }
-                        SDL_Log("%d",aux32);
   }
 
   { // iterate over the result of the 2x2x2 grouping, checking the 4x4x4 regions 
@@ -696,9 +699,6 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         || leinad_blockdata_comparator(&checking_block, &(aux_subregion_64x64x64map[7]))
             ) || aux_subregion_64x64x64check[0] != 0xFF)
     ) {
-                aux_subregion_64x64x64map[0].id = LEINAD_BLOCK_invalid;
-                aux_subregion_64x64x64map[0].rotation_n_subpos = 0;
-                aux_subregion_64x64x64map[0].custom_data = 0;
     } else {
 
         // set bit
@@ -850,7 +850,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         aux-= (((per_level_count) & mask_amount_02x) >> (3+6+9+12+15)) * 2*2*2;
         SDL_Log("aux: %lu, count2: %lu",aux,(((per_level_count) & mask_amount_02x) >> (3+6+9+12+15)));
         
-        total_block_count -= aux;
+        total_block_count += aux;
       }             /// EL PROBLEMA ES QUE AQUI LA SUMA SE HACE MAL ^^^^^
 
         // everything counted, so now its just allocating the region and
@@ -870,7 +870,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
             + sizeof(struct blockdata) * total_block_count  //block data
         );
         
-        SDL_Log("%x\n",result);
+        SDL_Log("%lx\n",(Uint64)result);
         result->amounts_perLODlevel = per_level_count;
 
         SDL_memcpy(result->redirection_flags,&aux_subregion_64x64x64check[0],1);

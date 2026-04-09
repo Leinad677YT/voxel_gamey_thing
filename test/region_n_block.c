@@ -72,41 +72,41 @@ SDL_AppResult SDL_AppInit(
 
     if (region3 == NULL) {printf("region2 not properly initialized"); return SDL_APP_FAILURE;}
 
-    aux2 = leinad_region_getblock(2,4,3,region3);
+    aux2 = leinad_region_getblock(0,0,0,region3);
     SDL_Log(
         """\n"
         "block: %d\n"
         "custom_placement: %x\n"
         "custom_data: %x\n"
         , aux2.id, aux2.rotation_n_subpos, aux2.rotation_n_subpos
-    ); SDL_Log("block should be: %d\n",3);
+    ); SDL_Log("block should be: %d\n",0);
 
-    aux2 = leinad_region_getblock(28,50,2,region3);
+    aux2 = leinad_region_getblock(1,1,1,region3);
     SDL_Log(
         """\n"
         "block: %d\n"
         "custom_placement: %x\n"
         "custom_data: %x\n"
         , aux2.id, aux2.rotation_n_subpos, aux2.rotation_n_subpos
-    ); SDL_Log("block should be: %d\n",4);
+    ); SDL_Log("block should be: %d\n",1);
 
-    aux2 = leinad_region_getblock(9,33,121,region3);
+    aux2 = leinad_region_getblock(2,2,2,region3);
     SDL_Log(
         """\n"
         "block: %d\n"
         "custom_placement: %x\n"
         "custom_data: %x\n"
         , aux2.id, aux2.rotation_n_subpos, aux2.rotation_n_subpos
-    ); SDL_Log("block should be: %d\n",5);
+    ); SDL_Log("block should be: %d\n",1);
 
-    aux2 = leinad_region_getblock(73,99,4,region3);
+    aux2 = leinad_region_getblock(6,9,4,region3);
     SDL_Log(
         """\n"
         "block: %d\n"
         "custom_placement: %x\n"
         "custom_data: %x\n"
         , aux2.id, aux2.rotation_n_subpos, aux2.rotation_n_subpos
-    ); SDL_Log("block should be: %d\n",6);
+    ); SDL_Log("block should be: %d\n",1);
 
 
     SDL_free(chunk);
