@@ -37,4 +37,3 @@ struct blockdata {
     Uint32 custom_data; 
 };
 
-

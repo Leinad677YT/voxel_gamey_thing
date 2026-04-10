@@ -1,12 +1,11 @@
 #pragma once
 
 #include <SDL3/SDL.h>
+#include <stdio.h>
 
 #include "../libs/bit_manipulation.h"
 
 #include "block.h"
-
-
 
 // REGIONS
 
@@ -94,8 +93,6 @@ void leinad_blockdata_clone(struct blockdata src, struct blockdata* dst) {
     dst->rotation_n_subpos = src.rotation_n_subpos;
     dst->custom_data = src.custom_data;
 }
-
-
 
 LEINAD_AUX // fills masks used to get data depending on subregion-offset [0,7]
            // if both umask and pmask are the same variable, result = umask
@@ -851,17 +848,11 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         SDL_Log("aux: %lu, count2: %lu",aux,(((per_level_count) & mask_amount_02x) >> (3+6+9+12+15)));
         
         total_block_count += aux;
-      }             /// EL PROBLEMA ES QUE AQUI LA SUMA SE HACE MAL ^^^^^
-
+      }
+       
         // everything counted, so now its just allocating the region and
         // filling in the data
         // I'm almost free :')
-
-        // 0x7891 = 0b0111100010010001
-        //          64x 0b001
-        //          32x 0b001
-        //          16x 0b001
-                          
 
         result = SDL_malloc( 0 +
             sizeof(Uint64)                                  // count of blocks per level
@@ -887,7 +878,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         for (i = 0; i < 8; i++) {
             // if flag is set, insert the block into the array
             if (aux_subregion_64x64x64check[i/8] & (0b10000000 >> (i % 8))) {
-                result->region_data[aux] = aux_subregion_64x64x64map[i];
+                leinad_blockdata_clone(aux_subregion_64x64x64map[i],&result->region_data[aux]);
                 aux++;
             }
         }
@@ -896,7 +887,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         for (i = 0; i < 8 * 8; i++) {
             // if flag is set, insert the block into the array
             if (aux_subregion_32x32x32check[i/8] & (0b10000000 >> (i % 8))) {
-                result->region_data[aux] = aux_subregion_32x32x32map[i];
+                leinad_blockdata_clone(aux_subregion_32x32x32map[i],&result->region_data[aux]);
                 aux++;
             }
         }
@@ -905,7 +896,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         for (i = 0; i < 8 * 8 * 8; i++) {
             // if flag is set, insert the block into the array
             if (aux_subregion_16x16x16check[i/8] & (0b10000000 >> (i % 8))) {
-                result->region_data[aux] = aux_subregion_16x16x16map[i];
+                leinad_blockdata_clone(aux_subregion_16x16x16map[i],&result->region_data[aux]);
                 aux++;
             }
         }
@@ -914,7 +905,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         for (i = 0; i < 8 * 8 * 8 * 8; i++) {
             // if flag is set, insert the block into the array
             if (aux_subregion_08x08x08check[i/8] & (0b10000000 >> (i % 8))) {
-                result->region_data[aux] = aux_subregion_08x08x08map[i];
+                leinad_blockdata_clone(aux_subregion_08x08x08map[i],&result->region_data[aux]);
                 aux++;
             }
         }
@@ -923,7 +914,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         for (i = 0; i < 8 * 8 * 8 * 8 * 8; i++) {
             // if flag is set, insert the block into the array
             if (aux_subregion_04x04x04check[i/8] & (0b10000000 >> (i % 8))) {
-                result->region_data[aux] = aux_subregion_04x04x04map[i];
+                leinad_blockdata_clone(aux_subregion_04x04x04map[i],&result->region_data[aux]);
                 aux++;
             }
         }
@@ -932,7 +923,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         for (i = 0; i < 8 * 8 * 8 * 8 * 8 * 8; i++) {
             // if flag is set, insert the block into the array
             if (aux_subregion_02x02x02check[i/8] & (0b10000000 >> (i % 8))) {
-                result->region_data[aux] = aux_subregion_02x02x02map[i];
+                leinad_blockdata_clone(aux_subregion_02x02x02map[i],&result->region_data[aux]);
                 aux++;
             }
         }
@@ -940,35 +931,35 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         for (i = 0; i < 8 * 8 * 8 * 8 * 8 * 8; i++) {
             Uint32 x, y, z;
 
-
             // if flag is unset, insert the 8 block group into the array
             if (
-                (!aux_subregion_02x02x02check[i/8]) & (0b10000000 >> (i % 8)) // 0 at 2x2x2
-             && (!aux_subregion_04x04x04check[i/(8*8)]) & (0b10000000 >> (i/(8) % 8)) // 0 at 4x4x4
-             && (!aux_subregion_08x08x08check[i/(8*8*8)]) & (0b10000000 >> (i/(8*8) % 8)) // 0 at 8x8x8
-             && (!aux_subregion_64x64x64check[i/(8*8*8*8)]) & (0b10000000 >> (i/(8*8*8) % 8)) // 0 at 16x16x16
-             && (!aux_subregion_64x64x64check[i/(8*8*8*8*8)]) & (0b10000000 >> (i/(8*8*8*8) % 8)) // 0 at 32x32x32
-             && (!aux_subregion_64x64x64check[i/(8*8*8*8*8*8)]) & (0b10000000 >> (i/(8*8*8*8*8) % 8)) // 0 at 64x64x64
+                ((~aux_subregion_02x02x02check[i/8])) & (0b10000000 >> (i % 8)) // 0 at 2x2x2
+             && ((~aux_subregion_04x04x04check[i/(8*8)])) & (0b10000000 >> (i/(8) % 8)) // 0 at 4x4x4
+             && ((~aux_subregion_08x08x08check[i/(8*8*8)])) & (0b10000000 >> (i/(8*8) % 8)) // 0 at 8x8x8
+             && ((~aux_subregion_16x16x16check[i/(8*8*8*8)])) & (0b10000000 >> (i/(8*8*8) % 8)) // 0 at 16x16x16
+             && ((~aux_subregion_32x32x32check[i/(8*8*8*8*8)])) & (0b10000000 >> (i/(8*8*8*8) % 8)) // 0 at 32x32x32
+             && ((~aux_subregion_64x64x64check[i/(8*8*8*8*8*8)])) & (0b10000000 >> (i/(8*8*8*8*8) % 8)) // 0 at 64x64x64
             ) {
-                x = (i & 0b1 + ((i & 0b1000) >> 2) + ((i & 0b1000000) >> 4) + ((i & 0b1000000000) >> 6) + ((i & 0b1000000000000) >> 8) + ((i & 0b1000000000000000) >> 10));
-                y = (((i & 0b10) >> 1) + ((i & 0b1000) >> 3) + ((i & 0b1000000) >> 5) + ((i & 0b1000000000) >> 7) + ((i & 0b1000000000000) >> 9) + ((i & 0b1000000000000000) >> 11));
-                z = (((i & 0b100) >> 2) + ((i & 0b1000) >> 4) + ((i & 0b1000000) >> 6) + ((i & 0b1000000000) >> 8) + ((i & 0b1000000000000) >> 10) + ((i & 0b1000000000000000) >> 12));
+                x = 2*(i & 0b1 + ((i & 0b1000) >> 2) + ((i & 0b1000000) >> 4) + ((i & 0b1000000000) >> 6) + ((i & 0b1000000000000) >> 8) + ((i & 0b1000000000000000) >> 10));
+                y = 2*(((i & 0b10) >> 1) + ((i & 0b1000) >> 3) + ((i & 0b1000000) >> 5) + ((i & 0b1000000000) >> 7) + ((i & 0b1000000000000) >> 9) + ((i & 0b1000000000000000) >> 11));
+                z = 2*(((i & 0b100) >> 2) + ((i & 0b1000) >> 4) + ((i & 0b1000000) >> 6) + ((i & 0b1000000000) >> 8) + ((i & 0b1000000000000) >> 10) + ((i & 0b1000000000000000) >> 12));
 
-
-                result->region_data[aux+0] = chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x];
-                result->region_data[aux+1] = chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x+1];
-                result->region_data[aux+2] = chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (z+1)*LEINAD_REGION_RADIUS + x];
-                result->region_data[aux+3] = chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (z+1)*LEINAD_REGION_RADIUS + x+1];
-                result->region_data[aux+4] = chunk->block[(y+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x];
-                result->region_data[aux+5] = chunk->block[(y+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x+1];
-                result->region_data[aux+6] = chunk->block[(y+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (z+1)*LEINAD_REGION_RADIUS + x];
-                result->region_data[aux+7] = chunk->block[(y+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (z+1)*LEINAD_REGION_RADIUS + x+1];
+                // printf("aux: %lu\n",aux); fflush(stdout); // EL BUCLE NO HACE LAS ITERACIONES QUE SON, AUX SE PASA POR MUCHO
+                // printf("x:%d y:%d z:%d\n",x,y,z);fflush(stdout);
+                leinad_blockdata_clone(chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x],&result->region_data[aux+0]);
+                leinad_blockdata_clone(chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x+1],&result->region_data[aux+1]);
+                leinad_blockdata_clone(chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (z+1)*LEINAD_REGION_RADIUS + x],&result->region_data[aux+2]);
+                leinad_blockdata_clone(chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (z+1)*LEINAD_REGION_RADIUS + x+1],&result->region_data[aux+3]);
+                leinad_blockdata_clone(chunk->block[(y+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x],&result->region_data[aux+4]);
+                leinad_blockdata_clone(chunk->block[(y+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x+1],&result->region_data[aux+5]);
+                leinad_blockdata_clone(chunk->block[(y+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (z+1)*LEINAD_REGION_RADIUS + x],&result->region_data[aux+6]);
+                leinad_blockdata_clone(chunk->block[(y+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (z+1)*LEINAD_REGION_RADIUS + x+1],&result->region_data[aux+7]);
                 aux+=8;
             } 
         }
 
     }
-    }
+  }
 
 
     SDL_free(aux_subregion_02x02x02check);

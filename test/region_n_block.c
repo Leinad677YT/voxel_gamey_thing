@@ -4,6 +4,7 @@
 #include <SDL3/SDL_main.h>
 
 #include <stdio.h>
+#include <time.h>
 
 #include "../src/world/block.c"
 
@@ -12,6 +13,8 @@ SDL_AppResult SDL_AppInit(
     __attribute__ ((unused)) int argc,
     __attribute__ ((unused)) char *argv[]
 ) {
+
+    // full region
     leinad_region_t region_full = {
         .amounts_perLODlevel = 0 & mask_amount_64x,
         .ctrl_data = is_full_region,
@@ -61,7 +64,9 @@ SDL_AppResult SDL_AppInit(
 
     SDL_free(region2);
 
-    chunk->block[0].id = LEINAD_BLOCK_STONE;
+    chunk->block[0].id = 0x55;
+    chunk->block[0].rotation_n_subpos = 0x1234;
+    chunk->block[0].custom_data = 0x12345678;
     // chunk->block[128*128*  4 + 128*  3 +  2].id = 3;
     // chunk->block[128*128* 50 + 128*  2 + 28].id = 4;
     // chunk->block[128*128*  9 + 128* 33 +121].id = 5;
@@ -79,7 +84,7 @@ SDL_AppResult SDL_AppInit(
         "custom_placement: %x\n"
         "custom_data: %x\n"
         , aux2.id, aux2.rotation_n_subpos, aux2.rotation_n_subpos
-    ); SDL_Log("block should be: %d\n",0);
+    ); SDL_Log("block should be: %d\n",0x55);
 
     aux2 = leinad_region_getblock(1,1,1,region3);
     SDL_Log(
@@ -108,9 +113,52 @@ SDL_AppResult SDL_AppInit(
         , aux2.id, aux2.rotation_n_subpos, aux2.rotation_n_subpos
     ); SDL_Log("block should be: %d\n",1);
 
+    SDL_free(region3);
+
+    // end of manual checks
+
+    // start of auto test
+    SDL_Log("- - AUTOTEST START - -");
+    
+    SDL_srand(time(NULL));
+    for (Uint32 i = 0; i < 40; i++) {
+        leinad_blockdata_clone(
+            (struct blockdata){.id=SDL_rand(0xFFFE),.rotation_n_subpos=SDL_rand(0xFFFF),.custom_data=SDL_rand(0xFFFFFFFF)},
+            &chunk->block[SDL_rand(128*128*128)]
+        );
+    }
+
+    region3 = leinad_region_create_from_chunk(chunk);
+
+    Uint64 failcount = 0;
+
+    for(Uint32 y = 0; y < LEINAD_REGION_RADIUS;y++) for(Uint32 z = 0; z < LEINAD_REGION_RADIUS;z++) for(Uint32 x = 0; x < LEINAD_REGION_RADIUS;x++){
+        struct blockdata potato = leinad_region_getblock(x,y,z,region3);
+        if (
+            leinad_blockdata_comparator(
+                &chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x],
+                &potato
+            )
+        ) {
+            failcount++;
+            // printf(
+            //     """"""
+            //     "block <%d,%d,%d> failed by comparing:\n"
+            //     "A: %x %x %x\n"
+            //     "B: %x %x %x\n"
+            //     """""",
+            //     x,y,z,
+            //     chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x].id,
+            //      chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x].rotation_n_subpos,
+            //      chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x].custom_data,
+            //     potato.id, potato.rotation_n_subpos, potato.custom_data
+            // );
+        }
+    }
+    SDL_Log("%lu fails out of %u ",failcount,128*128*128);
 
     SDL_free(chunk);
-    SDL_free(region3);
+
 
     return SDL_APP_SUCCESS;
 }
