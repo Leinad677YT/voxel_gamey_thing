@@ -25,4 +25,3 @@ const Uint8 set_bit_table[256] = {
 };
 
 #define count_set_bits(byte) set_bit_table[byte]
-

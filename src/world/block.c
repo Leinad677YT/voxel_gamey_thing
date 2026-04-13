@@ -51,7 +51,7 @@ typedef struct leinad_region {
     // tree-like organised, each byte represents the flags for its subregions
     // [breadth first]
     // all the filled subregions must be ignored
-    Uint8 redirection_flags[0b1001001001001];
+    Uint8 redirection_flags[0b1001001001001001+3];
 
 
     // size depends on the specific contents of the region
@@ -114,7 +114,7 @@ LEINAD_FGET struct blockdata leinad_region_getblock(int x, int y, int z, leinad_
     struct blockdata data = {0};
     Uint16 offset, offset_i;
     Uint8 umask, pmask, check;
-    Uint32 index;
+    Uint64 index;
 
     // 128x128x128
     if (region->ctrl_data & is_full_region) {
@@ -123,7 +123,7 @@ LEINAD_FGET struct blockdata leinad_region_getblock(int x, int y, int z, leinad_
     }
     else {
         offset = 0;
-        check = ((x &64) >> 4) | ((z &64) >> 5) | ((y &64) >> 6);
+        check = ((x &0b1000000) >> 6) | ((z &0b1000000) >> 5) | ((y &0b1000000) >> 4);
 
         GETMASKS(umask, pmask, check);
 
@@ -137,55 +137,55 @@ LEINAD_FGET struct blockdata leinad_region_getblock(int x, int y, int z, leinad_
             ;
         }
         else {
-            offset = 1 + check;
-            check = ((x &32) >> 3) | ((z &32) >> 4) | ((y &32) >> 5);
+            offset = check;
+            check = ((x &0b100000) >> 5) | ((z &0b100000) >> 4) | ((y &0b100000) >> 3);
 
             GETMASKS(umask, pmask, check);
 
             // 32x32x32
-            if (region->redirection_flags[offset] & umask) {
+            if (region->redirection_flags[0b1 + offset] & umask) {
                 // subregion is full, so data is at this level
 
                 // get the index of this region
                 index =
                     (region->amounts_perLODlevel & mask_amount_64x)
-                    + count_set_bits(region->redirection_flags[offset] & pmask)
+                    + count_set_bits(region->redirection_flags[0b1 + offset] & pmask)
                 ;
 
-                for (offset_i = 0b1; offset_i < offset; offset_i++) {
+                for (offset_i = 0b1; offset_i < 0b1 + offset; offset_i++) {
                     index += count_set_bits(region->redirection_flags[offset_i]);                
                 }
             }
             else {
-                offset = (offset <<3) +1 + check;
-                check = ((x &16) >> 2) | ((z &16) >> 3) | ((y &16) >> 4);
+                offset = (offset <<3) + check;
+                check = ((x &0b10000) >> 4) | ((z &0b10000) >> 3) | ((y &0b10000) >> 2);
 
                 GETMASKS(umask, pmask, check);
 
                 // 16x16x16
-                if (region->redirection_flags[offset] & umask) {
+                if (region->redirection_flags[0b1001+ offset] & umask) {
                     // subregion is full, so data is at this level
 
                     // get the index of this region
                     index =
                            (region->amounts_perLODlevel & mask_amount_64x)
                         + ((region->amounts_perLODlevel & mask_amount_32x) >> 3)
-                        + count_set_bits(region->redirection_flags[offset] & pmask)
+                        + count_set_bits(region->redirection_flags[0b1001+ offset] & pmask)
                     ;
 
-                    for (offset_i = 0b1001; offset_i < offset; offset_i++) {
+                    for (offset_i = 0b1001; offset_i < 0b1001+ offset; offset_i++) {
                         index += count_set_bits(region->redirection_flags[offset_i]);                
                     }
                 }
                 // reiterates                
                 else {
-                    offset = (offset <<3) +1 + check;
-                    check = ((x &8) >> 1) | ((z &8) >> 2) | ((y &8) >> 3);
+                    offset = (offset <<3) + check;
+                    check = ((x &0b1000) >> 3) | ((z &0b1000) >> 2) | ((y &0b1000) >> 1);
 
                     GETMASKS(umask, pmask, check);
 
                     // 8x8x8
-                    if (region->redirection_flags[offset] & umask) {
+                    if (region->redirection_flags[0b1001001+ offset] & umask) {
                         // subregion is full, so data is at this level
 
                         // get the index of this region
@@ -193,22 +193,22 @@ LEINAD_FGET struct blockdata leinad_region_getblock(int x, int y, int z, leinad_
                                (region->amounts_perLODlevel & mask_amount_64x)
                             + ((region->amounts_perLODlevel & mask_amount_32x) >> 3)
                             + ((region->amounts_perLODlevel & mask_amount_16x) >> 9)
-                            + count_set_bits(region->redirection_flags[offset] & pmask)
+                            + count_set_bits(region->redirection_flags[0b1001001+ offset] & pmask)
                         ;
 
-                        for (offset_i = 0b1001001; offset_i < offset; offset_i++) {
+                        for (offset_i = 0b1001001; offset_i < 0b1001001+ offset; offset_i++) {
                             index += count_set_bits(region->redirection_flags[offset_i]);                
                         }
                     }
                     
                     else {
-                        offset = (offset <<3) +1 + check;
-                        check = ((x &4) >> 0) | ((z &4) >> 1) | ((y &4) >> 2);
+                        offset = (offset <<3) + check;
+                        check = ((x &0b100) >> 2) | ((z &0b100) >> 1) | ((y &0b100) >> 0);
 
                         GETMASKS(umask, pmask, check);
 
                         // 4x4x4
-                        if (region->redirection_flags[offset] & umask) {
+                        if (region->redirection_flags[0b1001001001+ offset] & umask) {
                             // subregion is full, so data is at this level
 
                             // get the index of this region
@@ -217,22 +217,22 @@ LEINAD_FGET struct blockdata leinad_region_getblock(int x, int y, int z, leinad_
                                 + ((region->amounts_perLODlevel & mask_amount_32x) >> 3)
                                 + ((region->amounts_perLODlevel & mask_amount_16x) >> 9)
                                 + ((region->amounts_perLODlevel & mask_amount_08x) >> 18)
-                                + count_set_bits(region->redirection_flags[offset] & pmask)
+                                + count_set_bits(region->redirection_flags[0b1001001001+ offset] & pmask)
                             ;
 
-                            for (offset_i = 0b1001001001 ; offset_i < offset; offset_i++) {
+                            for (offset_i = 0b1001001001 ; offset_i < 0b1001001001+ offset; offset_i++) {
                                 index += count_set_bits(region->redirection_flags[offset_i]);                
                             }
                         }
                         
                         else {
-                            offset = (offset <<3) +1 + check;
-                            check = ((x &2) << 1) | ((z &2) >> 0) | ((y &2) >> 1);
+                            offset = (offset <<3) + check;
+                            check = ((x &0b10) >> 1) | ((z &0b10) >> 0) | ((y &0b10) << 1);
 
                             GETMASKS(umask, pmask, check);
 
                             // 2x2x2
-                            if (region->redirection_flags[offset] & umask) {
+                            if (region->redirection_flags[0b1001001001001+ offset] & umask) {
                                 // subregion is full, so data is at this level
 
                                 // get the index of this region
@@ -242,30 +242,93 @@ LEINAD_FGET struct blockdata leinad_region_getblock(int x, int y, int z, leinad_
                                     + ((region->amounts_perLODlevel & mask_amount_16x) >> 9)
                                     + ((region->amounts_perLODlevel & mask_amount_08x) >> 18)
                                     + ((region->amounts_perLODlevel & mask_amount_04x) >> 30)
-                                    + count_set_bits(region->redirection_flags[offset] & pmask)
+                                    + count_set_bits(region->redirection_flags[0b1001001001001+ offset] & pmask)
                                 ;
 
-                                for (offset_i = 0b1001001001001 ; offset_i < offset; offset_i++) {
+                                for (offset_i = 0b1001001001001 ; offset_i < 0b1001001001001+ offset; offset_i++) {
                                     index += count_set_bits(region->redirection_flags[offset_i]);                
                                 }
                             }
                             else {
+                                Uint64 test = 0;
                                 // AQUI HAY QUE ELEGIR POSICION BASANDOSE EN QUE LOS 8 ESTAN EN LINEA
+                                check = (((x &0b1) << 0) | ((z &0b1) << 1) | ((y &0b1) << 2)); // index of the 2x2x2
                                 
                                 // get the index of this region
-                                index =
-                                       (region->amounts_perLODlevel & mask_amount_64x)
-                                    + ((region->amounts_perLODlevel & mask_amount_32x) >> 3)
-                                    + ((region->amounts_perLODlevel & mask_amount_16x) >> 9)
-                                    + ((region->amounts_perLODlevel & mask_amount_08x) >> 18)
-                                    + ((region->amounts_perLODlevel & mask_amount_04x) >> 30)
-                                    + ((region->amounts_perLODlevel & mask_amount_02x) >> 45)
-                                    + (((x &1) << 2) | ((z &1) << 1) | ((y &1) << 0)) // index of the 2x2x2
-                                ;
+                                index = 0;
+                                index+= (region->amounts_perLODlevel & mask_amount_64x);
+                                index+=((region->amounts_perLODlevel & mask_amount_32x) >> 3);
+                                index+=((region->amounts_perLODlevel & mask_amount_16x) >> 9);
+                                index+=((region->amounts_perLODlevel & mask_amount_08x) >> 18);
+                                index+=((region->amounts_perLODlevel & mask_amount_04x) >> 30);
+                                index+=((region->amounts_perLODlevel & mask_amount_02x) >> 45);
+                                index+=8* (count_set_bits((~region->redirection_flags[0b1001001001001+ offset]) & pmask));
+                                index+=check;
 
-                                for (offset_i = 0b1001001001001 ; offset_i < offset; offset_i++) {
-                                    index += count_set_bits(~region->redirection_flags[offset_i]);                
+                                SDL_Log("check - %d-=- x: %d, y: %d, z:%d", check,x,y,z);
+
+                                for (offset_i = 0b1001001001001 ; offset_i < 0b1001001001001+ offset; offset_i++) {
+                                    index += 8*count_set_bits((~region->redirection_flags[offset_i]) & 0xff);
                                 }
+
+                                // false positives to remove
+                                    // 64x64x64
+                                    offset = 0;
+                                    check = ((x &0b1000000) >> 6) | ((z &0b1000000) >> 5) | ((y &0b1000000) >> 4);
+                                    GETMASKS(umask, pmask, check);
+                                    test = count_set_bits(region->redirection_flags[offset] & pmask);
+
+                                    // 32x32x32
+                                    offset = check;
+                                    check = ((x &0b100000) >> 5) | ((z &0b100000) >> 4) | ((y &0b100000) >> 3);
+                                    GETMASKS(umask, pmask, check);
+                                    test = (test << 3) + count_set_bits(region->redirection_flags[0b1 + offset] & pmask);
+                                    for (offset_i = 0b1; offset_i < 0b1 + offset; offset_i++) {
+                                        test += count_set_bits(region->redirection_flags[offset_i]);                
+                                    }
+
+                                    // 16x16x16
+                                    offset = (offset <<3) + check;
+                                    check = ((x &0b10000) >> 4) | ((z &0b10000) >> 3) | ((y &0b10000) >> 2);
+                                    GETMASKS(umask, pmask, check);
+                                    test = (test << 3) + count_set_bits(region->redirection_flags[0b1001+ offset] & pmask);
+                                    for (offset_i = 0b1001; offset_i < 0b1001+ offset; offset_i++) {
+                                        test += count_set_bits(region->redirection_flags[offset_i]);                
+                                    }
+
+                                    // 8x8x8
+                                    offset = (offset <<3) + check;
+                                    check = ((x &0b1000) >> 3) | ((z &0b1000) >> 2) | ((y &0b1000) >> 1);
+                                    GETMASKS(umask, pmask, check);
+                                    test = (test << 3) + count_set_bits(region->redirection_flags[0b1001001+ offset] & pmask);
+
+                                    for (offset_i = 0b1001001; offset_i < 0b1001001+ offset; offset_i++) {
+                                        test += count_set_bits(region->redirection_flags[offset_i]);                
+                                    }
+
+                                    // 4x4x4
+                                    offset = (offset <<3) + check;
+                                    check = ((x &0b100) >> 2) | ((z &0b100) >> 1) | ((y &0b100) >> 0);
+                                    GETMASKS(umask, pmask, check);
+                                    test = (test << 3) + count_set_bits(region->redirection_flags[0b1001001001+ offset] & pmask);
+                                    for (offset_i = 0b1001001001 ; offset_i < 0b1001001001+ offset; offset_i++) {
+                                        test += count_set_bits(region->redirection_flags[offset_i]);                
+                                    }
+
+                                    // // 2x2x2
+                                    // offset = (offset <<3) + check;
+                                    // check = ((x &0b10) >> 1) | ((z &0b10) >> 0) | ((y &0b10) << 1);
+                                    // GETMASKS(umask, pmask, check);
+                                    // test = (test << 3) + count_set_bits(region->redirection_flags[0b1001001001001+ offset] & pmask);
+                                    // for (offset_i = 0b1001001001001 ; offset_i < 0b1001001001001+ offset; offset_i++) {
+                                    //     test += count_set_bits(region->redirection_flags[offset_i]);                
+                                    // }
+
+                                //
+
+                                index -= 8*8*test;
+                                index = index+1;
+                                index = index-1;
                             }
                             
                         }
@@ -374,17 +437,22 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
     LEINAD_AUX struct blockdata* aux_subregion_64x64x64map = SDL_malloc(sizeof(struct blockdata) * 8);
 
     LEINAD_AUX Uint8* aux_subregion_02x02x02check = SDL_malloc(sizeof(Uint8) * 1*8*8*8*8*8);
-    SDL_memset(&aux_subregion_02x02x02check[0],0,1*8*8*8*8*8);
+        SDL_memset(&aux_subregion_02x02x02check[0],0,1*8*8*8*8*8);
+    
     LEINAD_AUX Uint8* aux_subregion_04x04x04check = SDL_malloc(sizeof(Uint8) * 1*8*8*8*8);
-    SDL_memset(&aux_subregion_04x04x04check[0],0,1*8*8*8*8);
+        SDL_memset(&aux_subregion_04x04x04check[0],0,1*8*8*8*8);
+    
     LEINAD_AUX Uint8* aux_subregion_08x08x08check = SDL_malloc(sizeof(Uint8) * 1*8*8*8);
-    SDL_memset(&aux_subregion_08x08x08check[0],0,1*8*8*8);
+        SDL_memset(&aux_subregion_08x08x08check[0],0,1*8*8*8);
+    
     LEINAD_AUX Uint8* aux_subregion_16x16x16check = SDL_malloc(sizeof(Uint8) * 1*8*8);
-    SDL_memset(&aux_subregion_16x16x16check[0],0,1*8*8);
+        SDL_memset(&aux_subregion_16x16x16check[0],0,1*8*8);
+    
     LEINAD_AUX Uint8* aux_subregion_32x32x32check = SDL_malloc(sizeof(Uint8) * 1*8);
-    SDL_memset(&aux_subregion_32x32x32check[0],0,1*8);
+        SDL_memset(&aux_subregion_32x32x32check[0],0,1*8);
+    
     LEINAD_AUX Uint8* aux_subregion_64x64x64check = SDL_malloc(sizeof(Uint8) * 1);
-    SDL_memset(&aux_subregion_64x64x64check[0],0,1);
+        SDL_memset(&aux_subregion_64x64x64check[0],0,1);
     
   { // iterate over the whole region (128x128x128), checking the 2x2x2 regions 
     aux_count = 0;
@@ -410,23 +478,23 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
                             // iterates over a 2x2x2
 
                             // get first block
-                            leinad_blockdata_clone(chunk->block[yy*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + zz*LEINAD_REGION_RADIUS + xx],&checking_block);
+                            leinad_blockdata_clone(chunk->block[2*yy*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + 2*zz*LEINAD_REGION_RADIUS + 2*xx],&checking_block);
 
                             // compare with the rest
 
                             // if different than any, don't set the byte
                             if (
-                                leinad_blockdata_comparator(&checking_block, &(chunk->block[yy*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + zz*LEINAD_REGION_RADIUS + xx+1]))
-                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[yy*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (zz+1)*LEINAD_REGION_RADIUS + xx]))
-                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[yy*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (zz+1)*LEINAD_REGION_RADIUS + xx+1]))
-                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[(yy+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + zz*LEINAD_REGION_RADIUS + xx]))
-                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[(yy+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + zz*LEINAD_REGION_RADIUS + xx+1]))
-                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[(yy+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (zz+1)*LEINAD_REGION_RADIUS + xx]))
-                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[(yy+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (zz+1)*LEINAD_REGION_RADIUS + xx+1]))
+                                leinad_blockdata_comparator(&checking_block, &(chunk->block[2*yy*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + 2*zz*LEINAD_REGION_RADIUS + 2*xx+1]))
+                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[2*yy*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (2*zz+1)*LEINAD_REGION_RADIUS + 2*xx]))
+                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[2*yy*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (2*zz+1)*LEINAD_REGION_RADIUS + 2*xx+1]))
+                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[(2*yy+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + 2*zz*LEINAD_REGION_RADIUS + 2*xx]))
+                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[(2*yy+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + 2*zz*LEINAD_REGION_RADIUS + 2*xx+1]))
+                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[(2*yy+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (2*zz+1)*LEINAD_REGION_RADIUS + 2*xx]))
+                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[(2*yy+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (2*zz+1)*LEINAD_REGION_RADIUS + 2*xx+1]))
                             ) {
-                                aux_subregion_02x02x02map[aux_count/8].id = LEINAD_BLOCK_invalid;
-                                aux_subregion_02x02x02map[aux_count/8].rotation_n_subpos = 0;
-                                aux_subregion_02x02x02map[aux_count/8].custom_data = 0;
+                                aux_subregion_02x02x02map[aux_count].id = LEINAD_BLOCK_invalid;
+                                aux_subregion_02x02x02map[aux_count].rotation_n_subpos = 0;
+                                aux_subregion_02x02x02map[aux_count].custom_data = 0;
                             } else {
                                 // set bit
                                 switch (aux_count % 8) {
@@ -687,7 +755,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
     if (
         checking_block.id == LEINAD_BLOCK_invalid
         || (( 
-            leinad_blockdata_comparator(&checking_block, &(aux_subregion_64x64x64map[1]))
+           leinad_blockdata_comparator(&checking_block, &(aux_subregion_64x64x64map[1]))
         || leinad_blockdata_comparator(&checking_block, &(aux_subregion_64x64x64map[2]))
         || leinad_blockdata_comparator(&checking_block, &(aux_subregion_64x64x64map[3]))
         || leinad_blockdata_comparator(&checking_block, &(aux_subregion_64x64x64map[4]))
@@ -721,7 +789,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
 
         SDL_memset(result->redirection_flags,0,0b1001001001001);
 
-        result->region_data[0] = checking_block;
+        leinad_blockdata_clone(checking_block,&result->region_data[0]);
 
     }
     // region con mas de un tipo de bloque, debe dividirse
@@ -745,7 +813,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         }
         SDL_Log("%lu 64x regions",aux);
 
-        per_level_count += aux << 0;
+        per_level_count |= aux << 0;
         total_block_count += aux;
       }
 
@@ -763,7 +831,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         SDL_Log("%lu 32x regions",aux);
 
 
-        per_level_count += aux << 3;
+        per_level_count |= aux << 3;
         total_block_count += aux;
       }
 
@@ -779,7 +847,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         }
         SDL_Log("%lu 16x regions",aux);
 
-        per_level_count += aux << (3+6);
+        per_level_count |= aux << (3+6);
         total_block_count += aux;
       }
 
@@ -794,7 +862,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         }
         SDL_Log("%lu 08x regions",aux);
 
-        per_level_count += aux << (3+6+9);
+        per_level_count |= aux << (3+6+9);
         total_block_count += aux;
       }
 
@@ -808,45 +876,33 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         }
         SDL_Log("%lu 04x regions",aux);
 
-        per_level_count += aux << (3+6+9+12);
+        per_level_count |= aux << (3+6+9+12);
         total_block_count += aux;
       }
 
       { // 2x2x2 checks
         aux = 0;
-        for (i = 0; i < 8 * 8 * 8 * 8 * 8; i++) {
+        for (i = 0; i < 8 * 8 * 8 * 8 * 8 * 8; i++) {
             if (aux_subregion_02x02x02check[i/8] & (0b10000000 >> (i % 8))) {
                 aux++;
             }
         }
         SDL_Log("%lu 02x regions",aux);
 
-        per_level_count += aux << (3+6+9+12+15);
+        per_level_count |= aux << (3+6+9+12+15);
         total_block_count += aux;
       }
 
       { // GET THE AMOUNT OF THE REMAINING 1x1x1 TO COVER
-        aux = LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS;
-        SDL_Log("aux: %lu, binary lvl count: %lx",aux,per_level_count);
-        
-        aux-= (((per_level_count) & mask_amount_64x) >> (0)) * 64*64*64;
-        SDL_Log("aux: %lu, count64: %lu",aux,(((per_level_count) & mask_amount_64x) >> (0)));
+        aux = LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS
+          - (((per_level_count) & mask_amount_64x) >> (0)) * 64*64*64
+          - (((per_level_count) & mask_amount_32x) >> (3)) * 32*32*32
+          - (((per_level_count) & mask_amount_16x) >> (3+6)) *16*16*16
+          - (((per_level_count) & mask_amount_08x) >> (3+6+9)) * 8*8*8
+          - (((per_level_count) & mask_amount_04x) >> (3+6+9+12)) * 4*4*4
+          - (((per_level_count) & mask_amount_02x) >> (3+6+9+12+15)) * 2*2*2
+        ;
 
-        aux-= (((per_level_count) & mask_amount_32x) >> (3)) * 32*32*32;
-        SDL_Log("aux: %lu, count32: %lu",aux,(((per_level_count) & mask_amount_32x) >> (3)));
-
-        aux-= (((per_level_count) & mask_amount_16x) >> (3+6)) *16*16*16;
-        SDL_Log("aux: %lu, count16: %lu",aux,(((per_level_count) & mask_amount_16x) >> (3+6)));
-  
-        aux-= (((per_level_count) & mask_amount_08x) >> (3+6+9)) * 8*8*8;
-        SDL_Log("aux: %lu, count8: %lu",aux,(((per_level_count) & mask_amount_08x) >> (3+6+9)));
-        
-        aux-= (((per_level_count) & mask_amount_04x) >> (3+6+9+12)) * 4*4*4;
-        SDL_Log("aux: %lu, count4: %lu",aux,(((per_level_count) & mask_amount_04x) >> (3+6+9+12)));
-
-        aux-= (((per_level_count) & mask_amount_02x) >> (3+6+9+12+15)) * 2*2*2;
-        SDL_Log("aux: %lu, count2: %lu",aux,(((per_level_count) & mask_amount_02x) >> (3+6+9+12+15)));
-        
         total_block_count += aux;
       }
        
@@ -861,15 +917,14 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
             + sizeof(struct blockdata) * total_block_count  //block data
         );
         
-        SDL_Log("%lx\n",(Uint64)result);
         result->amounts_perLODlevel = per_level_count;
 
-        SDL_memcpy(result->redirection_flags,&aux_subregion_64x64x64check[0],1);
-        SDL_memcpy(result->redirection_flags + 0b1,&aux_subregion_32x32x32check[0],1*8);
-        SDL_memcpy(result->redirection_flags + 0b1001,&aux_subregion_16x16x16check[0],1*8*8);
-        SDL_memcpy(result->redirection_flags + 0b1001001,&aux_subregion_08x08x08check[0],1*8*8*8);
-        SDL_memcpy(result->redirection_flags + 0b1001001001,&aux_subregion_04x04x04check[0],1*8*8*8*8);
-        SDL_memcpy(result->redirection_flags + 0b1001001001001,&aux_subregion_02x02x02check[0],1*8*8*8*8*8);
+        SDL_memcpy(&result->redirection_flags[0],&aux_subregion_64x64x64check[0],1);
+        SDL_memcpy(&result->redirection_flags[0b1],&aux_subregion_32x32x32check[0],1*8);
+        SDL_memcpy(&result->redirection_flags[0b1001],&aux_subregion_16x16x16check[0],1*8*8);
+        SDL_memcpy(&result->redirection_flags[0b1001001],&aux_subregion_08x08x08check[0],1*8*8*8);
+        SDL_memcpy(&result->redirection_flags[0b1001001001],&aux_subregion_04x04x04check[0],1*8*8*8*8);
+        SDL_memcpy(&result->redirection_flags[0b1001001001001],&aux_subregion_02x02x02check[0],1*8*8*8*8*8);
 
         // aux will now be used as the current offset when inserting data
         aux = 0;
@@ -883,6 +938,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
             }
         }
       }
+    ;
       { // map 32x32x32
         for (i = 0; i < 8 * 8; i++) {
             // if flag is set, insert the block into the array
@@ -940,11 +996,11 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
              && ((~aux_subregion_32x32x32check[i/(8*8*8*8*8)])) & (0b10000000 >> (i/(8*8*8*8) % 8)) // 0 at 32x32x32
              && ((~aux_subregion_64x64x64check[i/(8*8*8*8*8*8)])) & (0b10000000 >> (i/(8*8*8*8*8) % 8)) // 0 at 64x64x64
             ) {
-                x = 2*(i & 0b1 + ((i & 0b1000) >> 2) + ((i & 0b1000000) >> 4) + ((i & 0b1000000000) >> 6) + ((i & 0b1000000000000) >> 8) + ((i & 0b1000000000000000) >> 10));
-                y = 2*(((i & 0b10) >> 1) + ((i & 0b1000) >> 3) + ((i & 0b1000000) >> 5) + ((i & 0b1000000000) >> 7) + ((i & 0b1000000000000) >> 9) + ((i & 0b1000000000000000) >> 11));
-                z = 2*(((i & 0b100) >> 2) + ((i & 0b1000) >> 4) + ((i & 0b1000000) >> 6) + ((i & 0b1000000000) >> 8) + ((i & 0b1000000000000) >> 10) + ((i & 0b1000000000000000) >> 12));
+                x = 2*(((i & 0b1) >> 1)   + ((i & 0b1000) >> 2)   + ((i & 0b1000000) >> 4)   + ((i & 0b1000000000) >> 6)   + ((i & 0b1000000000000) >> 8)    + ((i & 0b1000000000000000) >> 10) );//   + ((i & 0b1000000000000000000) >> 12));
+                z = 2*(((i & 0b10) >> 1)  + ((i & 0b10000) >> 3)  + ((i & 0b10000000) >> 5)  + ((i & 0b10000000000) >> 7)  + ((i & 0b10000000000000) >> 9)   + ((i & 0b10000000000000000) >> 11) );//  + ((i & 0b10000000000000000000) >> 13));
+                y = 2*(((i & 0b100) >> 2) + ((i & 0b100000) >> 4) + ((i & 0b100000000) >> 6) + ((i & 0b100000000000) >> 8) + ((i & 0b100000000000000) >> 10) + ((i & 0b100000000000000000) >> 12) );// + ((i & 0b100000000000000000000) >> 14));
 
-                // printf("aux: %lu\n",aux); fflush(stdout); // EL BUCLE NO HACE LAS ITERACIONES QUE SON, AUX SE PASA POR MUCHO
+                // printf("aux: %lu\n",aux); fflush(stdout);
                 // printf("x:%d y:%d z:%d\n",x,y,z);fflush(stdout);
                 leinad_blockdata_clone(chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x],&result->region_data[aux+0]);
                 leinad_blockdata_clone(chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x+1],&result->region_data[aux+1]);

@@ -3,4 +3,4 @@
 build/
 vendored/
 CMakeCache.txt
-a.out
+*.out
