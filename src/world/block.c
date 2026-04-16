@@ -11,6 +11,7 @@
 
 #define LEINAD_REGION_RADIUS 128
 
+#define leinad_get_chunk_index(x,y,z) ((y)*128*128 + (z)*128 + (x))
 
 /**
  * Struct that defines how the data inside a region file is stored.
@@ -114,7 +115,18 @@ LEINAD_FGET struct blockdata leinad_region_getblock(int x, int y, int z, leinad_
     struct blockdata data = {0};
     Uint16 offset, offset_i;
     Uint8 umask, pmask, check;
-    Uint64 index;
+    Uint64 index, aux_index, aux_index2;
+
+    const Uint8* flags[7] = {
+        &region->redirection_flags[0b1001001001001],
+        &region->redirection_flags[0b1001001001001],
+        &region->redirection_flags[0b1001001001],
+        &region->redirection_flags[0b1001001],
+        &region->redirection_flags[0b1001],
+        &region->redirection_flags[0b1],
+        &region->redirection_flags[0]
+    };
+
 
     // 128x128x128
     if (region->ctrl_data & is_full_region) {
@@ -122,226 +134,86 @@ LEINAD_FGET struct blockdata leinad_region_getblock(int x, int y, int z, leinad_
         index = 0;
     }
     else {
-        offset = 0;
-        check = ((x &0b1000000) >> 6) | ((z &0b1000000) >> 5) | ((y &0b1000000) >> 4);
+        short lvl;
+        offset = 0; 
+        check = 0;
 
-        GETMASKS(umask, pmask, check);
-
-        // 64x64x64
-        if (region->redirection_flags[offset] & umask) {
-            // subregion is full, so data is at this level
-
-            // get the index of this region
-            index =
-                count_set_bits(region->redirection_flags[offset] & pmask)
-            ;
-        }
-        else {
-            offset = check;
-            check = ((x &0b100000) >> 5) | ((z &0b100000) >> 4) | ((y &0b100000) >> 3);
-
+        // gets last available level
+        for (lvl = 6; lvl > 0; lvl--){
+            offset = (offset << 3) | check;
+            check = (((y >> lvl) &1) << 2) | (((z >> lvl) &1) << 1) | (((x >> lvl) &1) << 0);
             GETMASKS(umask, pmask, check);
+            if (flags[lvl][offset] & umask) break;
+        }
 
-            // 32x32x32
-            if (region->redirection_flags[0b1 + offset] & umask) {
-                // subregion is full, so data is at this level
+        // sets base index accordingly
+        index = 0;
+        switch(lvl) { 
+            case 0:
+                index+=((region->amounts_perLODlevel & mask_amount_02x) >> 45);
 
-                // get the index of this region
-                index =
-                    (region->amounts_perLODlevel & mask_amount_64x)
-                    + count_set_bits(region->redirection_flags[0b1 + offset] & pmask)
-                ;
+            __attribute__((fallthrough)); 
+            case 1:
+                index+=((region->amounts_perLODlevel & mask_amount_04x) >> 30);
 
-                for (offset_i = 0b1; offset_i < 0b1 + offset; offset_i++) {
-                    index += count_set_bits(region->redirection_flags[offset_i]);                
-                }
+            __attribute__((fallthrough)); 
+            case 2:
+                index+=((region->amounts_perLODlevel & mask_amount_08x) >> 18);
+
+            __attribute__((fallthrough)); 
+            case 3:
+                index+=((region->amounts_perLODlevel & mask_amount_16x) >> 9);
+
+            __attribute__((fallthrough)); 
+            case 4:
+                index+=((region->amounts_perLODlevel & mask_amount_32x) >> 3);
+
+            __attribute__((fallthrough)); 
+            case 5:
+                index+= (region->amounts_perLODlevel & mask_amount_64x);
+
+            __attribute__((fallthrough)); 
+            case 6:
+                index += (lvl) ? count_set_bits(flags[lvl][offset] & pmask) 
+                               : (count_set_bits((~flags[0][offset]) & pmask) << 3);
+        }
+
+        // adds inbetween values
+
+        if (lvl) { // if not special case (1x1x1)
+            for (offset_i = 0 ; offset_i < offset; offset_i++) {
+                index += count_set_bits(flags[lvl][offset_i]);                
             }
-            else {
-                offset = (offset <<3) + check;
-                check = ((x &0b10000) >> 4) | ((z &0b10000) >> 3) | ((y &0b10000) >> 2);
+        }
+        else { // 1x1x1 needs special counting for its same level
+            aux_index = 0;
 
-                GETMASKS(umask, pmask, check);
-
-                // 16x16x16
-                if (region->redirection_flags[0b1001+ offset] & umask) {
-                    // subregion is full, so data is at this level
-
-                    // get the index of this region
-                    index =
-                           (region->amounts_perLODlevel & mask_amount_64x)
-                        + ((region->amounts_perLODlevel & mask_amount_32x) >> 3)
-                        + count_set_bits(region->redirection_flags[0b1001+ offset] & pmask)
-                    ;
-
-                    for (offset_i = 0b1001; offset_i < 0b1001+ offset; offset_i++) {
-                        index += count_set_bits(region->redirection_flags[offset_i]);                
-                    }
-                }
-                // reiterates                
-                else {
-                    offset = (offset <<3) + check;
-                    check = ((x &0b1000) >> 3) | ((z &0b1000) >> 2) | ((y &0b1000) >> 1);
-
-                    GETMASKS(umask, pmask, check);
-
-                    // 8x8x8
-                    if (region->redirection_flags[0b1001001+ offset] & umask) {
-                        // subregion is full, so data is at this level
-
-                        // get the index of this region
-                        index =
-                               (region->amounts_perLODlevel & mask_amount_64x)
-                            + ((region->amounts_perLODlevel & mask_amount_32x) >> 3)
-                            + ((region->amounts_perLODlevel & mask_amount_16x) >> 9)
-                            + count_set_bits(region->redirection_flags[0b1001001+ offset] & pmask)
-                        ;
-
-                        for (offset_i = 0b1001001; offset_i < 0b1001001+ offset; offset_i++) {
-                            index += count_set_bits(region->redirection_flags[offset_i]);                
-                        }
-                    }
-                    
-                    else {
-                        offset = (offset <<3) + check;
-                        check = ((x &0b100) >> 2) | ((z &0b100) >> 1) | ((y &0b100) >> 0);
-
-                        GETMASKS(umask, pmask, check);
-
-                        // 4x4x4
-                        if (region->redirection_flags[0b1001001001+ offset] & umask) {
-                            // subregion is full, so data is at this level
-
-                            // get the index of this region
-                            index =
-                                   (region->amounts_perLODlevel & mask_amount_64x)
-                                + ((region->amounts_perLODlevel & mask_amount_32x) >> 3)
-                                + ((region->amounts_perLODlevel & mask_amount_16x) >> 9)
-                                + ((region->amounts_perLODlevel & mask_amount_08x) >> 18)
-                                + count_set_bits(region->redirection_flags[0b1001001001+ offset] & pmask)
-                            ;
-
-                            for (offset_i = 0b1001001001 ; offset_i < 0b1001001001+ offset; offset_i++) {
-                                index += count_set_bits(region->redirection_flags[offset_i]);                
-                            }
-                        }
-                        
-                        else {
-                            offset = (offset <<3) + check;
-                            check = ((x &0b10) >> 1) | ((z &0b10) >> 0) | ((y &0b10) << 1);
-
-                            GETMASKS(umask, pmask, check);
-
-                            // 2x2x2
-                            if (region->redirection_flags[0b1001001001001+ offset] & umask) {
-                                // subregion is full, so data is at this level
-
-                                // get the index of this region
-                                index =
-                                       (region->amounts_perLODlevel & mask_amount_64x)
-                                    + ((region->amounts_perLODlevel & mask_amount_32x) >> 3)
-                                    + ((region->amounts_perLODlevel & mask_amount_16x) >> 9)
-                                    + ((region->amounts_perLODlevel & mask_amount_08x) >> 18)
-                                    + ((region->amounts_perLODlevel & mask_amount_04x) >> 30)
-                                    + count_set_bits(region->redirection_flags[0b1001001001001+ offset] & pmask)
-                                ;
-
-                                for (offset_i = 0b1001001001001 ; offset_i < 0b1001001001001+ offset; offset_i++) {
-                                    index += count_set_bits(region->redirection_flags[offset_i]);                
-                                }
-                            }
-                            else {
-                                Uint64 test = 0;
-                                // AQUI HAY QUE ELEGIR POSICION BASANDOSE EN QUE LOS 8 ESTAN EN LINEA
-                                check = (((x &0b1) << 0) | ((z &0b1) << 1) | ((y &0b1) << 2)); // index of the 2x2x2
-                                
-                                // get the index of this region
-                                index = 0;
-                                index+= (region->amounts_perLODlevel & mask_amount_64x);
-                                index+=((region->amounts_perLODlevel & mask_amount_32x) >> 3);
-                                index+=((region->amounts_perLODlevel & mask_amount_16x) >> 9);
-                                index+=((region->amounts_perLODlevel & mask_amount_08x) >> 18);
-                                index+=((region->amounts_perLODlevel & mask_amount_04x) >> 30);
-                                index+=((region->amounts_perLODlevel & mask_amount_02x) >> 45);
-                                index+=8* (count_set_bits((~region->redirection_flags[0b1001001001001+ offset]) & pmask));
-                                index+=check;
-
-                                SDL_Log("check - %d-=- x: %d, y: %d, z:%d", check,x,y,z);
-
-                                for (offset_i = 0b1001001001001 ; offset_i < 0b1001001001001+ offset; offset_i++) {
-                                    index += 8*count_set_bits((~region->redirection_flags[offset_i]) & 0xff);
-                                }
-
-                                // false positives to remove
-                                    // 64x64x64
-                                    offset = 0;
-                                    check = ((x &0b1000000) >> 6) | ((z &0b1000000) >> 5) | ((y &0b1000000) >> 4);
-                                    GETMASKS(umask, pmask, check);
-                                    test = count_set_bits(region->redirection_flags[offset] & pmask);
-
-                                    // 32x32x32
-                                    offset = check;
-                                    check = ((x &0b100000) >> 5) | ((z &0b100000) >> 4) | ((y &0b100000) >> 3);
-                                    GETMASKS(umask, pmask, check);
-                                    test = (test << 3) + count_set_bits(region->redirection_flags[0b1 + offset] & pmask);
-                                    for (offset_i = 0b1; offset_i < 0b1 + offset; offset_i++) {
-                                        test += count_set_bits(region->redirection_flags[offset_i]);                
-                                    }
-
-                                    // 16x16x16
-                                    offset = (offset <<3) + check;
-                                    check = ((x &0b10000) >> 4) | ((z &0b10000) >> 3) | ((y &0b10000) >> 2);
-                                    GETMASKS(umask, pmask, check);
-                                    test = (test << 3) + count_set_bits(region->redirection_flags[0b1001+ offset] & pmask);
-                                    for (offset_i = 0b1001; offset_i < 0b1001+ offset; offset_i++) {
-                                        test += count_set_bits(region->redirection_flags[offset_i]);                
-                                    }
-
-                                    // 8x8x8
-                                    offset = (offset <<3) + check;
-                                    check = ((x &0b1000) >> 3) | ((z &0b1000) >> 2) | ((y &0b1000) >> 1);
-                                    GETMASKS(umask, pmask, check);
-                                    test = (test << 3) + count_set_bits(region->redirection_flags[0b1001001+ offset] & pmask);
-
-                                    for (offset_i = 0b1001001; offset_i < 0b1001001+ offset; offset_i++) {
-                                        test += count_set_bits(region->redirection_flags[offset_i]);                
-                                    }
-
-                                    // 4x4x4
-                                    offset = (offset <<3) + check;
-                                    check = ((x &0b100) >> 2) | ((z &0b100) >> 1) | ((y &0b100) >> 0);
-                                    GETMASKS(umask, pmask, check);
-                                    test = (test << 3) + count_set_bits(region->redirection_flags[0b1001001001+ offset] & pmask);
-                                    for (offset_i = 0b1001001001 ; offset_i < 0b1001001001+ offset; offset_i++) {
-                                        test += count_set_bits(region->redirection_flags[offset_i]);                
-                                    }
-
-                                    // // 2x2x2
-                                    // offset = (offset <<3) + check;
-                                    // check = ((x &0b10) >> 1) | ((z &0b10) >> 0) | ((y &0b10) << 1);
-                                    // GETMASKS(umask, pmask, check);
-                                    // test = (test << 3) + count_set_bits(region->redirection_flags[0b1001001001001+ offset] & pmask);
-                                    // for (offset_i = 0b1001001001001 ; offset_i < 0b1001001001001+ offset; offset_i++) {
-                                    //     test += count_set_bits(region->redirection_flags[offset_i]);                
-                                    // }
-
-                                //
-
-                                index -= 8*8*test;
-                                index = index+1;
-                                index = index-1;
-                            }
-                            
-                        }
-                        
-                    }
-                    
-                }
-                
+            // counts all non-greater-than 2x2x2 subregions
+            for (offset_i = 0 ; offset_i <offset; offset_i++) {
+                aux_index += count_set_bits((~flags[0][offset_i]) & 0xFF);                
             }
 
             
-        }
+          { // remove the false positives
+            offset =0; check = 0;
+            for (lvl = 6; lvl > 1; lvl--){
+                offset = (offset << 3) | check;
+                check = (((y >> lvl) &1) << 2) | (((z >> lvl) &1) << 1) | (((x >> lvl) &1) << 0);
 
+                GETMASKS(umask, pmask, check);
+                aux_index2 = count_set_bits(flags[lvl][offset] & pmask);
+    
+                for (offset_i = 0 ; offset_i < offset; offset_i++) {
+                    aux_index2 += count_set_bits(flags[lvl][offset_i]);                
+                }
+
+                aux_index -= aux_index2 << (3*(lvl-1));
+            }
+          }
+
+          // add resulting index offset to the calculation
+          index += (aux_index << 3) + (((y &1) << 2) | ((z &1) << 1) | ((x &1) << 0));
+        }
     }
 
     // fill in the data and return
@@ -429,30 +301,53 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
     int aux_count = 0;
     Uint32 full_region_check = 0;
 
-    LEINAD_AUX struct blockdata* aux_subregion_02x02x02map = SDL_malloc(sizeof(struct blockdata) * 8*8*8*8*8*8);
-    LEINAD_AUX struct blockdata* aux_subregion_04x04x04map = SDL_malloc(sizeof(struct blockdata) * 8*8*8*8*8);
-    LEINAD_AUX struct blockdata* aux_subregion_08x08x08map = SDL_malloc(sizeof(struct blockdata) * 8*8*8*8);
-    LEINAD_AUX struct blockdata* aux_subregion_16x16x16map = SDL_malloc(sizeof(struct blockdata) * 8*8*8);
-    LEINAD_AUX struct blockdata* aux_subregion_32x32x32map = SDL_malloc(sizeof(struct blockdata) * 8*8);
-    LEINAD_AUX struct blockdata* aux_subregion_64x64x64map = SDL_malloc(sizeof(struct blockdata) * 8);
+    LEINAD_AUX struct blockdata* maps[6] = { 0 }; // 2x2x2 -> 64x64x64 (8:8)
+    LEINAD_AUX Uint8* checks[6] = {0};            // 2x2x2 -> 64x64x64 (8:1)
 
-    LEINAD_AUX Uint8* aux_subregion_02x02x02check = SDL_malloc(sizeof(Uint8) * 1*8*8*8*8*8);
-        SDL_memset(&aux_subregion_02x02x02check[0],0,1*8*8*8*8*8);
+  { // init memory
+
+    // 02x02x02
+    maps[0] = SDL_malloc(sizeof(struct blockdata) * 8*8*8*8*8*8);
+        if (maps[0] == NULL) return NULL;
+    checks[0] = SDL_malloc(sizeof(Uint8) * 1*8*8*8*8*8);
+        if (checks[0] == NULL) return NULL;
+        SDL_memset(checks[0],0,1*8*8*8*8*8);
+
+    // 04x04x04
+    maps[1] = SDL_malloc(sizeof(struct blockdata) * 8*8*8*8*8);
+        if (maps[1] == NULL) return NULL;
+    checks[1] = SDL_malloc(sizeof(Uint8) * 1*8*8*8*8);
+        if (checks[1] == NULL) return NULL;
+        SDL_memset(checks[1],0,1*8*8*8*8);
     
-    LEINAD_AUX Uint8* aux_subregion_04x04x04check = SDL_malloc(sizeof(Uint8) * 1*8*8*8*8);
-        SDL_memset(&aux_subregion_04x04x04check[0],0,1*8*8*8*8);
+    // 08x08x08
+    maps[2] = SDL_malloc(sizeof(struct blockdata) * 8*8*8*8);
+        if (maps[2] == NULL) return NULL;
+    checks[2] = SDL_malloc(sizeof(Uint8) * 1*8*8*8);
+        if (checks[2] == NULL) return NULL;
+        SDL_memset(checks[2],0,1*8*8*8);
     
-    LEINAD_AUX Uint8* aux_subregion_08x08x08check = SDL_malloc(sizeof(Uint8) * 1*8*8*8);
-        SDL_memset(&aux_subregion_08x08x08check[0],0,1*8*8*8);
+    // 16x16x16
+    maps[3] = SDL_malloc(sizeof(struct blockdata) * 8*8*8);
+        if (maps[3] == NULL) return NULL;
+    checks[3] = SDL_malloc(sizeof(Uint8) * 1*8*8);
+        if (checks[3] == NULL) return NULL;
+        SDL_memset(checks[3],0,1*8*8);
     
-    LEINAD_AUX Uint8* aux_subregion_16x16x16check = SDL_malloc(sizeof(Uint8) * 1*8*8);
-        SDL_memset(&aux_subregion_16x16x16check[0],0,1*8*8);
+    // 32x32x32
+    maps[4] = SDL_malloc(sizeof(struct blockdata) * 8*8);
+        if (maps[4] == NULL) return NULL;
+    checks[4] = SDL_malloc(sizeof(Uint8) * 1*8);
+        if (checks[4] == NULL) return NULL;
+        SDL_memset(checks[4],0,1*8);
     
-    LEINAD_AUX Uint8* aux_subregion_32x32x32check = SDL_malloc(sizeof(Uint8) * 1*8);
-        SDL_memset(&aux_subregion_32x32x32check[0],0,1*8);
-    
-    LEINAD_AUX Uint8* aux_subregion_64x64x64check = SDL_malloc(sizeof(Uint8) * 1);
-        SDL_memset(&aux_subregion_64x64x64check[0],0,1);
+    // 64x64x64
+    maps[5] = SDL_malloc(sizeof(struct blockdata) * 8);
+        if (maps[5] == NULL) return NULL;
+    checks[5] = SDL_malloc(sizeof(Uint8) * 1);
+        if (checks[5] == NULL) return NULL;
+        SDL_memset(checks[5],0,1);
+  }
     
   { // iterate over the whole region (128x128x128), checking the 2x2x2 regions 
     aux_count = 0;
@@ -478,188 +373,50 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
                             // iterates over a 2x2x2
 
                             // get first block
-                            leinad_blockdata_clone(chunk->block[2*yy*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + 2*zz*LEINAD_REGION_RADIUS + 2*xx],&checking_block);
+                            leinad_blockdata_clone(chunk->block[leinad_get_chunk_index(2*xx+0,2*yy+0,2*zz+0)],&checking_block);
 
                             // compare with the rest
 
                             // if different than any, don't set the byte
                             if (
-                                leinad_blockdata_comparator(&checking_block, &(chunk->block[2*yy*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + 2*zz*LEINAD_REGION_RADIUS + 2*xx+1]))
-                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[2*yy*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (2*zz+1)*LEINAD_REGION_RADIUS + 2*xx]))
-                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[2*yy*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (2*zz+1)*LEINAD_REGION_RADIUS + 2*xx+1]))
-                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[(2*yy+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + 2*zz*LEINAD_REGION_RADIUS + 2*xx]))
-                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[(2*yy+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + 2*zz*LEINAD_REGION_RADIUS + 2*xx+1]))
-                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[(2*yy+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (2*zz+1)*LEINAD_REGION_RADIUS + 2*xx]))
-                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[(2*yy+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (2*zz+1)*LEINAD_REGION_RADIUS + 2*xx+1]))
+                                leinad_blockdata_comparator(&checking_block, &(chunk->block[leinad_get_chunk_index(2*xx+1,2*yy+0,2*zz+0)]))
+                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[leinad_get_chunk_index(2*xx+0,2*yy+0,2*zz+1)]))
+                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[leinad_get_chunk_index(2*xx+1,2*yy+0,2*zz+1)]))
+                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[leinad_get_chunk_index(2*xx+0,2*yy+1,2*zz+0)]))
+                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[leinad_get_chunk_index(2*xx+1,2*yy+1,2*zz+0)]))
+                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[leinad_get_chunk_index(2*xx+0,2*yy+1,2*zz+1)]))
+                             || leinad_blockdata_comparator(&checking_block, &(chunk->block[leinad_get_chunk_index(2*xx+1,2*yy+1,2*zz+1)]))
                             ) {
-                                aux_subregion_02x02x02map[aux_count].id = LEINAD_BLOCK_invalid;
-                                aux_subregion_02x02x02map[aux_count].rotation_n_subpos = 0;
-                                aux_subregion_02x02x02map[aux_count].custom_data = 0;
+                                maps[0][aux_count].id = LEINAD_BLOCK_invalid;
+                                maps[0][aux_count].rotation_n_subpos = 0;
+                                maps[0][aux_count].custom_data = 0;
                             } else {
                                 // set bit
                                 switch (aux_count % 8) {
-                                    case 7: aux_subregion_02x02x02check[aux_count/8] |= 0b00000001; break; \
-                                    case 6: aux_subregion_02x02x02check[aux_count/8] |= 0b00000010; break; \
-                                    case 5: aux_subregion_02x02x02check[aux_count/8] |= 0b00000100; break; \
-                                    case 4: aux_subregion_02x02x02check[aux_count/8] |= 0b00001000; break; \
-                                    case 3: aux_subregion_02x02x02check[aux_count/8] |= 0b00010000; break; \
-                                    case 2: aux_subregion_02x02x02check[aux_count/8] |= 0b00100000; break; \
-                                    case 1: aux_subregion_02x02x02check[aux_count/8] |= 0b01000000; break; \
-                                    case 0: aux_subregion_02x02x02check[aux_count/8] |= 0b10000000; break; \
+                                    case 7: checks[0][aux_count/8] |= 0b00000001; break; \
+                                    case 6: checks[0][aux_count/8] |= 0b00000010; break; \
+                                    case 5: checks[0][aux_count/8] |= 0b00000100; break; \
+                                    case 4: checks[0][aux_count/8] |= 0b00001000; break; \
+                                    case 3: checks[0][aux_count/8] |= 0b00010000; break; \
+                                    case 2: checks[0][aux_count/8] |= 0b00100000; break; \
+                                    case 1: checks[0][aux_count/8] |= 0b01000000; break; \
+                                    case 0: checks[0][aux_count/8] |= 0b10000000; break; \
                                 }
 
                                 // set block
-                                leinad_blockdata_clone(checking_block,&aux_subregion_02x02x02map[aux_count]);
+                                leinad_blockdata_clone(checking_block,&maps[0][aux_count]);
                             }
                             aux_count++;
                         }
   }
 
-  { // iterate over the result of the 2x2x2 grouping, checking the 4x4x4 regions 
+  { // iterate over the result of the 2x2x2 grouping, checking the rest of subregion sizes until the last
     Uint32 i;
-
-    // iterates over a 4x4x4
-    for (i = 0; i < 64*64*64; i+=8) {
-        // get first block
-        leinad_blockdata_clone(aux_subregion_02x02x02map[i],&checking_block);
-
-        // compare with the rest
-
-        // if different than any, AND ANY SUBREGION IS NOT EQUAL don't set the byte
-        if (
-            checking_block.id == LEINAD_BLOCK_invalid
-            || (( 
-                leinad_blockdata_comparator(&checking_block, &(aux_subregion_02x02x02map[i+1]))
-            || leinad_blockdata_comparator(&checking_block, &(aux_subregion_02x02x02map[i+2]))
-            || leinad_blockdata_comparator(&checking_block, &(aux_subregion_02x02x02map[i+3]))
-            || leinad_blockdata_comparator(&checking_block, &(aux_subregion_02x02x02map[i+4]))
-            || leinad_blockdata_comparator(&checking_block, &(aux_subregion_02x02x02map[i+5]))
-            || leinad_blockdata_comparator(&checking_block, &(aux_subregion_02x02x02map[i+6]))
-            || leinad_blockdata_comparator(&checking_block, &(aux_subregion_02x02x02map[i+7]))
-                ) || aux_subregion_02x02x02check[i/8] != 0xFF)
-        ) {
-            aux_subregion_04x04x04map[i/8].id = LEINAD_BLOCK_invalid;
-            aux_subregion_04x04x04map[i/8].rotation_n_subpos = 0;
-            aux_subregion_04x04x04map[i/8].custom_data = 0;
-        } else {
-
-            // set bit
-            switch ((i/8) % 8) {
-                case 7: aux_subregion_04x04x04check[i/64] |= 0b00000001; break; \
-                case 6: aux_subregion_04x04x04check[i/64] |= 0b00000010; break; \
-                case 5: aux_subregion_04x04x04check[i/64] |= 0b00000100; break; \
-                case 4: aux_subregion_04x04x04check[i/64] |= 0b00001000; break; \
-                case 3: aux_subregion_04x04x04check[i/64] |= 0b00010000; break; \
-                case 2: aux_subregion_04x04x04check[i/64] |= 0b00100000; break; \
-                case 1: aux_subregion_04x04x04check[i/64] |= 0b01000000; break; \
-                case 0: aux_subregion_04x04x04check[i/64] |= 0b10000000; break; \
-            }
-
-            // set block
-            leinad_blockdata_clone(checking_block,&aux_subregion_04x04x04map[i/8]);
-        }
-    }
-  }
-
-  { // iterate over the result of the 4x4x4 grouping, checking the 8x8x8 regions 
-    Uint32 i;
-
-    // iterates over a 8x8x8
-    for (i = 0; i < 32*32*32; i+=8) {
-        // get first block
-        leinad_blockdata_clone(aux_subregion_04x04x04map[i],&checking_block);
-
-        // compare with the rest
-
-        // if different than any, AND ANY SUBREGION IS NOT EQUAL don't set the byte
-        if (
-            checking_block.id == LEINAD_BLOCK_invalid
-            || (( 
-                leinad_blockdata_comparator(&checking_block, &(aux_subregion_04x04x04map[i+1]))
-            || leinad_blockdata_comparator(&checking_block, &(aux_subregion_04x04x04map[i+2]))
-            || leinad_blockdata_comparator(&checking_block, &(aux_subregion_04x04x04map[i+3]))
-            || leinad_blockdata_comparator(&checking_block, &(aux_subregion_04x04x04map[i+4]))
-            || leinad_blockdata_comparator(&checking_block, &(aux_subregion_04x04x04map[i+5]))
-            || leinad_blockdata_comparator(&checking_block, &(aux_subregion_04x04x04map[i+6]))
-            || leinad_blockdata_comparator(&checking_block, &(aux_subregion_04x04x04map[i+7]))
-                ) || aux_subregion_04x04x04check[i/8] != 0xFF)
-        ) {
-            aux_subregion_08x08x08map[i/8].id = LEINAD_BLOCK_invalid;
-            aux_subregion_08x08x08map[i/8].rotation_n_subpos = 0;
-            aux_subregion_08x08x08map[i/8].custom_data = 0;
-        } else {
-
-            // set bit
-            switch ((i/8) % 8) {
-                case 7: aux_subregion_08x08x08check[i/64] |= 0b00000001; break; \
-                case 6: aux_subregion_08x08x08check[i/64] |= 0b00000010; break; \
-                case 5: aux_subregion_08x08x08check[i/64] |= 0b00000100; break; \
-                case 4: aux_subregion_08x08x08check[i/64] |= 0b00001000; break; \
-                case 3: aux_subregion_08x08x08check[i/64] |= 0b00010000; break; \
-                case 2: aux_subregion_08x08x08check[i/64] |= 0b00100000; break; \
-                case 1: aux_subregion_08x08x08check[i/64] |= 0b01000000; break; \
-                case 0: aux_subregion_08x08x08check[i/64] |= 0b10000000; break; \
-            }
-
-            // set block
-            leinad_blockdata_clone(checking_block,&aux_subregion_08x08x08map[i/8]);
-        }
-    }
-  }
-
-  { // iterate over the result of the 8x8x8 grouping, checking the 16x16x16 regions 
-    Uint32 i;
-
-    // iterates over a 16x16x16
-    for (i = 0; i < 16*16*16; i+=8) {
-        // get first block
-        leinad_blockdata_clone(aux_subregion_08x08x08map[i],&checking_block);
-
-                // compare with the rest
-
-                // if different than any, AND ANY SUBREGION IS NOT EQUAL don't set the byte
-                if (
-                    checking_block.id == LEINAD_BLOCK_invalid
-                    || (( 
-                       leinad_blockdata_comparator(&checking_block, &(aux_subregion_08x08x08map[i+1]))
-                    || leinad_blockdata_comparator(&checking_block, &(aux_subregion_08x08x08map[i+2]))
-                    || leinad_blockdata_comparator(&checking_block, &(aux_subregion_08x08x08map[i+3]))
-                    || leinad_blockdata_comparator(&checking_block, &(aux_subregion_08x08x08map[i+4]))
-                    || leinad_blockdata_comparator(&checking_block, &(aux_subregion_08x08x08map[i+5]))
-                    || leinad_blockdata_comparator(&checking_block, &(aux_subregion_08x08x08map[i+6]))
-                    || leinad_blockdata_comparator(&checking_block, &(aux_subregion_08x08x08map[i+7]))
-                        ) || aux_subregion_08x08x08check[i/8] != 0xFF)
-                ) {
-                    aux_subregion_16x16x16map[i/8].id = LEINAD_BLOCK_invalid;
-                    aux_subregion_16x16x16map[i/8].rotation_n_subpos = 0;
-                    aux_subregion_16x16x16map[i/8].custom_data = 0;
-                } else {
-
-                    // set bit
-                    switch ((i/8) % 8) {
-                        case 7: aux_subregion_16x16x16check[i/64] |= 0b00000001; break; \
-                        case 6: aux_subregion_16x16x16check[i/64] |= 0b00000010; break; \
-                        case 5: aux_subregion_16x16x16check[i/64] |= 0b00000100; break; \
-                        case 4: aux_subregion_16x16x16check[i/64] |= 0b00001000; break; \
-                        case 3: aux_subregion_16x16x16check[i/64] |= 0b00010000; break; \
-                        case 2: aux_subregion_16x16x16check[i/64] |= 0b00100000; break; \
-                        case 1: aux_subregion_16x16x16check[i/64] |= 0b01000000; break; \
-                        case 0: aux_subregion_16x16x16check[i/64] |= 0b10000000; break; \
-                    }
-
-                    // set block
-            leinad_blockdata_clone(checking_block,&aux_subregion_16x16x16map[i/8]);
-                }
-            }
-  }
-
-  { // iterate over the result of the 16x16x16 grouping, checking the 32x32x32 regions 
-    Uint32 i;
-
-    // iterates over a 32x32x32
-    for (i = 0; i < 8*8*8; i+=8) {
-        // get first block
-        leinad_blockdata_clone(aux_subregion_16x16x16map[i],&checking_block);
+    short lvl;
+    for (lvl = 0; lvl < 5; lvl++) {
+        for (i = 0; i < 0b1000000000000000000 >> (lvl*3); i+=8) { // 
+            // get first block
+            leinad_blockdata_clone(maps[lvl][i],&checking_block);
 
             // compare with the rest
 
@@ -667,102 +424,57 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
             if (
                 checking_block.id == LEINAD_BLOCK_invalid
                 || (( 
-                   leinad_blockdata_comparator(&checking_block, &(aux_subregion_16x16x16map[i+1]))
-                || leinad_blockdata_comparator(&checking_block, &(aux_subregion_16x16x16map[i+2]))
-                || leinad_blockdata_comparator(&checking_block, &(aux_subregion_16x16x16map[i+3]))
-                || leinad_blockdata_comparator(&checking_block, &(aux_subregion_16x16x16map[i+4]))
-                || leinad_blockdata_comparator(&checking_block, &(aux_subregion_16x16x16map[i+5]))
-                || leinad_blockdata_comparator(&checking_block, &(aux_subregion_16x16x16map[i+6]))
-                || leinad_blockdata_comparator(&checking_block, &(aux_subregion_16x16x16map[i+7]))
-                    ) || aux_subregion_16x16x16check[i/8] != 0xFF)
+                leinad_blockdata_comparator(&checking_block, &(maps[lvl][i+1]))
+                || leinad_blockdata_comparator(&checking_block, &(maps[lvl][i+2]))
+                || leinad_blockdata_comparator(&checking_block, &(maps[lvl][i+3]))
+                || leinad_blockdata_comparator(&checking_block, &(maps[lvl][i+4]))
+                || leinad_blockdata_comparator(&checking_block, &(maps[lvl][i+5]))
+                || leinad_blockdata_comparator(&checking_block, &(maps[lvl][i+6]))
+                || leinad_blockdata_comparator(&checking_block, &(maps[lvl][i+7]))
+                    ) || checks[lvl][i/8] != 0xFF)
             ) {
-                aux_subregion_32x32x32map[i/8].id = LEINAD_BLOCK_invalid;
-                aux_subregion_32x32x32map[i/8].rotation_n_subpos = 0;
-                aux_subregion_32x32x32map[i/8].custom_data = 0;
+                maps[lvl+1][i/8].id = LEINAD_BLOCK_invalid;
+                maps[lvl+1][i/8].rotation_n_subpos = 0;
+                maps[lvl+1][i/8].custom_data = 0;
             } else {
 
                 // set bit
                 switch ((i/8) % 8) {
-                    case 7: aux_subregion_32x32x32check[i/64] |= 0b00000001; break; \
-                    case 6: aux_subregion_32x32x32check[i/64] |= 0b00000010; break; \
-                    case 5: aux_subregion_32x32x32check[i/64] |= 0b00000100; break; \
-                    case 4: aux_subregion_32x32x32check[i/64] |= 0b00001000; break; \
-                    case 3: aux_subregion_32x32x32check[i/64] |= 0b00010000; break; \
-                    case 2: aux_subregion_32x32x32check[i/64] |= 0b00100000; break; \
-                    case 1: aux_subregion_32x32x32check[i/64] |= 0b01000000; break; \
-                    case 0: aux_subregion_32x32x32check[i/64] |= 0b10000000; break; \
+                    case 7: checks[lvl+1][i/64] |= 0b00000001; break; \
+                    case 6: checks[lvl+1][i/64] |= 0b00000010; break; \
+                    case 5: checks[lvl+1][i/64] |= 0b00000100; break; \
+                    case 4: checks[lvl+1][i/64] |= 0b00001000; break; \
+                    case 3: checks[lvl+1][i/64] |= 0b00010000; break; \
+                    case 2: checks[lvl+1][i/64] |= 0b00100000; break; \
+                    case 1: checks[lvl+1][i/64] |= 0b01000000; break; \
+                    case 0: checks[lvl+1][i/64] |= 0b10000000; break; \
                 }
 
                 // set block
-            leinad_blockdata_clone(checking_block,&aux_subregion_32x32x32map[i/8]);
+                leinad_blockdata_clone(checking_block,&maps[lvl+1][i/8]);
             }
         }
-  }
-
-  { // iterate over the result of the 32x32x32 grouping, checking the 64x64x64 regions 
-    Uint32 i;
-
-    // iterates over a 64x64x64
-    for (i = 0; i < 4*4*4; i+=8) {
-        // get first block
-        leinad_blockdata_clone(aux_subregion_32x32x32map[i],&checking_block);
-
-            // compare with the rest
-
-            // if different than any, AND ANY SUBREGION IS NOT EQUAL don't set the byte
-            if (
-                checking_block.id == LEINAD_BLOCK_invalid
-                || (( 
-                   leinad_blockdata_comparator(&checking_block, &(aux_subregion_32x32x32map[i+1]))
-                || leinad_blockdata_comparator(&checking_block, &(aux_subregion_32x32x32map[i+2]))
-                || leinad_blockdata_comparator(&checking_block, &(aux_subregion_32x32x32map[i+3]))
-                || leinad_blockdata_comparator(&checking_block, &(aux_subregion_32x32x32map[i+4]))
-                || leinad_blockdata_comparator(&checking_block, &(aux_subregion_32x32x32map[i+5]))
-                || leinad_blockdata_comparator(&checking_block, &(aux_subregion_32x32x32map[i+6]))
-                || leinad_blockdata_comparator(&checking_block, &(aux_subregion_32x32x32map[i+7]))
-                    ) || aux_subregion_32x32x32check[i/8] != 0xFF)
-            ) {
-                aux_subregion_64x64x64map[i/8].id = LEINAD_BLOCK_invalid;
-                aux_subregion_64x64x64map[i/8].rotation_n_subpos = 0;
-                aux_subregion_64x64x64map[i/8].custom_data = 0;
-            } else {
-
-                // set bit
-                switch ((i/8) % 8) {
-                    case 7: aux_subregion_64x64x64check[i/64] |= 0b00000001; break; \
-                    case 6: aux_subregion_64x64x64check[i/64] |= 0b00000010; break; \
-                    case 5: aux_subregion_64x64x64check[i/64] |= 0b00000100; break; \
-                    case 4: aux_subregion_64x64x64check[i/64] |= 0b00001000; break; \
-                    case 3: aux_subregion_64x64x64check[i/64] |= 0b00010000; break; \
-                    case 2: aux_subregion_64x64x64check[i/64] |= 0b00100000; break; \
-                    case 1: aux_subregion_64x64x64check[i/64] |= 0b01000000; break; \
-                    case 0: aux_subregion_64x64x64check[i/64] |= 0b10000000; break; \
-                }
-
-                // set block
-            leinad_blockdata_clone(checking_block,&aux_subregion_64x64x64map[i/8]);
-            }
-        }
+    }
   }
 
   { // iterate over the result of the 64x64x64 grouping, checking the whole 128x128x128 region 
     // iterates over a 128x128x128
     // get first block
-        leinad_blockdata_clone(aux_subregion_64x64x64map[0],&checking_block);
+        leinad_blockdata_clone(maps[5][0],&checking_block);
 
     // compare with the rest
     // if different than any, AND ANY SUBREGION IS NOT EQUAL don't set the flag
     if (
         checking_block.id == LEINAD_BLOCK_invalid
         || (( 
-           leinad_blockdata_comparator(&checking_block, &(aux_subregion_64x64x64map[1]))
-        || leinad_blockdata_comparator(&checking_block, &(aux_subregion_64x64x64map[2]))
-        || leinad_blockdata_comparator(&checking_block, &(aux_subregion_64x64x64map[3]))
-        || leinad_blockdata_comparator(&checking_block, &(aux_subregion_64x64x64map[4]))
-        || leinad_blockdata_comparator(&checking_block, &(aux_subregion_64x64x64map[5]))
-        || leinad_blockdata_comparator(&checking_block, &(aux_subregion_64x64x64map[6]))
-        || leinad_blockdata_comparator(&checking_block, &(aux_subregion_64x64x64map[7]))
-            ) || aux_subregion_64x64x64check[0] != 0xFF)
+           leinad_blockdata_comparator(&checking_block, &(maps[5][1]))
+        || leinad_blockdata_comparator(&checking_block, &(maps[5][2]))
+        || leinad_blockdata_comparator(&checking_block, &(maps[5][3]))
+        || leinad_blockdata_comparator(&checking_block, &(maps[5][4]))
+        || leinad_blockdata_comparator(&checking_block, &(maps[5][5]))
+        || leinad_blockdata_comparator(&checking_block, &(maps[5][6]))
+        || leinad_blockdata_comparator(&checking_block, &(maps[5][7]))
+            ) || checks[5][0] != 0xFF)
     ) {
     } else {
 
@@ -777,17 +489,17 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
     // region completa de 1 bloque
     if (full_region_check) {
         result = SDL_malloc( 0 +
-            sizeof(Uint64)                      // count of blocks per level
-            + sizeof(Uint32)                    // region data
-            + sizeof(Uint8[0b1001001001001])    // redirection flags
-            + sizeof(struct blockdata) * 1      // block data
+            sizeof(Uint64)                        // count of blocks per level
+            + sizeof(Uint32)                      // region data
+            + sizeof(Uint8[0b1001001001001001+3]) // redirection flags
+            + sizeof(struct blockdata) * 1        // block data
         );
         result->ctrl_data = 
             is_full_region
         ;
         result->amounts_perLODlevel = 0;
 
-        SDL_memset(result->redirection_flags,0,0b1001001001001);
+        SDL_memset(result->redirection_flags,0,0b1001001001001001+3);
 
         leinad_blockdata_clone(checking_block,&result->region_data[0]);
 
@@ -796,110 +508,60 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
     else {
         Uint32 i;
         Uint64 per_level_count = 0, total_block_count = 0, aux = 0;;
-
+        short lvl_start;
         // clear sublevels when a higher one is available (by checking bits)
 
-      { // 64x64x64 checks
-        aux = 0;
-        for (i = 0; i < 8; i++) {
-            if (aux_subregion_64x64x64check[i/8] & (0b10000000 >> (i % 8))) {
-                SDL_memset(&aux_subregion_32x32x32check[i],0,1);
-                SDL_memset(&aux_subregion_16x16x16check[2*2*2*i],0,2*2*2);
-                SDL_memset(&aux_subregion_08x08x08check[4*4*4*i],0,4*4*4);
-                SDL_memset(&aux_subregion_04x04x04check[8*8*8*i],0,8*8*8);
-                SDL_memset(&aux_subregion_02x02x02check[16*16*16*i],0,16*16*16);
-                aux++;
+        for (lvl_start = 5; lvl_start >= 0; lvl_start--){
+            aux = 0;
+            for (i = 0; i < 0b1000000000000000000 >> (lvl_start * 3); i++) {
+                if (checks[lvl_start][i/8] & (0b10000000 >> (i % 8))) {
+                    switch (lvl_start) {
+                        
+                        case 5:
+                            SDL_memset(&checks[lvl_start-5][16*16*16*i],0,16*16*16);
+            
+                        __attribute__((fallthrough)); 
+                        case 4:
+                            SDL_memset(&checks[lvl_start-4][8*8*8*i],0,8*8*8);
+            
+                        __attribute__((fallthrough)); 
+                        case 3:
+                            SDL_memset(&checks[lvl_start-3][4*4*4*i],0,4*4*4);
+             
+                        __attribute__((fallthrough)); 
+                        case 2:
+                            SDL_memset(&checks[lvl_start-2][2*2*2*i],0,2*2*2);
+                
+                        __attribute__((fallthrough)); 
+                        case 1:
+                            SDL_memset(&checks[lvl_start-1][i],0,1);
+                
+                        __attribute__((fallthrough)); 
+                        case 0:
+                            aux++;
+                    }
+                }
             }
-        }
-        SDL_Log("%lu 64x regions",aux);
 
-        per_level_count |= aux << 0;
-        total_block_count += aux;
-      }
-
-      { // 32x32x32 checks
-        aux = 0;
-        for (i = 0; i < 8 * 8; i++) {
-            if (aux_subregion_32x32x32check[i/8] & (0b10000000 >> (i % 8))) {
-                SDL_memset(&aux_subregion_16x16x16check[i],0,1);
-                SDL_memset(&aux_subregion_08x08x08check[2*2*2*i],0,2*2*2);
-                SDL_memset(&aux_subregion_04x04x04check[4*4*4*i],0,4*4*4);
-                SDL_memset(&aux_subregion_02x02x02check[8*8*8*i],0,8*8*8);
-                aux++;
+            switch (lvl_start) {
+                case 5: per_level_count |= aux << 0; break;
+                case 4: per_level_count |= aux << (3); break;
+                case 3: per_level_count |= aux << (3+6); break;
+                case 2: per_level_count |= aux << (3+6+9); break;
+                case 1: per_level_count |= aux << (3+6+9+12); break;
+                case 0: per_level_count |= aux << (3+6+9+12+15); break;
             }
+            
+            total_block_count += aux;
         }
-        SDL_Log("%lu 32x regions",aux);
-
-
-        per_level_count |= aux << 3;
-        total_block_count += aux;
-      }
-
-      { // 16x16x16 checks
-        aux = 0;
-        for (i = 0; i < 8 * 8 * 8; i++) {
-            if (aux_subregion_16x16x16check[i/8] & (0b10000000 >> (i % 8))) {
-                SDL_memset(&aux_subregion_08x08x08check[i],0,1);
-                SDL_memset(&aux_subregion_04x04x04check[2*2*2*i],0,2*2*2);
-                SDL_memset(&aux_subregion_02x02x02check[4*4*4*i],0,4*4*4);
-                aux++;
-            }
-        }
-        SDL_Log("%lu 16x regions",aux);
-
-        per_level_count |= aux << (3+6);
-        total_block_count += aux;
-      }
-
-      { // 8x8x8 checks
-        aux = 0;
-        for (i = 0; i < 8 * 8 * 8 * 8; i++) {
-            if (aux_subregion_08x08x08check[i/8] & (0b10000000 >> (i % 8))) {
-                SDL_memset(&aux_subregion_04x04x04check[i],0,1);
-                SDL_memset(&aux_subregion_02x02x02check[2*2*2*i],0,2*2*2);
-                aux++;
-            }
-        }
-        SDL_Log("%lu 08x regions",aux);
-
-        per_level_count |= aux << (3+6+9);
-        total_block_count += aux;
-      }
-
-      { // 4x4x4 checks
-        aux = 0;
-        for (i = 0; i < 8 * 8 * 8 * 8 * 8; i++) {
-            if (aux_subregion_04x04x04check[i/8] & (0b10000000 >> (i % 8))) {
-                SDL_memset(&aux_subregion_02x02x02check[i],0,1);
-                aux++;
-            }
-        }
-        SDL_Log("%lu 04x regions",aux);
-
-        per_level_count |= aux << (3+6+9+12);
-        total_block_count += aux;
-      }
-
-      { // 2x2x2 checks
-        aux = 0;
-        for (i = 0; i < 8 * 8 * 8 * 8 * 8 * 8; i++) {
-            if (aux_subregion_02x02x02check[i/8] & (0b10000000 >> (i % 8))) {
-                aux++;
-            }
-        }
-        SDL_Log("%lu 02x regions",aux);
-
-        per_level_count |= aux << (3+6+9+12+15);
-        total_block_count += aux;
-      }
 
       { // GET THE AMOUNT OF THE REMAINING 1x1x1 TO COVER
         aux = LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS
-          - (((per_level_count) & mask_amount_64x) >> (0)) * 64*64*64
-          - (((per_level_count) & mask_amount_32x) >> (3)) * 32*32*32
-          - (((per_level_count) & mask_amount_16x) >> (3+6)) *16*16*16
-          - (((per_level_count) & mask_amount_08x) >> (3+6+9)) * 8*8*8
-          - (((per_level_count) & mask_amount_04x) >> (3+6+9+12)) * 4*4*4
+          - (((per_level_count) & mask_amount_64x) >> (0))        * 64*64*64
+          - (((per_level_count) & mask_amount_32x) >> (3))        * 32*32*32
+          - (((per_level_count) & mask_amount_16x) >> (3+6))      * 16*16*16
+          - (((per_level_count) & mask_amount_08x) >> (3+6+9))       * 8*8*8
+          - (((per_level_count) & mask_amount_04x) >> (3+6+9+12))    * 4*4*4
           - (((per_level_count) & mask_amount_02x) >> (3+6+9+12+15)) * 2*2*2
         ;
 
@@ -913,103 +575,63 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         result = SDL_malloc( 0 +
             sizeof(Uint64)                                  // count of blocks per level
             + sizeof(Uint32)                                // region data
-            + sizeof(Uint8[0b1001001001001001])             // redirection flags
+            + sizeof(Uint8[0b1001001001001001+3])           // redirection flags
             + sizeof(struct blockdata) * total_block_count  //block data
         );
         
         result->amounts_perLODlevel = per_level_count;
 
-        SDL_memcpy(&result->redirection_flags[0],&aux_subregion_64x64x64check[0],1);
-        SDL_memcpy(&result->redirection_flags[0b1],&aux_subregion_32x32x32check[0],1*8);
-        SDL_memcpy(&result->redirection_flags[0b1001],&aux_subregion_16x16x16check[0],1*8*8);
-        SDL_memcpy(&result->redirection_flags[0b1001001],&aux_subregion_08x08x08check[0],1*8*8*8);
-        SDL_memcpy(&result->redirection_flags[0b1001001001],&aux_subregion_04x04x04check[0],1*8*8*8*8);
-        SDL_memcpy(&result->redirection_flags[0b1001001001001],&aux_subregion_02x02x02check[0],1*8*8*8*8*8);
+        SDL_memcpy(&result->redirection_flags[0],&checks[5][0],1);
+        SDL_memcpy(&result->redirection_flags[0b1],&checks[4][0],1*8);
+        SDL_memcpy(&result->redirection_flags[0b1001],&checks[3][0],1*8*8);
+        SDL_memcpy(&result->redirection_flags[0b1001001],&checks[2][0],1*8*8*8);
+        SDL_memcpy(&result->redirection_flags[0b1001001001],&checks[1][0],1*8*8*8*8);
+        SDL_memcpy(&result->redirection_flags[0b1001001001001],&checks[0][0],1*8*8*8*8*8);
 
         // aux will now be used as the current offset when inserting data
         aux = 0;
 
-      { // map 64x64x64
-        for (i = 0; i < 8; i++) {
-            // if flag is set, insert the block into the array
-            if (aux_subregion_64x64x64check[i/8] & (0b10000000 >> (i % 8))) {
-                leinad_blockdata_clone(aux_subregion_64x64x64map[i],&result->region_data[aux]);
-                aux++;
+      { // move full subregions
+        short lvl;
+        for (lvl = 5; lvl >= 0; lvl-- ){
+            for (i = 0; i < 0b1000000000000000000>>(3*lvl); i++) {
+                // if flag is set, insert the block into the array
+                if (checks[lvl][i/8] & (0b10000000 >> (i % 8))) {
+                    leinad_blockdata_clone(maps[lvl][i],&result->region_data[aux]);
+                    aux++;
+                }
             }
         }
       }
-    ;
-      { // map 32x32x32
-        for (i = 0; i < 8 * 8; i++) {
-            // if flag is set, insert the block into the array
-            if (aux_subregion_32x32x32check[i/8] & (0b10000000 >> (i % 8))) {
-                leinad_blockdata_clone(aux_subregion_32x32x32map[i],&result->region_data[aux]);
-                aux++;
-            }
-        }
-      }
-      { // map 16x16x16
-        for (i = 0; i < 8 * 8 * 8; i++) {
-            // if flag is set, insert the block into the array
-            if (aux_subregion_16x16x16check[i/8] & (0b10000000 >> (i % 8))) {
-                leinad_blockdata_clone(aux_subregion_16x16x16map[i],&result->region_data[aux]);
-                aux++;
-            }
-        }
-      }
-      { // map 8x8x8
-        for (i = 0; i < 8 * 8 * 8 * 8; i++) {
-            // if flag is set, insert the block into the array
-            if (aux_subregion_08x08x08check[i/8] & (0b10000000 >> (i % 8))) {
-                leinad_blockdata_clone(aux_subregion_08x08x08map[i],&result->region_data[aux]);
-                aux++;
-            }
-        }
-      }
-      { // map 4x4x4
-        for (i = 0; i < 8 * 8 * 8 * 8 * 8; i++) {
-            // if flag is set, insert the block into the array
-            if (aux_subregion_04x04x04check[i/8] & (0b10000000 >> (i % 8))) {
-                leinad_blockdata_clone(aux_subregion_04x04x04map[i],&result->region_data[aux]);
-                aux++;
-            }
-        }
-      }
-      { // map 2x2x2 // HEY, DONT FORGET TO COPY THE EMPTY ONES AT THE END!
-        for (i = 0; i < 8 * 8 * 8 * 8 * 8 * 8; i++) {
-            // if flag is set, insert the block into the array
-            if (aux_subregion_02x02x02check[i/8] & (0b10000000 >> (i % 8))) {
-                leinad_blockdata_clone(aux_subregion_02x02x02map[i],&result->region_data[aux]);
-                aux++;
-            }
-        }
 
-        for (i = 0; i < 8 * 8 * 8 * 8 * 8 * 8; i++) {
+    // HEY, DONT FORGET TO COPY THE EMPTY ONES AT THE END!
+        {
+          for (i = 0; i < 8 * 8 * 8 * 8 * 8 * 8; i++) {
             Uint32 x, y, z;
 
             // if flag is unset, insert the 8 block group into the array
             if (
-                ((~aux_subregion_02x02x02check[i/8])) & (0b10000000 >> (i % 8)) // 0 at 2x2x2
-             && ((~aux_subregion_04x04x04check[i/(8*8)])) & (0b10000000 >> (i/(8) % 8)) // 0 at 4x4x4
-             && ((~aux_subregion_08x08x08check[i/(8*8*8)])) & (0b10000000 >> (i/(8*8) % 8)) // 0 at 8x8x8
-             && ((~aux_subregion_16x16x16check[i/(8*8*8*8)])) & (0b10000000 >> (i/(8*8*8) % 8)) // 0 at 16x16x16
-             && ((~aux_subregion_32x32x32check[i/(8*8*8*8*8)])) & (0b10000000 >> (i/(8*8*8*8) % 8)) // 0 at 32x32x32
-             && ((~aux_subregion_64x64x64check[i/(8*8*8*8*8*8)])) & (0b10000000 >> (i/(8*8*8*8*8) % 8)) // 0 at 64x64x64
+                ((~checks[0][i/(8)])) & (0b10000000 >> (i % 8)) // 0 at 2x2x2
+             && ((~checks[1][i/(8*8)])) & (0b10000000 >> (i/(8) % 8)) // 0 at 4x4x4
+             && ((~checks[2][i/(8*8*8)])) & (0b10000000 >> (i/(8*8) % 8)) // 0 at 8x8x8
+             && ((~checks[3][i/(8*8*8*8)])) & (0b10000000 >> (i/(8*8*8) % 8)) // 0 at 16x16x16
+             && ((~checks[4][i/(8*8*8*8*8)])) & (0b10000000 >> (i/(8*8*8*8) % 8)) // 0 at 32x32x32
+             && ((~checks[5][i/(8*8*8*8*8*8)])) & (0b10000000 >> (i/(8*8*8*8*8) % 8)) // 0 at 64x64x64
             ) {
-                x = 2*(((i & 0b1) >> 1)   + ((i & 0b1000) >> 2)   + ((i & 0b1000000) >> 4)   + ((i & 0b1000000000) >> 6)   + ((i & 0b1000000000000) >> 8)    + ((i & 0b1000000000000000) >> 10) );//   + ((i & 0b1000000000000000000) >> 12));
-                z = 2*(((i & 0b10) >> 1)  + ((i & 0b10000) >> 3)  + ((i & 0b10000000) >> 5)  + ((i & 0b10000000000) >> 7)  + ((i & 0b10000000000000) >> 9)   + ((i & 0b10000000000000000) >> 11) );//  + ((i & 0b10000000000000000000) >> 13));
-                y = 2*(((i & 0b100) >> 2) + ((i & 0b100000) >> 4) + ((i & 0b100000000) >> 6) + ((i & 0b100000000000) >> 8) + ((i & 0b100000000000000) >> 10) + ((i & 0b100000000000000000) >> 12) );// + ((i & 0b100000000000000000000) >> 14));
+                x = 2*(((i & 0b1) >> 0)   + ((i & 0b1000) >> 2)   + ((i & 0b1000000) >> 4)   + ((i & 0b1000000000) >> 6)   + ((i & 0b1000000000000) >> 8)    + ((i & 0b1000000000000000) >> 10)  );
+                z = 2*(((i & 0b10) >> 1)  + ((i & 0b10000) >> 3)  + ((i & 0b10000000) >> 5)  + ((i & 0b10000000000) >> 7)  + ((i & 0b10000000000000) >> 9)   + ((i & 0b10000000000000000) >> 11) );
+                y = 2*(((i & 0b100) >> 2) + ((i & 0b100000) >> 4) + ((i & 0b100000000) >> 6) + ((i & 0b100000000000) >> 8) + ((i & 0b100000000000000) >> 10) + ((i & 0b100000000000000000) >> 12));
 
                 // printf("aux: %lu\n",aux); fflush(stdout);
                 // printf("x:%d y:%d z:%d\n",x,y,z);fflush(stdout);
-                leinad_blockdata_clone(chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x],&result->region_data[aux+0]);
-                leinad_blockdata_clone(chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x+1],&result->region_data[aux+1]);
-                leinad_blockdata_clone(chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (z+1)*LEINAD_REGION_RADIUS + x],&result->region_data[aux+2]);
-                leinad_blockdata_clone(chunk->block[y*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (z+1)*LEINAD_REGION_RADIUS + x+1],&result->region_data[aux+3]);
-                leinad_blockdata_clone(chunk->block[(y+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x],&result->region_data[aux+4]);
-                leinad_blockdata_clone(chunk->block[(y+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + z*LEINAD_REGION_RADIUS + x+1],&result->region_data[aux+5]);
-                leinad_blockdata_clone(chunk->block[(y+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (z+1)*LEINAD_REGION_RADIUS + x],&result->region_data[aux+6]);
-                leinad_blockdata_clone(chunk->block[(y+1)*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS + (z+1)*LEINAD_REGION_RADIUS + x+1],&result->region_data[aux+7]);
+                leinad_blockdata_clone(chunk->block[leinad_get_chunk_index(x+0,y+0,z+0)],&result->region_data[aux+0]);
+                leinad_blockdata_clone(chunk->block[leinad_get_chunk_index(x+1,y+0,z+0)],&result->region_data[aux+1]);
+                leinad_blockdata_clone(chunk->block[leinad_get_chunk_index(x+0,y+0,z+1)],&result->region_data[aux+2]);
+                leinad_blockdata_clone(chunk->block[leinad_get_chunk_index(x+1,y+0,z+1)],&result->region_data[aux+3]);
+                leinad_blockdata_clone(chunk->block[leinad_get_chunk_index(x+0,y+1,z+0)],&result->region_data[aux+4]);
+                leinad_blockdata_clone(chunk->block[leinad_get_chunk_index(x+1,y+1,z+0)],&result->region_data[aux+5]);
+                leinad_blockdata_clone(chunk->block[leinad_get_chunk_index(x+0,y+1,z+1)],&result->region_data[aux+6]);
+                leinad_blockdata_clone(chunk->block[leinad_get_chunk_index(x+1,y+1,z+1)],&result->region_data[aux+7]);
                 aux+=8;
             } 
         }
@@ -1018,19 +640,19 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
   }
 
 
-    SDL_free(aux_subregion_02x02x02check);
-    SDL_free(aux_subregion_04x04x04check);
-    SDL_free(aux_subregion_08x08x08check);
-    SDL_free(aux_subregion_16x16x16check);
-    SDL_free(aux_subregion_32x32x32check);
-    SDL_free(aux_subregion_64x64x64check);
+    SDL_free(checks[0]);
+    SDL_free(checks[1]);
+    SDL_free(checks[2]);
+    SDL_free(checks[3]);
+    SDL_free(checks[4]);
+    SDL_free(checks[5]);
 
-    SDL_free(aux_subregion_02x02x02map);
-    SDL_free(aux_subregion_04x04x04map);
-    SDL_free(aux_subregion_08x08x08map);
-    SDL_free(aux_subregion_16x16x16map);
-    SDL_free(aux_subregion_32x32x32map);
-    SDL_free(aux_subregion_64x64x64map);
+    SDL_free(maps[0]);
+    SDL_free(maps[1]);
+    SDL_free(maps[2]);
+    SDL_free(maps[3]);
+    SDL_free(maps[4]);
+    SDL_free(maps[5]);
 
     return result;
 }

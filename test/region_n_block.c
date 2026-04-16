@@ -33,13 +33,70 @@ SDL_AppResult SDL_AppInit(
     if (chunk == NULL) {printf("chunk not properly initialized"); return SDL_APP_FAILURE;}
 
 
-    chunk->block[9*128*128 + 00*128 + 00].id = 0x10;
-    chunk->block[9*128*128 + 00*128 + 00].rotation_n_subpos = 0;
-    chunk->block[9*128*128 + 00*128 + 00].custom_data = 0;
+    chunk->block[0*128*128 + 01*128 + 01].id = 0x55;
+    chunk->block[0*128*128 + 01*128 + 01].rotation_n_subpos = 0;
+    chunk->block[0*128*128 + 01*128 + 01].custom_data = 0;
 
-    chunk->block[1*128*128 + 01*128 + 01].id = 0x11;
-    chunk->block[1*128*128 + 01*128 + 01].rotation_n_subpos = 0;
-    chunk->block[1*128*128 + 01*128 + 01].custom_data = 0;
+chunk->block[8*128*128 + 0*128 + 0].id = 0x10;
+chunk->block[8*128*128 + 0*128 + 0].rotation_n_subpos = 0;
+chunk->block[8*128*128 + 0*128 + 0].custom_data = 0;
+
+chunk->block[8*128*128 + 0*128 + 1].id = 0x11;
+chunk->block[8*128*128 + 0*128 + 1].rotation_n_subpos = 0;
+chunk->block[8*128*128 + 0*128 + 1].custom_data = 0;
+
+chunk->block[8*128*128 + 1*128 + 0].id = 0x12;
+chunk->block[8*128*128 + 1*128 + 0].rotation_n_subpos = 0;
+chunk->block[8*128*128 + 1*128 + 0].custom_data = 0;
+
+chunk->block[8*128*128 + 1*128 + 1].id = 0x13;
+chunk->block[8*128*128 + 1*128 + 1].rotation_n_subpos = 0;
+chunk->block[8*128*128 + 1*128 + 1].custom_data = 0;
+
+        chunk->block[19*128*128 + 0*128 + 0].id = 0x14;
+        chunk->block[19*128*128 + 0*128 + 0].rotation_n_subpos = 0;
+        chunk->block[19*128*128 + 0*128 + 0].custom_data = 0;
+
+    chunk->block[9*128*128 + 40*128 + 01].id = 0x15;
+    chunk->block[9*128*128 + 40*128 + 01].rotation_n_subpos = 0;
+    chunk->block[9*128*128 + 40*128 + 01].custom_data = 0;
+
+chunk->block[9*128*128 + 1*128 + 1].id = 0x17;
+chunk->block[9*128*128 + 1*128 + 1].rotation_n_subpos = 0;
+chunk->block[9*128*128 + 1*128 + 1].custom_data = 0;
+
+
+chunk->block[10*128*128 + 2*128 + 70].id = 0x11;
+chunk->block[10*128*128 + 2*128 + 70].rotation_n_subpos = 0;
+chunk->block[10*128*128 + 2*128 + 70].custom_data = 0;
+
+chunk->block[10*128*128 + 2*128 + 71].id = 0x12;
+chunk->block[10*128*128 + 2*128 + 71].rotation_n_subpos = 0;
+chunk->block[10*128*128 + 2*128 + 71].custom_data = 0;
+
+chunk->block[10*128*128 + 3*128 + 70].id = 0x13;
+chunk->block[10*128*128 + 3*128 + 70].rotation_n_subpos = 0;
+chunk->block[10*128*128 + 3*128 + 70].custom_data = 0;
+
+chunk->block[10*128*128 + 3*128 + 71].id = 0x14;
+chunk->block[10*128*128 + 3*128 + 71].rotation_n_subpos = 0;
+chunk->block[10*128*128 + 3*128 + 71].custom_data = 0;
+
+chunk->block[11*128*128 + 2*128 + 70].id = 0x15;
+chunk->block[11*128*128 + 2*128 + 70].rotation_n_subpos = 0;
+chunk->block[11*128*128 + 2*128 + 70].custom_data = 0;
+
+chunk->block[11*128*128 + 2*128 + 71].id = 0x16;
+chunk->block[11*128*128 + 2*128 + 71].rotation_n_subpos = 0;
+chunk->block[11*128*128 + 2*128 + 71].custom_data = 0;
+
+chunk->block[11*128*128 + 3*128 + 70].id = 0x17;
+chunk->block[11*128*128 + 3*128 + 70].rotation_n_subpos = 0;
+chunk->block[11*128*128 + 3*128 + 70].custom_data = 0;
+
+chunk->block[11*128*128 + 3*128 + 71].id = 0x18;
+chunk->block[11*128*128 + 3*128 + 71].rotation_n_subpos = 0;
+chunk->block[11*128*128 + 3*128 + 71].custom_data = 0;
 
     // chunk->block[128*128*  4 + 128*  3 +  2].id = 3;
     // chunk->block[128*128* 50 + 128*  2 + 28].id = 4;
@@ -59,7 +116,7 @@ SDL_AppResult SDL_AppInit(
     SDL_Log("- - AUTOTEST START - -");
     
     SDL_srand(time(NULL));
-    for (Uint32 i = 0; i < 1; i++) {
+    for (Uint32 i = 0; i < 4000; i++) {
         Uint32 j = SDL_rand(128*128*128);
         leinad_blockdata_clone(
             (struct blockdata){.id= SDL_rand(0xFE),0,0},
@@ -67,8 +124,15 @@ SDL_AppResult SDL_AppInit(
         );
     }
 
+    Uint64 test_time = SDL_GetTicksNS();
+
     region3 = leinad_region_create_from_chunk(chunk);
 
+    test_time = SDL_GetTicksNS() - test_time;
+    
+
+    SDL_Log("- - REGION CREATED - -");
+    SDL_Log("time taken: %lu ns",test_time);
     Uint64 failcount = 0;
 
     for(Uint32 y = 0; y < LEINAD_REGION_RADIUS;y++) for(Uint32 z = 0; z < LEINAD_REGION_RADIUS;z++) for(Uint32 x = 0; x < LEINAD_REGION_RADIUS;x++){
