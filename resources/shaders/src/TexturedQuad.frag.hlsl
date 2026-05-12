@@ -15,5 +15,6 @@ float4 main(Input input) : SV_Target0
     Output output;
     output.Color = Texture.Sample(Sampler, input.TexCoord);
 
+    //output.Color = output.Color.bgra;
     return output.Color;
 }

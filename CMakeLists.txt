@@ -17,8 +17,8 @@ add_subdirectory(vendored/SDL_ttf EXCLUDE_FROM_ALL)
 add_subdirectory(vendored/SDL_shadercross-main EXCLUDE_FROM_ALL)
 
 # Create your game executable target as usual
-#add_executable(window_template WIN32 src/client.c)
-add_executable(window_template WIN32 test/region_n_block.c)
+add_executable(window_template WIN32 src/client.c)
+#add_executable(window_template WIN32 test/region_n_block.c)
 
 # Link to the actual SDL3 library.
 target_link_libraries(window_template PRIVATE SDL3::SDL3)

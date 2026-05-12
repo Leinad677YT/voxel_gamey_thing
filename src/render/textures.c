@@ -16,8 +16,6 @@ SDL_Surface* leinad_load_png(const char* texture_name) {
         return NULL;
     }
 
-    int a = surface->w;
-
     SDL_free(png_path);
 
     return surface;

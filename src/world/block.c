@@ -3,13 +3,16 @@
 #include <SDL3/SDL.h>
 #include <stdio.h>
 
+#include "../data/globals.h"
 #include "../libs/bit_manipulation.h"
+#include "render.h"
 
 #include "block.h"
 
 // REGIONS
 
 #define LEINAD_REGION_RADIUS 128
+#define LEINAD_MESH_RADIUS 16
 
 #define leinad_get_chunk_index(x,y,z) ((y)*128*128 + (z)*128 + (x))
 
@@ -65,6 +68,7 @@ typedef struct leinad_region {
 
 typedef struct leinad_chunk {
     struct blockdata block[LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS];
+    struct render_mesh* mesh[LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS];
 } leinad_chunk_t;
 
 
@@ -218,10 +222,8 @@ LEINAD_FGET struct blockdata leinad_region_getblock(int x, int y, int z, leinad_
 
     // fill in the data and return
     data.id = region->region_data[index].id;
-    if (block_has_custom_placement(data.id)) 
-        data.rotation_n_subpos = region->region_data[index].rotation_n_subpos;
-    if (block_has_custom_data(data.id)) 
-        data.custom_data = region->region_data[index].custom_data;
+    data.rotation_n_subpos = region->region_data[index].rotation_n_subpos;
+    data.custom_data = region->region_data[index].custom_data;
     return data;
 }
 
@@ -657,3 +659,182 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
     return result;
 }
 
+#define _block(_x,_y,_z) chunk->block[leinad_get_chunk_index(_x, _y, _z)]
+
+LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short off_x, short off_y, short off_z) {
+    int x, y, z;
+
+    Uint64 opaque_vertex_count = 0;
+    Uint64 opaque_index_count[7] = {0};
+
+    Uint64 transparent_vertex_count = 0;
+    Uint64 transparent_index_count[7] = {0};
+
+    // get vertex+index amount
+    for (y = off_y * LEINAD_MESH_RADIUS; y < off_y * LEINAD_MESH_RADIUS + LEINAD_MESH_RADIUS; y++)
+     for (z = off_z * LEINAD_MESH_RADIUS; z < off_z * LEINAD_MESH_RADIUS + LEINAD_MESH_RADIUS; z++)
+      for (x = off_x * LEINAD_MESH_RADIUS; x < off_x * LEINAD_MESH_RADIUS + LEINAD_MESH_RADIUS; x++) {
+
+        Uint8 faces = 0;
+
+        if ( // skips rendering
+            (leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_istransparent)
+        ) continue;
+        else {
+            if ( // full block rendering
+                (leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_isfullblock)
+            ) {
+                // for every face
+                // 1st if outside range, or collides with opaque SKIP
+                // 2nd cull if block is opaque
+                // 3rd if transparency, decide if should draw (!contiguous or not)
+
+                // +y
+                if (
+                    (y == (off_y+1) * LEINAD_MESH_RADIUS -1
+                 || !(~leinad_get_block_data(_block(x,y+1,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
+                 )&& !(
+                        leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
+                     && _block(x,y,z).id == _block(x,y+1,z).id
+                )) faces |= 0b000001;
+                
+                // -y
+                if (
+                    (y == off_y * LEINAD_MESH_RADIUS
+                 || !(~leinad_get_block_data(_block(x,y-1,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
+                 )&& !(
+                        leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
+                     && _block(x,y,z).id == _block(x,y-1,z).id
+                )) faces |= 0b000010;
+
+                // +z
+                if (
+                    (z == (off_z+1) * LEINAD_MESH_RADIUS -1
+                 || !(~leinad_get_block_data(_block(x,y,z+1).id).flags & LEINAD_BLOCKFLAG_hastransparency)
+                 )&& !(
+                        leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
+                     && _block(x,y,z).id == _block(x,y,z+1).id
+                )) faces |= 0b000100;
+                
+                // -z
+                if (
+                    (z == off_z * LEINAD_MESH_RADIUS
+                 || !(~leinad_get_block_data(_block(x,y,z-1).id).flags & LEINAD_BLOCKFLAG_hastransparency)
+                 )&& !(
+                        leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
+                     && _block(x,y,z).id == _block(x,y,z-1).id
+                )) faces |= 0b001000;
+
+                // +x
+                if (
+                    (x == (off_x+1) * LEINAD_MESH_RADIUS -1
+                 || !(~leinad_get_block_data(_block(x+1,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
+                 )&& !(
+                        leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
+                     && _block(x,y,z).id == _block(x+1,y,z).id
+                )) faces |= 0b010000;
+                
+                // -x
+                if (
+                    (x == off_x * LEINAD_MESH_RADIUS
+                 || !(~leinad_get_block_data(_block(x-1,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
+                 )&& !(
+                        leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
+                     && _block(x,y,z).id == _block(x-1,y,z).id
+                )) faces |= 0b100000;
+
+                // custom placement (directional textures)
+                if (
+                    leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_hascustomplacement
+                ) {
+                    if (
+                        leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
+                    ) {
+                        
+                        if (faces & 0b100000) transparent_index_count[1]+=6;
+                        if (faces & 0b010000) transparent_index_count[2]+=6;
+                        if (faces & 0b001000) transparent_index_count[3]+=6;
+                        if (faces & 0b000100) transparent_index_count[4]+=6;
+                        if (faces & 0b000010) transparent_index_count[5]+=6;
+                        if (faces & 0b000001) transparent_index_count[6]+=6;
+
+                        transparent_vertex_count+= 6*count_set_bits(faces);
+                    }
+                    else {
+
+                        if (faces & 0b100000) transparent_index_count[1]+=6;
+                        if (faces & 0b010000) transparent_index_count[2]+=6;
+                        if (faces & 0b001000) transparent_index_count[3]+=6;
+                        if (faces & 0b000100) transparent_index_count[4]+=6;
+                        if (faces & 0b000010) transparent_index_count[5]+=6;
+                        if (faces & 0b000001) transparent_index_count[6]+=6;
+
+                        opaque_vertex_count+= 6*count_set_bits(faces);
+                    }
+                }
+                // no custom placement (all faces share uv)
+                else {
+                    int to_add = 0;
+
+                    if (faces & 0b101010) to_add++;
+                    if (faces & 0b101001) to_add++;
+                    if (faces & 0b100110) to_add++;
+                    if (faces & 0b100101) to_add++;
+                    if (faces & 0b011010) to_add++;
+                    if (faces & 0b011001) to_add++;
+                    if (faces & 0b010110) to_add++;
+                    if (faces & 0b010101) to_add++;
+
+                    if (
+                        leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
+                    ) {
+                        if (faces & 0b100000) transparent_index_count[1]+=6;
+                        if (faces & 0b010000) transparent_index_count[2]+=6;
+                        if (faces & 0b001000) transparent_index_count[3]+=6;
+                        if (faces & 0b000100) transparent_index_count[4]+=6;
+                        if (faces & 0b000010) transparent_index_count[5]+=6;
+                        if (faces & 0b000001) transparent_index_count[6]+=6;
+                    
+                        transparent_vertex_count+= to_add;
+                    }
+                    else {
+                        if (faces & 0b100000) opaque_index_count[1]+=6;
+                        if (faces & 0b010000) opaque_index_count[2]+=6;
+                        if (faces & 0b001000) opaque_index_count[3]+=6;
+                        if (faces & 0b000100) opaque_index_count[4]+=6;
+                        if (faces & 0b000010) opaque_index_count[5]+=6;
+                        if (faces & 0b000001) opaque_index_count[6]+=6;
+                        opaque_vertex_count+= to_add;
+                    }
+                }
+            }
+        }
+    }
+
+
+    // SDL_GPUBufferCreateInfo createinfo = {
+    //     .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+    //     .size = 1,
+    //     .props = 0
+    // };
+
+    // chunk.mesh[
+    //     off_y * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
+    //   + off_z * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
+    //   + off_x
+    // ]->vertex = SDL_CreateGPUBuffer(device, &createinfo);
+
+    SDL_Log("VERTICES total: %lu opaque: %lu transparent: %lu",
+        opaque_vertex_count + transparent_vertex_count,
+        opaque_vertex_count, transparent_vertex_count
+    );
+    for(int i=1;i<7;i++) opaque_index_count[0]+=opaque_index_count[i];
+    for(int i=1;i<7;i++) transparent_index_count[0]+=transparent_index_count[i];
+    SDL_Log("FACES total: %lu opaque: %lu transparent: %lu",
+        opaque_index_count[0] + transparent_index_count[0],
+        opaque_index_count[0], transparent_index_count[0]
+    );
+    return NULL;
+}
+
+#undef _block

@@ -44,7 +44,7 @@ SDL_AppResult SDL_AppEvent(
     switch (event->type){
 
         case SDL_EVENT_KEY_DOWN:
-            SDL_Log("x= %lf, y= %lf, z= %lf",x,y,z);
+            SDL_Log("x= %lf, y= %lf, z= %lf",pos_x,pos_y,pos_z);
             if (event->key.repeat) break;
             switch(event->key.key) {
                 case SDLK_A:

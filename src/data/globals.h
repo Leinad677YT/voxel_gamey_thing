@@ -32,14 +32,12 @@ extern SDL_GPUBuffer* SceneVertexBuffer;
 extern SDL_GPUBuffer* SceneIndexBuffer;
 extern SDL_GPUTexture* SceneColorTexture;
 extern SDL_GPUTexture* SceneDepthTexture;
-extern SDL_GPUTexture* TEXTURE;
 
 extern SDL_GPUGraphicsPipeline* EffectPipeline;
 extern SDL_GPUBuffer* EffectVertexBuffer;
 extern SDL_GPUBuffer* EffectIndexBuffer;
 extern SDL_GPUSampler* EffectSampler;
-extern SDL_GPUSampler* TEXTURESampler;
 
 extern int SceneWidth, SceneHeight;
-extern double x,y,z;
+extern double pos_x,pos_y,pos_z;
 double toadd_x, toadd_y, toadd_z;

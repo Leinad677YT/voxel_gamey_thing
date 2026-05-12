@@ -1,0 +1,5 @@
+stone
+glass
+null
+stone
+stone

@@ -1,42 +1,62 @@
-const int set_bit_table[256] = {
-    0, 1, 1, 2, 1, 2, 2, 3, 
-    1, 2, 2, 3, 2, 3, 3, 4,
-
-    1, 2, 2, 3, 2, 3, 3, 4,
-    2, 3, 3, 4, 3, 4, 4, 5,
-
-    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-
-    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-
-    1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-    
-    2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-    3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-    4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
-};
 #include <stdio.h>
-int main(){
-    int err = 0;
-    for (int i =0; i<256; i++){
-        int amount = 0;
-        int j =i;
-        while (j>0) {
-            if (j%2) amount++;
-            j/=2;
-        }
+#include <math.h>
+#include <stdlib.h>
+#include <sys/time.h>
+#include <limits.h>
 
-        
-        if (set_bit_table[i] != amount) printf("- %d\n",i);;
+#define TEST_ITERS 0x10000000
+#define TEST_AMOUNT 5
+#define LOOP_AMOUNT 10
+
+int a[TEST_ITERS] = {0};
+int b[TEST_ITERS] = {0};
+
+
+extern int fast_sqrt(int n);
+
+int main(){
+    int n, fails = 0;
+    double accum_error = 0;
+    int time_lib =0, time_own =0, max_difference = 0;
+    struct timeval t1,t2;
+
+    for(int i = 0; i < TEST_ITERS; i++){
+        a[i] = (int)sqrt(i);
     }
 
-    return err;
+    for (int test_iter = 0; test_iter < TEST_AMOUNT; test_iter++){
+
+        gettimeofday(&t1,NULL);
+        for (int test_loop = 0; test_loop < LOOP_AMOUNT; test_loop++){
+            for(int i = 4; i < TEST_ITERS; i++){
+                b[i] = (int)fast_sqrt(i);
+            }
+        }
+        gettimeofday(&t2,NULL);
+        time_own += ((t2.tv_usec - t1.tv_usec)+ 1000000 * (t2.tv_sec - t1.tv_sec))/TEST_AMOUNT;
+
+        
+        gettimeofday(&t1,NULL);
+        for (int test_loop = 0; test_loop < LOOP_AMOUNT; test_loop++){
+            for(int i = 4; i < TEST_ITERS; i++){
+                a[i] = (int)sqrt(i);
+            }
+        }
+        gettimeofday(&t2,NULL);
+        time_lib += ((t2.tv_usec - t1.tv_usec)+ 1000000 * (t2.tv_sec - t1.tv_sec))/TEST_AMOUNT;
+
+
+    }
+
+    for(int i = 0; i < TEST_ITERS; i++){
+        if (a[i] != b[i]) {
+            fails++;
+            accum_error+= (a[i]-b[i]);
+            max_difference = abs(a[i]-b[i]) > max_difference ? abs(a[i]-b[i]) : max_difference;
+        }    }
+
+
+    printf("library sqrt() time: %d\n",time_lib);
+    printf("Own sqrt() time:     %d\n",time_own);
+    printf("%d fails out of %d with a mean error of %lf and a max error of %d\n\n",fails,TEST_ITERS,accum_error/(double)TEST_ITERS,max_difference);
 }

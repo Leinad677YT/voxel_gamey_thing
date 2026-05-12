@@ -1,6 +1,7 @@
 #include <SDL3/SDL.h>
 
 #include "../data/globals.h"
+#include "../world/render.h"
 
 void SDL_AppQuit(
     __attribute__ ((unused)) void *appstate,
@@ -15,11 +16,12 @@ void SDL_AppQuit(
     SDL_ReleaseGPUGraphicsPipeline(device,pipeline);
     SDL_DestroyRenderer(renderer);
 
+    leinad_render_end();
+
     // free gpu example
 	SDL_ReleaseGPUGraphicsPipeline(device, ScenePipeline);
 	SDL_ReleaseGPUTexture(device, SceneColorTexture);
 	SDL_ReleaseGPUTexture(device, SceneDepthTexture);
-	SDL_ReleaseGPUTexture(device, TEXTURE);
 	SDL_ReleaseGPUBuffer(device, SceneVertexBuffer);
 	SDL_ReleaseGPUBuffer(device, SceneIndexBuffer);
 
@@ -27,7 +29,6 @@ void SDL_AppQuit(
 	SDL_ReleaseGPUBuffer(device, EffectVertexBuffer);
 	SDL_ReleaseGPUBuffer(device, EffectIndexBuffer);
 	SDL_ReleaseGPUSampler(device, EffectSampler);
-	SDL_ReleaseGPUSampler(device, TEXTURESampler);
 
     SDL_ReleaseWindowFromGPUDevice(device, window);
 

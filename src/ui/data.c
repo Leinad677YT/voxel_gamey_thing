@@ -48,7 +48,7 @@ LEINAD_FBUILDER leinad_ui_t* leinad_create_ui(int w, int h, bool kidnaps_screen)
         return NULL;
     }
     
-    ui->surface = SDL_CreateSurface(w, h, SDL_PIXELFORMAT_RGBA8888);
+    ui->surface = SDL_CreateSurface(w, h, SDL_PIXELFORMAT_BGRA8888);
 
     if (ui->surface == NULL) {
         SDL_free(ui->welems);
@@ -66,7 +66,7 @@ LEINAD_FBUILDER leinad_ui_t* leinad_create_ui(int w, int h, bool kidnaps_screen)
     }
 
 
-    ui->texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,SDL_TEXTUREACCESS_STREAMING,w,h);
+    ui->texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_BGRA8888,SDL_TEXTUREACCESS_STREAMING,w,h);
 
     if (ui->texture == NULL) {
         SDL_DestroySurface(ui->surface);

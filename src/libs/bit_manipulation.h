@@ -29,3 +29,27 @@ const unsigned short set_bit_table[256] = {
 };
 
 #define count_set_bits(byte) set_bit_table[byte]
+
+#define pow2(n) (1<<(n))
+
+/**
+ * Returns `x` from `n = 2^x`
+ */
+inline static int next_pow2(int n) {
+    int i;
+    for (i = 0;;i++){
+        if (n <= pow2(i)) break;
+    }
+    return i;
+}
+
+/**
+ * Returns `x` from `n = 4^x`
+ */
+inline static int next_pow4(int n) {
+    short i;
+    for (i = 0;;i+=2){
+        if (n <= pow2(i)) break;
+    }
+    return i>>1;
+}

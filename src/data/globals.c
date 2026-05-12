@@ -28,14 +28,12 @@ SDL_GPUBuffer* SceneVertexBuffer;
 SDL_GPUBuffer* SceneIndexBuffer;
 SDL_GPUTexture* SceneColorTexture;
 SDL_GPUTexture* SceneDepthTexture;
-SDL_GPUTexture* TEXTURE = NULL;
 
 SDL_GPUGraphicsPipeline* EffectPipeline;
 SDL_GPUBuffer* EffectVertexBuffer;
 SDL_GPUBuffer* EffectIndexBuffer;
 SDL_GPUSampler* EffectSampler;
-SDL_GPUSampler* TEXTURESampler = NULL;
 
 int SceneWidth, SceneHeight;
-double x = 0,y = 0,z = 0;
+double pos_x = 0,pos_y = 0,pos_z = 0;
 double toadd_x = 0, toadd_y = 0, toadd_z = 0;

@@ -3,28 +3,15 @@
 #include "../data/globals.h"
 #include "../data/types.h"
 #include "../render/shaders.h"
-#include "../render/textures.h"
+
+#include "../world/render.h"
 
 
 
 LEINAD_FCALL int INIT_render() {
 
-    SDL_Surface* imageData = leinad_load_png("aux");
-    if (imageData == NULL)
-    {
-        SDL_Log("Could not load image data!");
-        return -1;
-    }
+    leinad_render_init();
 
-    SDL_GPUSamplerCreateInfo sampler_info = {
-        .min_filter = SDL_GPU_FILTER_NEAREST,
-        .mag_filter = SDL_GPU_FILTER_NEAREST,
-        .mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
-        .address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-        .address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-        .address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-    };
-    TEXTURESampler = SDL_CreateGPUSampler(device, &sampler_info);
 
   { // Creates the Shaders & Pipelines
     SDL_GPUShader* textureVertexShader;
@@ -178,20 +165,6 @@ LEINAD_FCALL int INIT_render() {
     SDL_ReleaseGPUShader(device, textureFragmentShader);
   }
 
-
-    SDL_GPUTextureCreateInfo texture_info = {
-        .type = SDL_GPU_TEXTURETYPE_2D,
-        .format = SDL_GetGPUSwapchainTextureFormat(device, window),
-        .width = (*imageData).w,
-        .height = (*imageData).h,
-        .layer_count_or_depth = 1,
-        .num_levels = 1,
-        .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
-    };
-    TEXTURE = SDL_CreateGPUTexture(device, &texture_info);
-
-
-
     // Create the Scene Textures
     {
         // Make them smaller so pixels stand out more
@@ -299,9 +272,9 @@ LEINAD_FCALL int INIT_render() {
         transferData[19] = (PositionTextureVertex) { 10, -10, -10, 1, 0 };
 
         transferData[20] = (PositionTextureVertex) { -10, 10, -10, 0, 0 };
-        transferData[21] = (PositionTextureVertex) { -10, 10, 10, 1, };
+        transferData[23] = (PositionTextureVertex) { -10, 10, 10, 0, 1};
         transferData[22] = (PositionTextureVertex) { 10, 10, 10, 1, 1 };
-        transferData[23] = (PositionTextureVertex) { 10, 10, -10, 1, 0 };
+        transferData[21] = (PositionTextureVertex) { 10, 10, -10, 1, 0 };
 
         Uint16* indexData = (Uint16*) &transferData[24];
         Uint16 indices[] = {
@@ -315,26 +288,6 @@ LEINAD_FCALL int INIT_render() {
         SDL_memcpy(indexData, indices, sizeof(indices));
 
         SDL_UnmapGPUTransferBuffer(device, bufferTransferBuffer);
-
-
-
-        SDL_GPUTransferBufferCreateInfo transfer_info_texture = {
-            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = (Uint32)(imageData->w * imageData->h * 4)
-        };
-
-        SDL_GPUTransferBuffer* textureTransferBuffer = SDL_CreateGPUTransferBuffer(
-            device,
-            &transfer_info_texture
-        );
-
-        Uint8* textureTransferPtr = (Uint8*)SDL_MapGPUTransferBuffer(
-            device,
-            textureTransferBuffer,
-            false
-        );
-        SDL_memcpy(textureTransferPtr, imageData->pixels, imageData->w * imageData->h * 4);
-        SDL_UnmapGPUTransferBuffer(device, textureTransferBuffer);
 
 
 
@@ -371,27 +324,10 @@ LEINAD_FCALL int INIT_render() {
         );
 
 
-        SDL_UploadToGPUTexture(
-            copyPass,
-            &(SDL_GPUTextureTransferInfo) {
-                .transfer_buffer = textureTransferBuffer,
-                .offset = 0
-            },
-            &(SDL_GPUTextureRegion) {
-                .texture = TEXTURE,
-                .w = imageData->w,
-                .h = imageData->h,
-                .d = 1
-            },
-            false
-        );
-
 
         SDL_EndGPUCopyPass(copyPass);
         SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
         SDL_ReleaseGPUTransferBuffer(device, bufferTransferBuffer);
-        SDL_ReleaseGPUTransferBuffer(device, textureTransferBuffer);
-        SDL_DestroySurface(imageData);
     }
 
     // Create & Upload Outline Effect Vertex and Index buffers

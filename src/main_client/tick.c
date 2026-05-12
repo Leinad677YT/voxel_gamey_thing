@@ -37,9 +37,9 @@ SDL_AppResult SDL_AppIterate( __attribute__ ((unused)) void *appstate) {
 
     if (current_ns - previous_ns < LEINAD_TICK_RANGE_NS) return SDL_APP_CONTINUE;
   }
-    x+= toadd_x / 16.0 ;
-    y+= toadd_y / 16.0;
-    z+= toadd_z / 16.0;
+    pos_x+= toadd_x / 16.0 ;
+    pos_y+= toadd_y / 16.0;
+    pos_z+= toadd_z / 16.0;
 
 
 
