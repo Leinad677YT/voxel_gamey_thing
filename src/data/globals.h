@@ -7,6 +7,7 @@
 #include "../libs/stack.h"
 #include "../ui/data.h"
 
+#include "../world/block.h"
 
 extern SDL_Window* window;              // Window
 extern SDL_Renderer* renderer;          // Renderer
@@ -41,3 +42,5 @@ extern SDL_GPUSampler* EffectSampler;
 extern int SceneWidth, SceneHeight;
 extern double pos_x,pos_y,pos_z;
 double toadd_x, toadd_y, toadd_z;
+
+extern leinad_chunk_t* chunk_test;

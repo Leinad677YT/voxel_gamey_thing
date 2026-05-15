@@ -75,12 +75,22 @@ LEINAD_FCALL int leinad_render_world(){
 
         SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, &depthStencilTargetInfo);
         SDL_BindGPUGraphicsPipeline(renderPass, ScenePipeline);
-        SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding){.buffer = SceneVertexBuffer, .offset = 0 }, 1);
-        SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding){ .buffer = SceneIndexBuffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+
+        // SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding){.buffer = SceneVertexBuffer, .offset = 0 },1);
+        // SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding){ .buffer = SceneIndexBuffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+
+        SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding){.buffer = chunk_test->mesh[0]->vertex, .offset = 0 },1);
+        SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding){ .buffer = chunk_test->mesh[0]->index, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+
+
         SDL_BindGPUFragmentSamplers(renderPass, 0, (SDL_GPUTextureSamplerBinding[]){
             { .texture = block_atlas.texture, .sampler = block_atlas.sampler }
         }, 1);
-        SDL_DrawGPUIndexedPrimitives(renderPass, 36, 1, 0, 0, 0);
+        SDL_DrawGPUIndexedPrimitives(renderPass,
+            // 36
+                chunk_test->mesh[0]->ind_unspecified + chunk_test->mesh[0]->ind_x + chunk_test->mesh[0]->ind_x_ + chunk_test->mesh[0]->ind_z 
+                  + chunk_test->mesh[0]->ind_z_ + chunk_test->mesh[0]->ind_y + chunk_test->mesh[0]->ind_y_ 
+            , 1, 0, 0, 0);
         SDL_EndGPURenderPass(renderPass);
 
         // Render the Outline Effect that samples from the Color/Depth textures
@@ -125,6 +135,9 @@ LEINAD_FCALL int leinad_render_init() {
 LEINAD_FCALL void leinad_render_end() {
 	SDL_ReleaseGPUSampler(device, block_atlas.sampler);
 	SDL_ReleaseGPUTexture(device, block_atlas.texture);
+
+    SDL_ReleaseGPUBuffer(device, chunk_test->mesh[0]->vertex);
+    SDL_ReleaseGPUBuffer(device, chunk_test->mesh[0]->index);
 }
 
 LEINAD_AUX int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32 tx_amount) {

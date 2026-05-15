@@ -22,9 +22,9 @@ typedef enum {
     LEINAD_BLOCKTX_init   = 0,
     LEINAD_BLOCKTX_STONE = 0,
     LEINAD_BLOCKTX_GLASS,
-    // LEINAD_BLOCKTX_debUG1,
-    // LEINAD_BLOCKTX_debUG2,
-    // LEINAD_BLOCKTX_debUG3,
+    LEINAD_BLOCKTX_debUG1,
+    LEINAD_BLOCKTX_debUG2,
+    LEINAD_BLOCKTX_debUG3,
     LEINAD_BLOCKTX_end,
     
     LEINAD_BLOCKTX_default = LEINAD_BLOCKTX_end,
@@ -100,7 +100,7 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_hastransparency
                | LEINAD_BLOCKFLAG_istransparent,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_invalid
+            .tx_index = LEINAD_BLOCKTX_NULL
         }
     }
 };

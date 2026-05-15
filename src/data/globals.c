@@ -5,6 +5,8 @@
 #include "../libs/stack.h"
 #include "../ui/data.h"
 
+#include "../world/block.h"
+
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 
@@ -37,3 +39,6 @@ SDL_GPUSampler* EffectSampler;
 int SceneWidth, SceneHeight;
 double pos_x = 0,pos_y = 0,pos_z = 0;
 double toadd_x = 0, toadd_y = 0, toadd_z = 0;
+
+
+leinad_chunk_t* chunk_test = NULL;

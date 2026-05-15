@@ -97,6 +97,8 @@ LEINAD_FITERATOR void* aux_removal_iterator(void* acc, void* node) {
     switch(data->type){
         case LEINAD_WELEM_BUTTON:
             leinad_destroy_button_instance((leinad_welem_button_instance_t*) inst);
+            break;
+        default: break;
     }
      
     return acc;

@@ -16,6 +16,6 @@ struct Output {
 Output main(Input input) {
     Output output;
     output.TexCoord = input.TexCoord;
-    output.Position = float4(input.Position, 1.0f);
+    output.Position = float4(input.Position, 1); // funny things happen when 4th value set to 0.5f
     return output;
 }

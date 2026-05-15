@@ -9,70 +9,6 @@
 
 #include "block.h"
 
-// REGIONS
-
-#define LEINAD_REGION_RADIUS 128
-#define LEINAD_MESH_RADIUS 16
-
-#define leinad_get_chunk_index(x,y,z) ((y)*128*128 + (z)*128 + (x))
-
-/**
- * Struct that defines how the data inside a region file is stored.
- * Such files, contain the block data of the region in a recursive manner,
- * if every block in a subregion has the same data, it only saves the data
- * once, otherwise, it subdivides in 8 equal sized cubical regions and tries
- * again, until it reaches 2x2x2, when it saves them directly.
- * Each region gets divided into 2x2x2 subregions and those subregions are
- * sorted from -x to +x, then -z to +z and then -y to +y, just like non-grouped
- * blocks.
- */
-typedef struct leinad_region {
-
-    #define mask_amount_64x 0b0000000000000000000000000000000000000000000000000000000000000111
-    #define mask_amount_32x 0b0000000000000000000000000000000000000000000000000000000111111000
-    #define mask_amount_16x 0b0000000000000000000000000000000000000000000000111111111000000000
-    #define mask_amount_08x 0b0000000000000000000000000000000000111111111111000000000000000000
-    #define mask_amount_04x 0b0000000000000000000111111111111111000000000000000000000000000000
-    #define mask_amount_02x 0b0111111111111111111000000000000000000000000000000000000000000000
-    // contains the amount of FILLED subregions that each level has, if
-    //  full, ignore. Data is stored in multiples of 3 bits:
-    // 3bits, 6bits, 9bits, 12bits, ... until adding up to 63
-    Uint64 amounts_perLODlevel;
-
-
-    #define is_full_region 0x01000000
-    #define undef1 0x02000000
-    #define undef2 0x04000000
-    #define undef3 0x08000000
-    #define undef4 0x10000000
-    #define undef5 0x20000000
-    #define undef6 0x40000000
-    #define undef7 0x80000000
-    // 24 remaining flags ...
-
-    Uint32 ctrl_data;
-
-    // tree-like organised, each byte represents the flags for its subregions
-    // [breadth first]
-    // all the filled subregions must be ignored
-    Uint8 redirection_flags[0b1001001001001001+3];
-
-
-    // size depends on the specific contents of the region
-    struct blockdata region_data[];
-
-} leinad_region_t;
-
-
-// CHUNKS
-
-typedef struct leinad_chunk {
-    struct blockdata block[LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS];
-    struct render_mesh* mesh[LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS];
-} leinad_chunk_t;
-
-
-
 // FUNCTIONS
 
 LEINAD_FCOMPARATOR int leinad_blockdata_comparator(void* a, void* b) {
@@ -235,6 +171,10 @@ LEINAD_FBUILDER leinad_chunk_t* leinad_chunk_create() {
 
     if (chunk == NULL) return NULL;
     
+    for(i = 0; i < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; i++){
+        chunk->mesh[i] = SDL_malloc(sizeof(struct render_mesh));
+    }
+
     for(i = 0; i< LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS; i++) {
         chunk->block[i] = (struct blockdata){.id = LEINAD_BLOCK_default, .rotation_n_subpos = 0, .custom_data = 0};
     }
@@ -659,6 +599,21 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
     return result;
 }
 
+LEINAD_FBUILDER leinad_region_t* leinad_region_create_empty(){
+    leinad_region_t* region_full = SDL_malloc(sizeof(leinad_region_t) + sizeof(struct blockdata[1]));
+    
+    region_full->amounts_perLODlevel = 0 & mask_amount_64x;
+    region_full->ctrl_data = is_full_region;
+    SDL_memset(region_full->redirection_flags,0,sizeof(region_full->redirection_flags));
+    
+    ((Uint16*)(region_full->region_data))[0*8+0] = (Uint16) LEINAD_BLOCK_AIR;
+    ((Uint16*)(region_full->region_data))[0*8+1] = (Uint16) 0;
+    ((Uint16*)(region_full->region_data))[0*8+2] = (Uint16) 0;
+    ((Uint16*)(region_full->region_data))[0*8+3] = (Uint16) 0;
+
+    return region_full;
+}
+
 #define _block(_x,_y,_z) chunk->block[leinad_get_chunk_index(_x, _y, _z)]
 
 LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short off_x, short off_y, short off_z) {
@@ -670,7 +625,7 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
     Uint64 transparent_vertex_count = 0;
     Uint64 transparent_index_count[7] = {0};
 
-    // get vertex+index amount
+  { // get vertex+index amount
     for (y = off_y * LEINAD_MESH_RADIUS; y < off_y * LEINAD_MESH_RADIUS + LEINAD_MESH_RADIUS; y++)
      for (z = off_z * LEINAD_MESH_RADIUS; z < off_z * LEINAD_MESH_RADIUS + LEINAD_MESH_RADIUS; z++)
       for (x = off_x * LEINAD_MESH_RADIUS; x < off_x * LEINAD_MESH_RADIUS + LEINAD_MESH_RADIUS; x++) {
@@ -758,18 +713,18 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                         if (faces & 0b000010) transparent_index_count[5]+=6;
                         if (faces & 0b000001) transparent_index_count[6]+=6;
 
-                        transparent_vertex_count+= 6*count_set_bits(faces);
+                        transparent_vertex_count+= 4*count_set_bits(faces);
                     }
                     else {
 
-                        if (faces & 0b100000) transparent_index_count[1]+=6;
-                        if (faces & 0b010000) transparent_index_count[2]+=6;
-                        if (faces & 0b001000) transparent_index_count[3]+=6;
-                        if (faces & 0b000100) transparent_index_count[4]+=6;
-                        if (faces & 0b000010) transparent_index_count[5]+=6;
-                        if (faces & 0b000001) transparent_index_count[6]+=6;
+                        if (faces & 0b100000) opaque_index_count[1]+=6;
+                        if (faces & 0b010000) opaque_index_count[2]+=6;
+                        if (faces & 0b001000) opaque_index_count[3]+=6;
+                        if (faces & 0b000100) opaque_index_count[4]+=6;
+                        if (faces & 0b000010) opaque_index_count[5]+=6;
+                        if (faces & 0b000001) opaque_index_count[6]+=6;
 
-                        opaque_vertex_count+= 6*count_set_bits(faces);
+                        opaque_vertex_count+= 4*count_set_bits(faces);
                     }
                 }
                 // no custom placement (all faces share uv)
@@ -795,7 +750,7 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                         if (faces & 0b000010) transparent_index_count[5]+=6;
                         if (faces & 0b000001) transparent_index_count[6]+=6;
                     
-                        transparent_vertex_count+= to_add;
+                        transparent_vertex_count+= 4*to_add;
                     }
                     else {
                         if (faces & 0b100000) opaque_index_count[1]+=6;
@@ -804,36 +759,506 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                         if (faces & 0b000100) opaque_index_count[4]+=6;
                         if (faces & 0b000010) opaque_index_count[5]+=6;
                         if (faces & 0b000001) opaque_index_count[6]+=6;
-                        opaque_vertex_count+= to_add;
+                        opaque_vertex_count+= 4*to_add;
                     }
                 }
             }
         }
     }
+  }
+  { // create 
+    
+    #define _aux chunk->mesh[off_y * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS+off_z * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS+ off_x]
+    _aux->ind_unspecified = opaque_index_count[0]+transparent_index_count[0];
+    _aux->ind_x = opaque_index_count[1]+transparent_index_count[1];
+    _aux->ind_x_ = opaque_index_count[2]+transparent_index_count[2];
+    _aux->ind_z = opaque_index_count[3]+transparent_index_count[3];
+    _aux->ind_z_ = opaque_index_count[4]+transparent_index_count[4];
+    _aux->ind_y = opaque_index_count[5]+transparent_index_count[5];
+    _aux->ind_y_ = opaque_index_count[6]+transparent_index_count[6];
+    _aux->vert_o_count = opaque_vertex_count;
+    _aux->vert_t_count = transparent_vertex_count;
+    #undef _aux
+
+    SDL_GPUBufferCreateInfo createinfo = {
+        .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+        .size = opaque_vertex_count + transparent_vertex_count,
+        .props = 0
+    };
+    createinfo.size*= sizeof(struct block_vertex);
+
+    chunk->mesh[
+        off_y * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
+      + off_z * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
+      + off_x
+    ]->vertex = SDL_CreateGPUBuffer(device, &createinfo);
+    SDL_Log("indx: %d",createinfo.size);
+    // create index buffer
+    createinfo.usage = SDL_GPU_BUFFERUSAGE_INDEX;
+    createinfo.size = 0;
+
+    for (int i = 0; i < 7; i++) createinfo.size += opaque_index_count[i] + transparent_index_count[i];
+    createinfo.size *= sizeof(Uint32);
+    SDL_Log("vert: %d",createinfo.size);
+    chunk->mesh[
+        off_y * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
+      + off_z * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
+      + off_x
+    ]->index = SDL_CreateGPUBuffer(device, &createinfo);
+  }
+
+  SDL_GPUTransferBuffer* bufferTransferBuffer;
+  { // fill buffers
+    Uint32 idx_v_opaque = 0;
+    Uint32 idx_v_transparent = opaque_vertex_count;
+
+    // measured with 0 as the base index
+    Uint32 idx_i_opaque[7] = {
+        0, 
+        opaque_index_count[0],
+        opaque_index_count[0] + opaque_index_count[1],
+        opaque_index_count[0] + opaque_index_count[1] + opaque_index_count[2],
+        opaque_index_count[0] + opaque_index_count[1] + opaque_index_count[2] + opaque_index_count[3],
+        opaque_index_count[0] + opaque_index_count[1] + opaque_index_count[2] + opaque_index_count[3] + opaque_index_count[4],
+        opaque_index_count[0] + opaque_index_count[1] + opaque_index_count[2] + opaque_index_count[3] + opaque_index_count[4] + opaque_index_count[5],
+    };
+    Uint32 idx_i_transparent[7] = {
+        idx_i_opaque[6] + opaque_index_count[6],
+        idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0],
+        idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0] + transparent_index_count[1],
+        idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0] + transparent_index_count[1] + transparent_index_count[2],
+        idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0] + transparent_index_count[1] + transparent_index_count[2] + transparent_index_count[3],
+        idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0] + transparent_index_count[1] + transparent_index_count[2] + transparent_index_count[3] + transparent_index_count[4],
+        idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0] + transparent_index_count[1] + transparent_index_count[2] + transparent_index_count[3] + transparent_index_count[4] + transparent_index_count[5],
+    };
+
+    for (int i = 0;i<6; i++) SDL_Log("idx - %d: %d ",i,idx_i_opaque[i]);
 
 
-    // SDL_GPUBufferCreateInfo createinfo = {
-    //     .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-    //     .size = 1,
-    //     .props = 0
-    // };
+        SDL_GPUTransferBufferCreateInfo createinfo = {
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .size = 0 // space for vertex + index 
+        };
+        for (int i = 0; i < 7; i++) createinfo.size += opaque_index_count[i] + transparent_index_count[i];
+        createinfo.size *= sizeof(Uint32);
+        createinfo.size += (sizeof(struct block_vertex) * (opaque_vertex_count+transparent_vertex_count));
 
-    // chunk.mesh[
-    //     off_y * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
-    //   + off_z * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
-    //   + off_x
-    // ]->vertex = SDL_CreateGPUBuffer(device, &createinfo);
+        bufferTransferBuffer = SDL_CreateGPUTransferBuffer(
+            device,
+            &createinfo
+        );
 
-    SDL_Log("VERTICES total: %lu opaque: %lu transparent: %lu",
-        opaque_vertex_count + transparent_vertex_count,
-        opaque_vertex_count, transparent_vertex_count
-    );
-    for(int i=1;i<7;i++) opaque_index_count[0]+=opaque_index_count[i];
-    for(int i=1;i<7;i++) transparent_index_count[0]+=transparent_index_count[i];
-    SDL_Log("FACES total: %lu opaque: %lu transparent: %lu",
-        opaque_index_count[0] + transparent_index_count[0],
-        opaque_index_count[0], transparent_index_count[0]
-    );
+        struct block_vertex* transferData = SDL_MapGPUTransferBuffer(
+            device,
+            bufferTransferBuffer,
+            false
+        );
+
+        Uint32* indexData = (Uint32*) &transferData[opaque_vertex_count + transparent_vertex_count];
+
+        // transferData[0] = (struct block_vertex) { -100, -100, -100, 0,0 }; ...
+
+      { // fill buffer block by block
+        for (y = off_y * LEINAD_MESH_RADIUS; y < off_y * LEINAD_MESH_RADIUS + LEINAD_MESH_RADIUS; y++)
+         for (z = off_z * LEINAD_MESH_RADIUS; z < off_z * LEINAD_MESH_RADIUS + LEINAD_MESH_RADIUS; z++)
+          for (x = off_x * LEINAD_MESH_RADIUS; x < off_x * LEINAD_MESH_RADIUS + LEINAD_MESH_RADIUS; x++) {
+
+            // active face flags + index of vertex
+            Uint8 faces[8] = {0,1,2,3,4,5,6,7};
+
+            if ( // skips rendering
+                (leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_istransparent)
+            ) continue;
+            else {
+                if ( // full block rendering
+                    (leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_isfullblock)
+                ) {
+                    // for every face
+                    // 1st if outside range, or collides with opaque SKIP
+                    // 2nd cull if block is opaque
+                    // 3rd if transparency, decide if should draw (!contiguous or not)
+
+                    // +y
+                    if (
+                        (y == (off_y+1) * LEINAD_MESH_RADIUS -1
+                        || !(~leinad_get_block_data(_block(x,y+1,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
+                        )&& !(
+                            leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
+                            && _block(x,y,z).id == _block(x,y+1,z).id
+                    )) faces[0] |= 0b000001;
+                    
+                    // -y
+                    if (
+                        (y == off_y * LEINAD_MESH_RADIUS
+                        || !(~leinad_get_block_data(_block(x,y-1,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
+                        )&& !(
+                            leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
+                            && _block(x,y,z).id == _block(x,y-1,z).id
+                    )) faces[0] |= 0b000010;
+
+                    // +z
+                    if (
+                        (z == (off_z+1) * LEINAD_MESH_RADIUS -1
+                        || !(~leinad_get_block_data(_block(x,y,z+1).id).flags & LEINAD_BLOCKFLAG_hastransparency)
+                        )&& !(
+                            leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
+                            && _block(x,y,z).id == _block(x,y,z+1).id
+                    )) faces[0] |= 0b000100;
+                    
+                    // -z
+                    if (
+                        (z == off_z * LEINAD_MESH_RADIUS
+                        || !(~leinad_get_block_data(_block(x,y,z-1).id).flags & LEINAD_BLOCKFLAG_hastransparency)
+                        )&& !(
+                            leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
+                            && _block(x,y,z).id == _block(x,y,z-1).id
+                    )) faces[0] |= 0b001000;
+
+                    // +x
+                    if (
+                        (x == (off_x+1) * LEINAD_MESH_RADIUS -1
+                        || !(~leinad_get_block_data(_block(x+1,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
+                        )&& !(
+                            leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
+                            && _block(x,y,z).id == _block(x+1,y,z).id
+                    )) faces[0] |= 0b010000;
+                    
+                    // -x
+                    if (
+                        (x == off_x * LEINAD_MESH_RADIUS
+                        || !(~leinad_get_block_data(_block(x-1,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
+                        )&& !(
+                            leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
+                            && _block(x,y,z).id == _block(x-1,y,z).id
+                    )) faces[0] |= 0b100000;
+
+                    // custom placement (directional textures)
+                    if (
+                        leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_hascustomplacement
+                    ) {
+                        if (
+                            leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
+                        ) {
+                            
+                            if (faces[0] & 0b100000) transparent_index_count[1]+=6;
+                            if (faces[0] & 0b010000) transparent_index_count[2]+=6;
+                            if (faces[0] & 0b001000) transparent_index_count[3]+=6;
+                            if (faces[0] & 0b000100) transparent_index_count[4]+=6;
+                            if (faces[0] & 0b000010) transparent_index_count[5]+=6;
+                            if (faces[0] & 0b000001) transparent_index_count[6]+=6;
+
+                            transparent_vertex_count+= 6*count_set_bits(faces[0]);
+                        }
+                        else {
+
+                            if (faces[0] & 0b100000) transparent_index_count[1]+=6;
+                            if (faces[0] & 0b010000) transparent_index_count[2]+=6;
+                            if (faces[0] & 0b001000) transparent_index_count[3]+=6;
+                            if (faces[0] & 0b000100) transparent_index_count[4]+=6;
+                            if (faces[0] & 0b000010) transparent_index_count[5]+=6;
+                            if (faces[0] & 0b000001) transparent_index_count[6]+=6;
+
+                            opaque_vertex_count+= 6*count_set_bits(faces[0]);
+                        }
+                    }
+                    // no custom placement (all faces share uv)
+                    else {
+
+                        if (
+                            leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
+                        ) {
+
+                            // vertices
+                            if (faces[0] & 0b101010) transferData[idx_v_transparent]          = (struct block_vertex){x,y,z,0.0f,0.0f};
+                            else {faces[1]--;faces[2]--;faces[3]--;faces[4]--;faces[5]--;faces[6]--;faces[7]--;}
+                            if (faces[0] & 0b101001) transferData[idx_v_transparent+faces[1]] = (struct block_vertex){x,y+1,z,0.0f,1.0f};
+                            else {faces[2]--;faces[3]--;faces[4]--;faces[5]--;faces[6]--;faces[7]--;}
+                            if (faces[0] & 0b100110) transferData[idx_v_transparent+faces[2]] = (struct block_vertex){x,y,z+1,1.0f,1.0f};
+                            else {faces[3]--;faces[4]--;faces[5]--;faces[6]--;faces[7]--;}
+                            if (faces[0] & 0b100101) transferData[idx_v_transparent+faces[3]] = (struct block_vertex){x,y+1,z+1,1.0f,0.0f};
+                            else {faces[4]--;faces[5]--;faces[6]--;faces[7]--;}
+                            if (faces[0] & 0b011010) transferData[idx_v_transparent+faces[4]] = (struct block_vertex){x+1,y,z,0.0f,0.0f};
+                            else {faces[5]--;faces[6]--;faces[7]--;}
+                            if (faces[0] & 0b011001) transferData[idx_v_transparent+faces[5]] = (struct block_vertex){x+1,y+1,z,0.0f,1.0f};
+                            else {faces[6]--;faces[7]--;}
+                            if (faces[0] & 0b010110) transferData[idx_v_transparent+faces[6]] = (struct block_vertex){x+1,y,z+1,1.0f,1.0f};
+                            else {faces[7]--;}
+                            if (faces[0] & 0b010101) transferData[idx_v_transparent+faces[7]] = (struct block_vertex){x+1,y+1,z+1,1.0f,0.0f};
+                            else {}
+
+                            // indexes
+                            if (faces[0] & 0b100000) {
+                                indexData[idx_i_transparent[0]] = idx_v_transparent + 0;
+                                indexData[idx_i_transparent[0]+1] = idx_v_transparent + faces[1];
+                                indexData[idx_i_transparent[0]+2] = idx_v_transparent + faces[2];
+
+                                indexData[idx_i_transparent[0]+3] = idx_v_transparent + faces[1];
+                                indexData[idx_i_transparent[0]+4] = idx_v_transparent + faces[3];
+                                indexData[idx_i_transparent[0]+5] = idx_v_transparent + faces[2];
+
+                                idx_i_transparent[0]+=6;
+                            };
+                            if (faces[0] & 0b010000) {
+                                indexData[idx_i_transparent[1]] = idx_v_transparent + faces[6];
+                                indexData[idx_i_transparent[1]+1] = idx_v_transparent + faces[7];
+                                indexData[idx_i_transparent[1]+2] = idx_v_transparent + faces[4];
+
+                                indexData[idx_i_transparent[1]+3] = idx_v_transparent + faces[4];
+                                indexData[idx_i_transparent[1]+4] = idx_v_transparent + faces[7];
+                                indexData[idx_i_transparent[1]+5] = idx_v_transparent + faces[5];
+
+                                idx_i_transparent[1]+=6;
+
+                            };
+                            if (faces[0] & 0b001000) {
+                                indexData[idx_i_transparent[2]] = idx_v_transparent + faces[4];
+                                indexData[idx_i_transparent[2]+1] = idx_v_transparent + faces[5];
+                                indexData[idx_i_transparent[2]+2] = idx_v_transparent + 0;
+
+                                indexData[idx_i_transparent[2]+3] = idx_v_transparent + faces[5];
+                                indexData[idx_i_transparent[2]+4] = idx_v_transparent + faces[1];
+                                indexData[idx_i_transparent[2]+5] = idx_v_transparent + 0;
+
+                                idx_i_transparent[2]+=6;
+                            };
+                            if (faces[0] & 0b000100) {
+                                indexData[idx_i_transparent[3]] = idx_v_transparent + faces[2];
+                                indexData[idx_i_transparent[3]+1] = idx_v_transparent + faces[3];
+                                indexData[idx_i_transparent[3]+2] = idx_v_transparent + faces[6];
+
+                                indexData[idx_i_transparent[3]+3] = idx_v_transparent + faces[3];
+                                indexData[idx_i_transparent[3]+4] = idx_v_transparent + faces[7];
+                                indexData[idx_i_transparent[3]+5] = idx_v_transparent + faces[6];
+
+                                idx_i_transparent[3]+=6;
+                            };
+                            if (faces[0] & 0b000010) {
+                                indexData[idx_i_transparent[4]] = idx_v_transparent + 0;
+                                indexData[idx_i_transparent[4]+1] = idx_v_transparent + faces[2];
+                                indexData[idx_i_transparent[4]+2] = idx_v_transparent + faces[4];
+
+                                indexData[idx_i_transparent[4]+3] = idx_v_transparent + faces[2];
+                                indexData[idx_i_transparent[4]+4] = idx_v_transparent + faces[6];
+                                indexData[idx_i_transparent[4]+5] = idx_v_transparent + faces[4];
+
+                                idx_i_transparent[4]+=6;
+                            };
+                            if (faces[0] & 0b000001) {
+                                indexData[idx_i_transparent[5]] = idx_v_transparent + faces[3];
+                                indexData[idx_i_transparent[5]+1] = idx_v_transparent + faces[1];
+                                indexData[idx_i_transparent[5]+2] = idx_v_transparent + faces[4];
+
+                                indexData[idx_i_transparent[5]+3] = idx_v_transparent + faces[1];
+                                indexData[idx_i_transparent[5]+4] = idx_v_transparent + faces[5];
+                                indexData[idx_i_transparent[5]+5] = idx_v_transparent + faces[4];
+
+                                idx_i_transparent[5]+=6;
+                            };
+                        
+                            idx_v_transparent+= faces[7]+1;
+                        }
+                        else {
+
+                            // indexes
+                            if (faces[0] & 0b100000) { // -x
+                                SDL_Log("-x : %d",x);
+
+                                // vertex
+                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = 0.0f, .v = 1.0f};
+                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = 1.0f, .v = 1.0f};
+                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = 0.0f, .v = 0.0f};
+                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = 1.0f, .v = 0.0f};
+
+                                // index
+                                indexData[idx_i_opaque[1]+0] = idx_v_opaque +0;
+                                indexData[idx_i_opaque[1]+1] = idx_v_opaque +1;
+                                indexData[idx_i_opaque[1]+2] = idx_v_opaque +2;
+
+                                indexData[idx_i_opaque[1]+3] = idx_v_opaque +3;
+                                indexData[idx_i_opaque[1]+4] = idx_v_opaque +1;
+                                indexData[idx_i_opaque[1]+5] = idx_v_opaque +2;
+
+                                // update array idxs
+                                idx_v_opaque+=4;
+                                idx_i_opaque[1]+=6;
+                            };
+                            if (faces[0] & 0b010000) { // +x
+                                SDL_Log("+x : %d",x);
+                                // vertex
+                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = 1.0f, .v = 1.0f};
+                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = 0.0f, .v = 1.0f};
+                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = 1.0f, .v = 0.0f};
+                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = 0.0f, .v = 0.0f};
+
+                                // index
+                                indexData[idx_i_opaque[2]+0] = idx_v_opaque +0;
+                                indexData[idx_i_opaque[2]+1] = idx_v_opaque +1;
+                                indexData[idx_i_opaque[2]+2] = idx_v_opaque +2;
+
+                                indexData[idx_i_opaque[2]+3] = idx_v_opaque +3;
+                                indexData[idx_i_opaque[2]+4] = idx_v_opaque +1;
+                                indexData[idx_i_opaque[2]+5] = idx_v_opaque +2;
+
+                                // update array idxs
+                                idx_v_opaque+=4;
+                                idx_i_opaque[2]+=6;
+                            };
+                            if (faces[0] & 0b001000) { // -z
+                                SDL_Log("-z : %d",z);
+                                // vertex
+                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z), .u = 1.0f, .v = 1.0f};
+                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z), .u = 1.0f, .v = 0.0f};
+                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z), .u = 0.0f, .v = 1.0f};
+                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z), .u = 0.0f, .v = 0.0f};
+
+                                // index
+                                indexData[idx_i_opaque[3]+0] = idx_v_opaque +0;
+                                indexData[idx_i_opaque[3]+1] = idx_v_opaque +1;
+                                indexData[idx_i_opaque[3]+2] = idx_v_opaque +2;
+
+                                indexData[idx_i_opaque[3]+3] = idx_v_opaque +3;
+                                indexData[idx_i_opaque[3]+4] = idx_v_opaque +1;
+                                indexData[idx_i_opaque[3]+5] = idx_v_opaque +2;
+
+                                // update array idxs
+                                idx_v_opaque+=4;
+                                idx_i_opaque[3]+=6;
+                            };
+                            if (faces[0] & 0b000100) { // +z
+                                SDL_Log("+z : %d",z);
+                                // vertex
+                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = 0.0f, .v = 1.0f};
+                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = 0.0f, .v = 0.0f};
+                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = 1.0f, .v = 1.0f};
+                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = 1.0f, .v = 0.0f};
+
+                                // index
+                                indexData[idx_i_opaque[4]+0] = idx_v_opaque +0;
+                                indexData[idx_i_opaque[4]+1] = idx_v_opaque +1;
+                                indexData[idx_i_opaque[4]+2] = idx_v_opaque +2;
+
+                                indexData[idx_i_opaque[4]+3] = idx_v_opaque +3;
+                                indexData[idx_i_opaque[4]+4] = idx_v_opaque +1;
+                                indexData[idx_i_opaque[4]+5] = idx_v_opaque +2;
+
+                                // update array idxs
+                                idx_v_opaque+=4;
+                                idx_i_opaque[4]+=6;
+                            };
+                            if (faces[0] & 0b000010) { // -y
+                                SDL_Log("-y : %d",y);
+                                // vertex
+                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = 0.0f, .v = 1.0f};
+                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = 1.0f, .v = 1.0f};
+                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = 0.0f, .v = 0.0f};
+                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = 1.0f, .v = 0.0f};
+
+                                // index
+                                indexData[idx_i_opaque[5]+0] = idx_v_opaque +0;
+                                indexData[idx_i_opaque[5]+1] = idx_v_opaque +1;
+                                indexData[idx_i_opaque[5]+2] = idx_v_opaque +2;
+
+                                indexData[idx_i_opaque[5]+3] = idx_v_opaque +3;
+                                indexData[idx_i_opaque[5]+4] = idx_v_opaque +1;
+                                indexData[idx_i_opaque[5]+5] = idx_v_opaque +2;
+
+                                // update array idxs
+                                idx_v_opaque+=4;
+                                idx_i_opaque[5]+=6;
+                            };
+                            if (faces[0] & 0b000001) { // +y
+                                SDL_Log("+y : %d",y);
+                                // vertex
+                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = 0.0f, .v = 1.0f};
+                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = 1.0f, .v = 1.0f};
+                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = 0.0f, .v = 0.0f};
+                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = 1.0f, .v = 0.0f};
+
+                                // index
+                                indexData[idx_i_opaque[6]+0] = idx_v_opaque +0;
+                                indexData[idx_i_opaque[6]+1] = idx_v_opaque +1;
+                                indexData[idx_i_opaque[6]+2] = idx_v_opaque +2;
+
+                                indexData[idx_i_opaque[6]+3] = idx_v_opaque +3;
+                                indexData[idx_i_opaque[6]+4] = idx_v_opaque +1;
+                                indexData[idx_i_opaque[6]+5] = idx_v_opaque +2;
+
+                                // update array idxs
+                                idx_v_opaque+=4;
+                                idx_i_opaque[6]+=6;
+                            };
+                        }
+                    }
+                }
+            }
+        }
+
+      }
+
+        SDL_UnmapGPUTransferBuffer(device, bufferTransferBuffer);
+  }
+
+  { // upload buffers
+
+        SDL_GPUCommandBuffer* uploadCmdBuf = SDL_AcquireGPUCommandBuffer(device);
+        SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(uploadCmdBuf);
+
+        SDL_UploadToGPUBuffer(
+            copyPass,
+            &(SDL_GPUTransferBufferLocation) {
+                .transfer_buffer = bufferTransferBuffer,
+                .offset = 0
+            },
+            &(SDL_GPUBufferRegion) {
+                .buffer = chunk->mesh[
+                    off_y * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
+                  + off_z * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
+                  + off_x
+                ]->vertex,
+                .offset = 0,
+                .size = sizeof(struct block_vertex) * (opaque_vertex_count + transparent_vertex_count)
+            },
+            false
+        );
+
+        SDL_Log("vert: %ld",sizeof(struct block_vertex) * (opaque_vertex_count + transparent_vertex_count));
+
+        SDL_UploadToGPUBuffer(
+            copyPass,
+            &(SDL_GPUTransferBufferLocation) {
+                .transfer_buffer = bufferTransferBuffer,
+                .offset = sizeof(struct block_vertex) * (opaque_vertex_count + transparent_vertex_count)
+            },
+            &(SDL_GPUBufferRegion) {
+                .buffer = chunk->mesh[
+                    off_y * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
+                  + off_z * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
+                  + off_x
+                ]->index,
+                .offset = 0,
+                .size = sizeof(Uint32) * (
+                    opaque_index_count[0]+opaque_index_count[1]+opaque_index_count[2]+opaque_index_count[3]+
+                    opaque_index_count[4]+opaque_index_count[5]+opaque_index_count[6]+transparent_index_count[0]+
+                    transparent_index_count[1]+transparent_index_count[2]+transparent_index_count[3]+
+                    transparent_index_count[4]+transparent_index_count[5]+transparent_index_count[6]
+                )
+            },
+            false
+        );
+
+        SDL_Log("indx: %ld",sizeof(Uint32) * (
+                    opaque_index_count[0]+opaque_index_count[1]+opaque_index_count[2]+opaque_index_count[3]+
+                    opaque_index_count[4]+opaque_index_count[5]+opaque_index_count[6]+transparent_index_count[0]+
+                    transparent_index_count[1]+transparent_index_count[2]+transparent_index_count[3]+
+                    transparent_index_count[4]+transparent_index_count[5]+transparent_index_count[6]
+                ));
+
+        SDL_EndGPUCopyPass(copyPass);
+        SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
+        SDL_ReleaseGPUTransferBuffer(device, bufferTransferBuffer);
+
+
+  }
     return NULL;
 }
 

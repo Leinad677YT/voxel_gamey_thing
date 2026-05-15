@@ -5,6 +5,8 @@
 #include "../render/shaders.h"
 
 #include "../world/render.h"
+#include "../world/block.h"
+#include "../world/blockdata.h"
 
 
 
@@ -227,7 +229,7 @@ LEINAD_FCALL int INIT_render() {
             device,
             &(SDL_GPUBufferCreateInfo) {
                 .usage = SDL_GPU_BUFFERUSAGE_INDEX,
-                .size = sizeof(Uint16) * 36
+                .size = sizeof(Uint32) * 36
             }
         );
 
@@ -236,7 +238,7 @@ LEINAD_FCALL int INIT_render() {
             &(SDL_GPUTransferBufferCreateInfo) {
                 .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
                 .size =   (sizeof(PositionTextureVertex) * 24) // vertices 
-                        + (sizeof(Uint16) * 36)              // indices para triangulos
+                        + (sizeof(Uint32) * 36)              // indices para triangulos
             }
         );
 
@@ -276,8 +278,8 @@ LEINAD_FCALL int INIT_render() {
         transferData[22] = (PositionTextureVertex) { 10, 10, 10, 1, 1 };
         transferData[21] = (PositionTextureVertex) { 10, 10, -10, 1, 0 };
 
-        Uint16* indexData = (Uint16*) &transferData[24];
-        Uint16 indices[] = {
+        Uint32* indexData = (Uint32*) &transferData[24];
+        Uint32 indices[] = {
             0, 1, 2, 0, 2, 3,
             4, 5, 6, 4, 6, 7,
             8, 9, 10, 8, 10, 11,
@@ -318,7 +320,7 @@ LEINAD_FCALL int INIT_render() {
             &(SDL_GPUBufferRegion) {
                 .buffer = SceneIndexBuffer,
                 .offset = 0,
-                .size = sizeof(Uint16) * 36
+                .size = sizeof(Uint32) * 36
             },
             false
         );
@@ -411,6 +413,30 @@ LEINAD_FCALL int INIT_render() {
         SDL_EndGPUCopyPass(copyPass);
         SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
         SDL_ReleaseGPUTransferBuffer(device, bufferTransferBuffer);
+    }
+
+    // load test chunk
+    {
+        leinad_region_t* region_test = leinad_region_create_empty();
+        chunk_test = leinad_chunk_create();
+        
+        leinad_chunk_setfromregion(region_test,chunk_test);
+
+        chunk_test->block[leinad_get_chunk_index(0, 0, 0)] = (struct blockdata) {
+            .id = LEINAD_BLOCK_STONE,
+            .rotation_n_subpos = 0,
+            .custom_data = 0
+        };
+
+        chunk_test->block[leinad_get_chunk_index(0, 0, 1)] = (struct blockdata) {
+            .id = LEINAD_BLOCK_STONE,
+            .rotation_n_subpos = 0,
+            .custom_data = 0
+        };
+
+        leinad_chunk_create_mesh(chunk_test, 0, 0, 0);
+
+
     }
 
     return SDL_APP_CONTINUE;

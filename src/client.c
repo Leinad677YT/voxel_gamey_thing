@@ -24,6 +24,9 @@
     // math
     #include "math/matrix.c"
 
+    // world
+    #include "world/block.c"
+
 //
 
 
