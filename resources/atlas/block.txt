@@ -1,5 +1,6 @@
 stone
 glass
+one
+two
+three
 null
-stone
-stone

@@ -47,17 +47,17 @@ SDL_GPUShader *LoadShader (
     basepath = SDL_GetBasePath();
 
 	if (backend_formats & SDL_GPU_SHADERFORMAT_SPIRV) {
-		SDL_snprintf(fullpath, sizeof(fullpath), "%sresources/shaders/%s.spv", basepath, filename);
+		SDL_snprintf(fullpath, sizeof(fullpath), "%sresources/shaders/bin/%s.spv", basepath, filename);
 		entrypoint = "main";
 		format = SDL_GPU_SHADERFORMAT_SPIRV;
 	}
 	else if (backend_formats & SDL_GPU_SHADERFORMAT_DXIL) {
-		SDL_snprintf(fullpath, sizeof(fullpath), "%sresources/shaders/%s.dxil", basepath, filename);
+		SDL_snprintf(fullpath, sizeof(fullpath), "%sresources/shaders/bin/%s.dxil", basepath, filename);
 		entrypoint = "main";
 		format = SDL_GPU_SHADERFORMAT_DXIL;
 	}
 	else if (backend_formats & SDL_GPU_SHADERFORMAT_MSL) {
-		SDL_snprintf(fullpath, sizeof(fullpath), "%sresources/shaders/%s.msl", basepath, filename);
+		SDL_snprintf(fullpath, sizeof(fullpath), "%sresources/shaders/bin/%s.msl", basepath, filename);
 		entrypoint = "main0";
 		format = SDL_GPU_SHADERFORMAT_MSL;
 	}
@@ -92,8 +92,6 @@ SDL_GPUShader *LoadShader (
 	shader = SDL_CreateGPUShader(gpu_device, &shader_info);
 	if (!shader) {
 		SDL_Log("Couldn't create shader: %s", SDL_GetError());
-		SDL_free(code);
-		return NULL;
 	}
 
 	SDL_free(code);

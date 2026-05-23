@@ -2,6 +2,7 @@
 
 #include "../data/app.h"
 #include "../data/globals.h"
+#include "../data/control_shortcuts.h"
 
 #include "../libs/io.h"
 #include "../libs/bit_manipulation.h"
@@ -11,16 +12,6 @@
 
 #include "../world/blockdata.h"
 #include "../render/textures.h"
-
-static Uint64 current_ms = 0;
-static Uint64 previous_ms = 0;
-
-static struct render_atlas block_atlas= {
-    .texture = NULL,
-    .sampler = NULL,
-    .width = 0,
-    .height = 0
-};
 
 LEINAD_FCALL int leinad_render_world(){
     SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(device);
@@ -36,28 +27,54 @@ LEINAD_FCALL int leinad_render_world(){
     }
 
     if (swapchainTexture != NULL) {
+
+        SDL_GPURenderPass* renderPass;
+        matrix4x4 viewproj;
+
         // Render the 3D Scene (Color and Depth pass)
-        float nearPlane = 2.0f;
+        float nearPlane = 0.0625f;
         float farPlane = 600.0f;
 
-        matrix4x4 proj = Matrix4x4_CreatePerspectiveFieldOfView(
-            80.0f * SDL_PI_F / 180.0f,
-            SceneWidth / (float)SceneHeight,
-            nearPlane,
-            farPlane
-        );
-        matrix4x4 view = Matrix4x4_CreateLookAt( // si CAM - LOOKAT = vec(0,whatever,0) hay div0
-            (vec3) { pos_x, pos_y, pos_z },
-            (vec3) { 0, 0, 0 },
-            (vec3) { 0, 1, 0 }
-        );
+        
+      { // create viewproj matrix
+            matrix4x4 proj = Matrix4x4_CreatePerspectiveFieldOfView(
+                80.0f * SDL_PI_F / 180.0f,
+                SceneWidth / (float)SceneHeight,
+                nearPlane,
+                farPlane
+            );
+            matrix4x4 view = Matrix4x4_CreateLookAt( // si CAM - LOOKAT = vec(0,whatever,0) hay div0
+                (vec3) { pos_x, pos_y, pos_z },
+                (vec3) { 0, 0, 0 },
+                (vec3) { 0, 1, 0 }
+            );
 
-        matrix4x4 viewproj = Matrix4x4_Multiply(view, proj);
+            viewproj = Matrix4x4_Multiply(view, proj);
+      }
 
+      { // @todo draw sky
         SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
-        colorTargetInfo.texture = SceneColorTexture; // BGRA
-        colorTargetInfo.clear_color = (SDL_FColor){ 1.0f, 0.5f, 0.0f, 0.8f };
+        colorTargetInfo.texture = SceneColorTexture; // RGBA
+        colorTargetInfo.clear_color = (SDL_FColor){ 0.2f, 0.7f, 1.0f, 0.0f };
         colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+        colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+        renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, NULL);
+
+        SDL_BindGPUGraphicsPipeline(renderPass, SkyPipeline);
+        SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding){ .buffer = EffectVertexBuffer, .offset = 0 }, 1);
+        SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding){ .buffer = EffectIndexBuffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+        SDL_DrawGPUIndexedPrimitives(renderPass, 6, 1, 0, 0, 0);
+        SDL_EndGPURenderPass(renderPass);
+
+
+      }
+
+      { // draw opaques
+        SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
+        colorTargetInfo.texture = SceneColorTexture; // RGBA
+        colorTargetInfo.clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 0.0f };
+        colorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
         colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
         SDL_GPUDepthStencilTargetInfo depthStencilTargetInfo = { 0 };
@@ -71,14 +88,13 @@ LEINAD_FCALL int leinad_render_world(){
         depthStencilTargetInfo.stencil_store_op = SDL_GPU_STOREOP_STORE;
 
         SDL_PushGPUVertexUniformData(cmdbuf, 0, &viewproj, sizeof(viewproj));
-        SDL_PushGPUFragmentUniformData(cmdbuf, 0, (float[]) { nearPlane, farPlane }, 8);
+        SDL_PushGPUFragmentUniformData(cmdbuf, 0, (float[]) { nearPlane, farPlane }, 2*sizeof(float));
 
-        SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, &depthStencilTargetInfo);
+        { // render all opaque block parts
+
+        renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, &depthStencilTargetInfo);
+
         SDL_BindGPUGraphicsPipeline(renderPass, ScenePipeline);
-
-        // SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding){.buffer = SceneVertexBuffer, .offset = 0 },1);
-        // SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding){ .buffer = SceneIndexBuffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
-
         SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding){.buffer = chunk_test->mesh[0]->vertex, .offset = 0 },1);
         SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding){ .buffer = chunk_test->mesh[0]->index, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
 
@@ -86,17 +102,29 @@ LEINAD_FCALL int leinad_render_world(){
         SDL_BindGPUFragmentSamplers(renderPass, 0, (SDL_GPUTextureSamplerBinding[]){
             { .texture = block_atlas.texture, .sampler = block_atlas.sampler }
         }, 1);
-        SDL_DrawGPUIndexedPrimitives(renderPass,
-            // 36
+        SDL_DrawGPUIndexedPrimitives(renderPass, 0+
                 chunk_test->mesh[0]->ind_unspecified + chunk_test->mesh[0]->ind_x + chunk_test->mesh[0]->ind_x_ + chunk_test->mesh[0]->ind_z 
-                  + chunk_test->mesh[0]->ind_z_ + chunk_test->mesh[0]->ind_y + chunk_test->mesh[0]->ind_y_ 
+            + chunk_test->mesh[0]->ind_z_ + chunk_test->mesh[0]->ind_y + chunk_test->mesh[0]->ind_y_ 
             , 1, 0, 0, 0);
         SDL_EndGPURenderPass(renderPass);
 
-        // Render the Outline Effect that samples from the Color/Depth textures
+        }
+
+        { // @todo render entities
+
+        }
+
+      }
+
+      { // @todo draw transparency
+
+      }
+
+      { // draw outline
+
         SDL_GPUColorTargetInfo swapchainTargetInfo = { 0 };
         swapchainTargetInfo.texture = swapchainTexture; // RGBA
-        swapchainTargetInfo.clear_color = (SDL_FColor){ 0.0f, 1.0f, 0.0f, 1.0f };
+        swapchainTargetInfo.clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 0.0f };
         swapchainTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
         swapchainTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
@@ -105,11 +133,13 @@ LEINAD_FCALL int leinad_render_world(){
         SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding){ .buffer = EffectVertexBuffer, .offset = 0 }, 1);
         SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding){ .buffer = EffectIndexBuffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT);
         SDL_BindGPUFragmentSamplers(renderPass, 0, (SDL_GPUTextureSamplerBinding[]){
-        	{ .texture = SceneColorTexture, .sampler = EffectSampler },
-        	{ .texture = SceneDepthTexture, .sampler = EffectSampler }
+            { .texture = SceneColorTexture, .sampler = EffectSampler },
+            { .texture = SceneDepthTexture, .sampler = EffectSampler }
         }, 2);
         SDL_DrawGPUIndexedPrimitives(renderPass, 6, 1, 0, 0, 0);
         SDL_EndGPURenderPass(renderPass);
+      }
+
     }
 
     SDL_SubmitGPUCommandBuffer(cmdbuf);
@@ -117,36 +147,49 @@ LEINAD_FCALL int leinad_render_world(){
     return SDL_APP_CONTINUE;
 }
 
-LEINAD_AUX int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32 tx_amount);
+
+
+
+
+
+
+
+
+
+LEINAD_AUX static int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32 tx_amount, int tx_w, int tx_h);
 
 LEINAD_FCALL int leinad_render_update_textures(){
+    
     // UPDATE THE ATLASES
-    _update_atlas(&block_atlas, "block", LEINAD_BLOCKTX_amount);
+    ENFORCE(_update_atlas(&block_atlas, "block", LEINAD_BLOCKTX_amount,LEINAD_TEXTURE_RADIUS,LEINAD_TEXTURE_RADIUS));
+    
     return SDL_APP_CONTINUE;
 } 
 
+
 LEINAD_FCALL int leinad_render_init() {
 
-    int res =  leinad_render_update_textures();
-    
-    return res;
+    ENFORCE(leinad_render_update_textures());
+
+    return SDL_APP_CONTINUE;
 }
 
-LEINAD_FCALL void leinad_render_end() {
-	SDL_ReleaseGPUSampler(device, block_atlas.sampler);
-	SDL_ReleaseGPUTexture(device, block_atlas.texture);
+
+LEINAD_FCALL void leinad_render_end() {    
+    SDL_ReleaseGPUSampler(device, block_atlas.sampler);
+    SDL_ReleaseGPUTexture(device, block_atlas.texture);
 
     SDL_ReleaseGPUBuffer(device, chunk_test->mesh[0]->vertex);
     SDL_ReleaseGPUBuffer(device, chunk_test->mesh[0]->index);
 }
 
-LEINAD_AUX int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32 tx_amount) {
+LEINAD_AUX static int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32 tx_amount, int tx_w, int tx_h) {
     Uint32 i;
     char path[LEINAD_MAX_PATH_LENGTH];
     char current_tx[LEINAD_MAX_LINE_LENGTH];
     SDL_IOStream *atlas_io;
     SDL_Surface *tx_surface, *atlas_surface;
-    SDL_Rect target = {0,0,LEINAD_TEXTURE_RADIUS,LEINAD_TEXTURE_RADIUS};
+    SDL_Rect target = {0,0,tx_w,tx_h};
 
     if (atlas->texture != NULL) SDL_ReleaseGPUTexture(device,atlas->texture);
     if (atlas->sampler != NULL) SDL_ReleaseGPUSampler(device,atlas->sampler);
@@ -154,7 +197,7 @@ LEINAD_AUX int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32
     // create the atlas surface
     atlas->width = pow2(next_pow4(tx_amount));
     atlas->height = pow2(next_pow4(tx_amount));
-    atlas_surface = SDL_CreateSurface(atlas->width * LEINAD_TEXTURE_RADIUS,atlas->height * LEINAD_TEXTURE_RADIUS, SDL_PIXELFORMAT_ARGB8888);
+    atlas_surface = SDL_CreateSurface(atlas->width * tx_w,atlas->height * tx_h, SDL_PIXELFORMAT_ARGB8888);
     
     // open the atlas redirection table
     SDL_snprintf(path,LEINAD_MAX_PATH_LENGTH, "%s/resources/atlas/%s.txt", SDL_GetBasePath(), root_path);
@@ -171,8 +214,8 @@ LEINAD_AUX int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32
         tx_surface = leinad_load_png(path);
 
         // blit texture on the atlas
-        target.x = (i % (atlas->width)) * LEINAD_TEXTURE_RADIUS;
-        target.y = (i / (atlas->width)) * LEINAD_TEXTURE_RADIUS;
+        target.x = (i % (atlas->width)) * tx_w;
+        target.y = (i / (atlas->width)) * tx_h;
         SDL_BlitSurface(tx_surface, NULL, atlas_surface, &target);
 
         SDL_DestroySurface(tx_surface);
@@ -181,8 +224,8 @@ LEINAD_AUX int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32
     const SDL_GPUTextureCreateInfo texture_info = {
         .type = SDL_GPU_TEXTURETYPE_2D,
         .format = SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM,
-        .width = atlas->width * LEINAD_TEXTURE_RADIUS,
-        .height = atlas->height * LEINAD_TEXTURE_RADIUS,
+        .width = atlas->width * tx_w,
+        .height = atlas->height * tx_h,
         .layer_count_or_depth = 1,
         .num_levels = 1,
         .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
@@ -207,7 +250,7 @@ LEINAD_AUX int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32
 
         SDL_GPUTransferBufferCreateInfo transfer_info_texture = {
             .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = (Uint32)(atlas->width * LEINAD_TEXTURE_RADIUS * atlas->height * LEINAD_TEXTURE_RADIUS * 4) // 4B / pixel
+            .size = (Uint32)(atlas->width * tx_w * atlas->height * tx_h * 4) // 4B / pixel
         };
 
         SDL_GPUTransferBuffer* textureTransferBuffer = SDL_CreateGPUTransferBuffer(
@@ -220,7 +263,7 @@ LEINAD_AUX int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32
             textureTransferBuffer,
             false
         );
-        SDL_memcpy(textureTransferPtr, atlas_surface->pixels, atlas->width * LEINAD_TEXTURE_RADIUS * atlas->height * LEINAD_TEXTURE_RADIUS * 4);
+        SDL_memcpy(textureTransferPtr, atlas_surface->pixels, atlas->width * tx_w * atlas->height * tx_h * 4);
         SDL_UnmapGPUTransferBuffer(device, textureTransferBuffer);
 
         // copy pass
@@ -237,8 +280,8 @@ LEINAD_AUX int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32
             },
             &(SDL_GPUTextureRegion) {
                 .texture = atlas->texture,
-                .w = atlas->width * LEINAD_TEXTURE_RADIUS,
-                .h = atlas->height * LEINAD_TEXTURE_RADIUS,
+                .w = atlas->width * tx_w,
+                .h = atlas->height * tx_h,
                 .d = 1
             },
             false

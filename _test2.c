@@ -69,3 +69,6 @@ int fast_sqrt(int n) {
 
     return (int)fres;
 }
+
+
+

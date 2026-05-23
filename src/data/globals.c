@@ -5,7 +5,7 @@
 #include "../libs/stack.h"
 #include "../ui/data.h"
 
-#include "../world/block.h"
+#include "../world/region.h"
 
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
@@ -17,24 +17,18 @@ leinad_stack_t ui_render_stack  = NULL;
 leinad_ui_instance_t* ui_active = NULL;
 
 SDL_GPUDevice *device = NULL;
-SDL_GPUGraphicsPipeline *pipeline = NULL;
-SDL_GPUSampler *sampler = NULL;
-SDL_GPUTexture *gpu_texture = NULL;
-SDL_GPUBuffer *vertex_buffer = NULL;
 SDL_GPUTexture *depth_texture = NULL;
 
+SDL_GPUGraphicsPipeline* SkyPipeline = NULL;
 
+SDL_GPUGraphicsPipeline* ScenePipeline = NULL;
+SDL_GPUTexture* SceneColorTexture = NULL;
+SDL_GPUTexture* SceneDepthTexture = NULL;
 
-SDL_GPUGraphicsPipeline* ScenePipeline;
-SDL_GPUBuffer* SceneVertexBuffer;
-SDL_GPUBuffer* SceneIndexBuffer;
-SDL_GPUTexture* SceneColorTexture;
-SDL_GPUTexture* SceneDepthTexture;
-
-SDL_GPUGraphicsPipeline* EffectPipeline;
-SDL_GPUBuffer* EffectVertexBuffer;
-SDL_GPUBuffer* EffectIndexBuffer;
-SDL_GPUSampler* EffectSampler;
+SDL_GPUGraphicsPipeline* EffectPipeline = NULL;
+SDL_GPUBuffer* EffectVertexBuffer = NULL;
+SDL_GPUBuffer* EffectIndexBuffer = NULL;
+SDL_GPUSampler* EffectSampler = NULL;
 
 int SceneWidth, SceneHeight;
 double pos_x = 0,pos_y = 0,pos_z = 0;

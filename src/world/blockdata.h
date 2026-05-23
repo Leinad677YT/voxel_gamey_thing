@@ -13,6 +13,7 @@ typedef enum {
     
     LEINAD_BLOCK_default = LEINAD_BLOCK_end,
     LEINAD_BLOCK_NULL = LEINAD_BLOCK_default,
+
     LEINAD_BLOCK_amount,
 
     LEINAD_BLOCK_invalid = 0xFFFF // 
@@ -29,34 +30,38 @@ typedef enum {
     
     LEINAD_BLOCKTX_default = LEINAD_BLOCKTX_end,
     LEINAD_BLOCKTX_NULL = LEINAD_BLOCKTX_default,
+
     LEINAD_BLOCKTX_amount,
 
-    LEINAD_BLOCKTX_invalid = 0xFFFF // 
+    LEINAD_BLOCKTX_invalid = 0xFFFF
 } block_tx;
 
 
-struct block { // all share the same atlas so no need to specify texture here
+struct block {
     Uint32 flags;
-    #define LEINAD_BLOCKFLAG_default            0b0000000000000000
-    #define LEINAD_BLOCKFLAG_isfullblock        0b0000000000000001
-    #define LEINAD_BLOCKFLAG_hastransparency    0b0000000000000010
-    #define LEINAD_BLOCKFLAG_istransparent      0b0000000000000100
-    #define LEINAD_BLOCKFLAG_iscontiguous       0b0000000000001000
-    #define LEINAD_BLOCKFLAG_hascustomplacement 0b0000000000010000
+    #define LEINAD_BLOCKFLAG_default            0x00000000
+
+    #define LEINAD_BLOCKFLAG_istransparent      0x00000001
+    #define LEINAD_BLOCKFLAG_isfullblock        0x00000002
+     #define LEINAD_BLOCKFLAG_issingletexture    0x00000004
+    #define LEINAD_BLOCKFLAG_hastransparency    0x00000008 // @todo CONSIDER REPLACING WITH PER-FACE OCCLUSION
+    #define LEINAD_BLOCKFLAG_iscontiguous       0x00000010
+    #define LEINAD_BLOCKFLAG_hascustomplacement 0x00000020 // @todo REPLACE WITH ROTATION AND SUB-BLOCK DISPLACEMENT
+
+    /**
+     *  amount of light to remove when light passes through it
+     */
+    short light_removal;
 
     union static_blockdata {
 
-        struct full_single_texture{
+        struct full_single_texture {
             Uint32 tx_index;
-            
-            Uint8 filler[64 - 1*sizeof(Uint32)];
         } full_single_texture;
 
-        struct full_multiple_texture{ 
+        struct full_multiple_texture {
             // y, -y, z, -z, x, -x
             Uint32 tx_index[6];
-            
-            Uint8 filler[64 - 6*sizeof(Uint32)];            
         } full_multiple_texture;
     
     } data;

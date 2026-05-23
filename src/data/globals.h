@@ -7,30 +7,26 @@
 #include "../libs/stack.h"
 #include "../ui/data.h"
 
-#include "../world/block.h"
+#include "../world/region.h"
 
 extern SDL_Window* window;              // Window
 extern SDL_Renderer* renderer;          // Renderer
 
 extern SDL_GPUDevice *device;               // GPU to use
 extern SDL_GPUGraphicsPipeline *pipeline;   // Shaders pipeline
-extern SDL_GPUSampler *sampler;             // Pixel sampler
-extern SDL_GPUTexture *gpu_texture;         // Texture to render
-extern SDL_GPUBuffer *vertex_buffer;        // [Buffer] Vertex
 extern SDL_GPUTexture *depth_texture;       // Depth texture
 
 extern Uint64 current_ns;
 extern Uint64 previous_ns;
 
-leinad_stack_t ui_render_stack;         // UI layers to render
-leinad_ui_instance_t* ui_active;        // active UI
+extern leinad_stack_t ui_render_stack;         // UI layers to render
+extern leinad_ui_instance_t* ui_active;        // active UI
 
 extern leinad_welem_t welem_data[];     // array with the welem data
 
+extern SDL_GPUGraphicsPipeline* SkyPipeline;
 
 extern SDL_GPUGraphicsPipeline* ScenePipeline;
-extern SDL_GPUBuffer* SceneVertexBuffer;
-extern SDL_GPUBuffer* SceneIndexBuffer;
 extern SDL_GPUTexture* SceneColorTexture;
 extern SDL_GPUTexture* SceneDepthTexture;
 

@@ -16,14 +16,9 @@ SDL_AppResult SDL_AppIterate( __attribute__ ((unused)) void *appstate) {
 //   } 
 
 
-{ // render world
-    switch (leinad_render_world()){
-        case SDL_APP_CONTINUE: break;
-        case SDL_APP_FAILURE: return SDL_APP_FAILURE; break;
-        case SDL_APP_SUCCESS: return SDL_APP_SUCCESS; break;
-    }
-    
-}
+  { // render world
+    ENFORCE(leinad_render_world());
+  }
 
 
 //   { // leinad_update_ui(ui_active->ui);
@@ -37,9 +32,9 @@ SDL_AppResult SDL_AppIterate( __attribute__ ((unused)) void *appstate) {
 
     if (current_ns - previous_ns < LEINAD_TICK_RANGE_NS) return SDL_APP_CONTINUE;
   }
-    pos_x+= toadd_x / 16.0 ;
-    pos_y+= toadd_y / 16.0;
-    pos_z+= toadd_z / 16.0;
+    pos_x+= toadd_x / 32.0 ;
+    pos_y+= toadd_y / 32.0;
+    pos_z+= toadd_z / 32.0;
 
 
 

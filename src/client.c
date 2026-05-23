@@ -25,6 +25,7 @@
     #include "math/matrix.c"
 
     // world
+    #include "world/region.c"
     #include "world/block.c"
 
 //

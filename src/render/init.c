@@ -2,6 +2,7 @@
 
 #include "../data/globals.h"
 #include "../data/types.h"
+#include "../data/control_shortcuts.h"
 #include "../render/shaders.h"
 
 #include "../world/render.h"
@@ -12,10 +13,15 @@
 
 LEINAD_FCALL int INIT_render() {
 
-    leinad_render_init();
-
+  { // Initialize sub-renderers
+    
+    // world
+    ENFORCE(leinad_render_init());
+  }
 
   { // Creates the Shaders & Pipelines
+    SDL_GPUShader* skyVertexShader;
+    SDL_GPUShader* skyFragmentShader;
     SDL_GPUShader* textureVertexShader;
     SDL_GPUShader* textureFragmentShader;
     SDL_GPUShader* effectVertexShader;
@@ -23,6 +29,21 @@ LEINAD_FCALL int INIT_render() {
 
     { // get shaders
 
+        // sky_vert
+        skyVertexShader = LoadShader(device, "Sky.vert", 0, 0, 0, 0);
+        if (skyVertexShader == NULL)
+        {
+            SDL_Log("Failed to create 'Sky' vertex shader!");
+            return -1;
+        }
+
+        // sky_frag
+        skyFragmentShader = LoadShader(device, "Sky.frag", 0, 0, 0, 0);
+        if (skyFragmentShader == NULL)
+        {
+            SDL_Log("Failed to create 'Sky' fragment shader!");
+            return -1;
+        }
         // texture_vert
         textureVertexShader = LoadShader(device, "TexturedQuad.vert", 0, 1, 0, 0);
         if (textureVertexShader == NULL)
@@ -58,6 +79,42 @@ LEINAD_FCALL int INIT_render() {
     }
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = {
+        .target_info = {
+            .num_color_targets = 1,
+            .color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
+                .format = SDL_GetGPUSwapchainTextureFormat(device, window)
+            }},
+            .has_depth_stencil_target = false
+        },
+        .vertex_input_state = (SDL_GPUVertexInputState){
+            .num_vertex_buffers = 1,
+            .vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription[]){{
+                .slot = 0,
+                .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+                .instance_step_rate = 0,
+                .pitch = sizeof(PositionTextureVertex)
+            }},
+            .num_vertex_attributes = 2,
+            .vertex_attributes = (SDL_GPUVertexAttribute[]){{
+                .buffer_slot = 0,
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+                .location = 0,
+                .offset = 0
+            }, {
+                .buffer_slot = 0,
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+                .location = 1,
+                .offset = sizeof(float) * 3
+            }}
+        },
+        .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+        .vertex_shader = skyVertexShader,
+        .fragment_shader = skyFragmentShader
+    };
+
+    SkyPipeline = SDL_CreateGPUGraphicsPipeline(device, &pipelineCreateInfo);
+
+    pipelineCreateInfo = (SDL_GPUGraphicsPipelineCreateInfo){
         .target_info = {
             .num_color_targets = 1,
             .color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
@@ -165,15 +222,17 @@ LEINAD_FCALL int INIT_render() {
 
     SDL_ReleaseGPUShader(device, textureVertexShader);
     SDL_ReleaseGPUShader(device, textureFragmentShader);
+
+    SDL_ReleaseGPUShader(device, skyVertexShader);
+    SDL_ReleaseGPUShader(device, skyFragmentShader);
   }
 
-    // Create the Scene Textures
-    {
-        // Make them smaller so pixels stand out more
+  { // Create the Scene Textures
+
         int w, h;
         SDL_GetWindowSizeInPixels(window, &w, &h);
-        SceneWidth = w / 2;
-        SceneHeight = h / 2;
+        SceneWidth = w;
+        SceneHeight = h;
 
         SceneColorTexture = SDL_CreateGPUTexture(
             device,
@@ -202,7 +261,7 @@ LEINAD_FCALL int INIT_render() {
                 .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET
             }
         );
-    }
+  }
 
     // Create Outline Effect Sampler
     EffectSampler = SDL_CreateGPUSampler(device, &(SDL_GPUSamplerCreateInfo){
@@ -214,126 +273,8 @@ LEINAD_FCALL int INIT_render() {
         .address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
     });
 
-    // Create & Upload Scene Index and Vertex Buffers
-    {
-        SceneVertexBuffer = SDL_CreateGPUBuffer(
-            device,
-            &(SDL_GPUBufferCreateInfo) {
-                .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-                .size = sizeof(PositionTextureVertex) * 24
-            }
-        );
-
-
-        SceneIndexBuffer = SDL_CreateGPUBuffer(
-            device,
-            &(SDL_GPUBufferCreateInfo) {
-                .usage = SDL_GPU_BUFFERUSAGE_INDEX,
-                .size = sizeof(Uint32) * 36
-            }
-        );
-
-        SDL_GPUTransferBuffer* bufferTransferBuffer = SDL_CreateGPUTransferBuffer(
-            device,
-            &(SDL_GPUTransferBufferCreateInfo) {
-                .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-                .size =   (sizeof(PositionTextureVertex) * 24) // vertices 
-                        + (sizeof(Uint32) * 36)              // indices para triangulos
-            }
-        );
-
-        PositionTextureVertex* transferData = SDL_MapGPUTransferBuffer(
-            device,
-            bufferTransferBuffer,
-            false
-        );
-
-        transferData[0] = (PositionTextureVertex) { -100, -100, -100, 0,0 };
-        transferData[1] = (PositionTextureVertex) { 100, -100, -100, 0,1 };
-        transferData[2] = (PositionTextureVertex) { 100, 100, -100, 1,1 };
-        transferData[3] = (PositionTextureVertex) { -100, 100, -100, 1,0 };
-
-        transferData[4] = (PositionTextureVertex) { -10, -10, 10,0, 0 };
-        transferData[5] = (PositionTextureVertex) { 10, -10, 10, 0, 1 };
-        transferData[6] = (PositionTextureVertex) { 10, 10, 10, 1, 1 };
-        transferData[7] = (PositionTextureVertex) { -10, 10, 10, 1, 0 };
-
-        transferData[8] = (PositionTextureVertex) { -10, -10, -10, 0, 0 };
-        transferData[9] = (PositionTextureVertex) { -10, 10, -10, 0, 1 };
-        transferData[10] = (PositionTextureVertex) { -10, 10, 10, 1, 1 };
-        transferData[11] = (PositionTextureVertex) { -10, -10, 10, 1, 0 };
-
-        transferData[12] = (PositionTextureVertex) { 10, -10, -10, 0, 0 };
-        transferData[13] = (PositionTextureVertex) { 10, 10, -10, 0, 1 };
-        transferData[14] = (PositionTextureVertex) { 10, 10, 10, 1, 1 };
-        transferData[15] = (PositionTextureVertex) { 10, -10, 10, 1, 0 };
-
-        transferData[16] = (PositionTextureVertex) { -10, -10, -10, 0, 0 };
-        transferData[17] = (PositionTextureVertex) { -10, -10, 10, 0, 1 };
-        transferData[18] = (PositionTextureVertex) { 10, -10, 10, 1, 1 };
-        transferData[19] = (PositionTextureVertex) { 10, -10, -10, 1, 0 };
-
-        transferData[20] = (PositionTextureVertex) { -10, 10, -10, 0, 0 };
-        transferData[23] = (PositionTextureVertex) { -10, 10, 10, 0, 1};
-        transferData[22] = (PositionTextureVertex) { 10, 10, 10, 1, 1 };
-        transferData[21] = (PositionTextureVertex) { 10, 10, -10, 1, 0 };
-
-        Uint32* indexData = (Uint32*) &transferData[24];
-        Uint32 indices[] = {
-            0, 1, 2, 0, 2, 3,
-            4, 5, 6, 4, 6, 7,
-            8, 9, 10, 8, 10, 11,
-            12, 13, 14, 12, 14, 15,
-            16, 17, 18, 16, 18, 19,
-            20, 21, 22, 20, 22, 23
-        };
-        SDL_memcpy(indexData, indices, sizeof(indices));
-
-        SDL_UnmapGPUTransferBuffer(device, bufferTransferBuffer);
-
-
-
-        // Upload the transfer data to the GPU buffers
-        SDL_GPUCommandBuffer* uploadCmdBuf = SDL_AcquireGPUCommandBuffer(device);
-        SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(uploadCmdBuf);
-
-        SDL_UploadToGPUBuffer(
-            copyPass,
-            &(SDL_GPUTransferBufferLocation) {
-                .transfer_buffer = bufferTransferBuffer,
-                .offset = 0
-            },
-            &(SDL_GPUBufferRegion) {
-                .buffer = SceneVertexBuffer,
-                .offset = 0,
-                .size = sizeof(PositionTextureVertex) * 24
-            },
-            false
-        );
-
-        SDL_UploadToGPUBuffer(
-            copyPass,
-            &(SDL_GPUTransferBufferLocation) {
-                .transfer_buffer = bufferTransferBuffer,
-                .offset = sizeof(PositionTextureVertex) * 24
-            },
-            &(SDL_GPUBufferRegion) {
-                .buffer = SceneIndexBuffer,
-                .offset = 0,
-                .size = sizeof(Uint32) * 36
-            },
-            false
-        );
-
-
-
-        SDL_EndGPUCopyPass(copyPass);
-        SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
-        SDL_ReleaseGPUTransferBuffer(device, bufferTransferBuffer);
-    }
-
-    // Create & Upload Outline Effect Vertex and Index buffers
-    {
+    
+  { // Create & Upload Outline Effect Vertex and Index buffers
         EffectVertexBuffer = SDL_CreateGPUBuffer(
             device,
             &(SDL_GPUBufferCreateInfo) {
@@ -413,10 +354,10 @@ LEINAD_FCALL int INIT_render() {
         SDL_EndGPUCopyPass(copyPass);
         SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
         SDL_ReleaseGPUTransferBuffer(device, bufferTransferBuffer);
-    }
+  }
 
-    // load test chunk
-    {
+
+  { // load test chunk
         leinad_region_t* region_test = leinad_region_create_empty();
         chunk_test = leinad_chunk_create();
         
@@ -428,8 +369,20 @@ LEINAD_FCALL int INIT_render() {
             .custom_data = 0
         };
 
-        chunk_test->block[leinad_get_chunk_index(0, 0, 1)] = (struct blockdata) {
+        chunk_test->block[leinad_get_chunk_index(0, 1, 0)] = (struct blockdata) {
             .id = LEINAD_BLOCK_STONE,
+            .rotation_n_subpos = 0,
+            .custom_data = 0
+        };
+
+        chunk_test->block[leinad_get_chunk_index(10, 0, 0)] = (struct blockdata) {
+            .id = LEINAD_BLOCK_STONE,
+            .rotation_n_subpos = 0,
+            .custom_data = 0
+        };
+
+        chunk_test->block[leinad_get_chunk_index(0, 0, 1)] = (struct blockdata) {
+            .id = LEINAD_BLOCK_GLASS,
             .rotation_n_subpos = 0,
             .custom_data = 0
         };

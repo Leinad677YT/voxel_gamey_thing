@@ -13,9 +13,13 @@ float GetDifference(float depth, float2 TexCoord, float distance)
     
     return
         max(DepthTexture.Sample(DepthSampler, TexCoord + float2(1.0 / w, 0) * distance).r - depth,
-        max(DepthTexture.Sample(DepthSampler, TexCoord + float2(-1.0 / w, 0) * distance).r - depth,
-        max(DepthTexture.Sample(DepthSampler, TexCoord + float2(0, 1.0 / h) * distance).r - depth,
-        DepthTexture.Sample(DepthSampler, TexCoord + float2(0, -1.0 / h) * distance).r - depth)));
+         max(DepthTexture.Sample(DepthSampler, TexCoord + float2(-1.0 / w, 0) * distance).r - depth,
+          max(
+            DepthTexture.Sample(DepthSampler, TexCoord + float2(0, 1.0 / h) * distance).r - depth,
+            DepthTexture.Sample(DepthSampler, TexCoord + float2(0, -1.0 / h) * distance).r - depth
+          )
+         )
+        );
 }
 
 float4 main(float2 TexCoord : TEXCOORD0) : SV_Target0
@@ -23,17 +27,25 @@ float4 main(float2 TexCoord : TEXCOORD0) : SV_Target0
     // get our color & depth value
     float4 color = ColorTexture.Sample(ColorSampler, TexCoord);
     float depth = DepthTexture.Sample(DepthSampler, TexCoord).r;
+    
+    float edge;
+    float edge2;
+    
+    float diff2 = GetDifference(depth, TexCoord, 2.0f);
+    float diff4 = GetDifference(depth, TexCoord, 4.0f);
+
+    float3 res = color.rgb;
 
     // get the difference between the edges at 1px and 2px away
-    float edge = step(0.2, GetDifference(depth, TexCoord, 1.0f));
-    float edge2 = step(0.2, GetDifference(depth, TexCoord, 2.0f));
+    if (diff2 > 2E-10 && abs(2*diff2 - diff4) > diff4*0.875) {
+        edge = step(0.00025f, diff2);
+        edge2 = step(0.00025f, diff4);
 
-    // turn inner edges black
-    float3 res = lerp(color.rgb, 0, edge2);
-
-    // turn the outer edges white
-    res = lerp(res, 1, edge2);
-
+        // turn inner edges black
+        res = lerp(color.rgb, 0, edge2);
+        // turn the outer edges white
+        res = lerp(res, 1, edge2);
+    }
     // combine results
     return float4(res, color.a);
 }

@@ -12,12 +12,13 @@ struct render_atlas {
     int height;
 };
 
-struct render_mesh {
-    SDL_GPUBuffer* vertex;
-    SDL_GPUBuffer* index;
-    Uint32 vert_o_count,vert_t_count;
-    Uint32 ind_x,ind_x_, ind_y,ind_y_, ind_z,ind_z_, ind_unspecified;
+static struct render_atlas block_atlas= {
+    .texture = NULL,
+    .sampler = NULL,
+    .width = 0,
+    .height = 0
 };
+
 
 LEINAD_FCALL int leinad_render_world();
 
