@@ -9,26 +9,31 @@ void SDL_AppQuit(
 ) {
 
     // free gpu mine
-    SDL_ReleaseGPUTexture(device, depth_texture);
-    SDL_ReleaseGPUGraphicsPipeline(device,SkyPipeline);
-    SDL_DestroyRenderer(renderer);
+    if (depth_texture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, depth_texture);
+    if (SkyPipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device,SkyPipeline);
+    if (renderer != NULL) SDL_DestroyRenderer(renderer);
 
     leinad_render_end();
 
     // free gpu example
-	SDL_ReleaseGPUGraphicsPipeline(device, ScenePipeline);
-	SDL_ReleaseGPUTexture(device, SceneColorTexture);
-	SDL_ReleaseGPUTexture(device, SceneDepthTexture);
+    if (ScenePipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device, ScenePipeline);
+    if (TransparencyPipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device, TransparencyPipeline);
+    if (AuxTransparencyPipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device, AuxTransparencyPipeline);
+    if (SceneColorTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, SceneColorTexture);
+    if (SceneTransparencyTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, SceneTransparencyTexture);
+    if (AuxTransparencyTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, AuxTransparencyTexture);
+    if (SceneDepthTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, SceneDepthTexture);
 
-	SDL_ReleaseGPUGraphicsPipeline(device, EffectPipeline);
-	SDL_ReleaseGPUBuffer(device, EffectVertexBuffer);
-	SDL_ReleaseGPUBuffer(device, EffectIndexBuffer);
-	SDL_ReleaseGPUSampler(device, EffectSampler);
+    if (EffectPipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device, EffectPipeline);
+    if (EffectVertexBuffer != NULL && device != NULL) SDL_ReleaseGPUBuffer(device, EffectVertexBuffer);
+    if (EffectIndexBuffer != NULL && device != NULL) SDL_ReleaseGPUBuffer(device, EffectIndexBuffer);
+    if (EffectSampler != NULL && device != NULL) SDL_ReleaseGPUSampler(device, EffectSampler);
+    if (AuxiliarySampler != NULL && device != NULL) SDL_ReleaseGPUSampler(device, AuxiliarySampler);
 
-    SDL_ReleaseWindowFromGPUDevice(device, window);
+    if (window != NULL && device != NULL) SDL_ReleaseWindowFromGPUDevice(device, window);
 
     // free window
-    SDL_DestroyWindow(window);
-    SDL_DestroyGPUDevice(device);
+    if (window != NULL) SDL_DestroyWindow(window);
+    if (device != NULL) SDL_DestroyGPUDevice(device);
 
 }

@@ -4,3 +4,6 @@ build/
 vendored/
 CMakeCache.txt
 *.out
+*.png
+*.spv
+_*

@@ -29,7 +29,7 @@ LEINAD_FGET bool block_has_custom_data(block_id id) {
 }
 
 /**
- * This struct specifies the format on which in-world blocks are stored and managed
+ * Struct that specifies the format on which in-world blocks are stored and managed
  */
 struct blockdata {
     /**
@@ -56,7 +56,7 @@ struct blockdata {
 };
 
 /**
- * This struct defines how vertices of blocks are sent to the gpu
+ * Struct that defines how vertices of blocks are sent to the gpu
  */
 struct block_vertex {
     /**

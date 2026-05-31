@@ -1,0 +1,3 @@
+#define RESCALE_UP 8.f
+#define RESCALE_DOWN (1.f / RESCALE_UP)
+#define SMOL_FLOAT 0.03125f

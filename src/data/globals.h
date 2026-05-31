@@ -27,14 +27,17 @@ extern leinad_welem_t welem_data[];     // array with the welem data
 extern SDL_GPUGraphicsPipeline* SkyPipeline;
 
 extern SDL_GPUGraphicsPipeline* ScenePipeline;
+extern SDL_GPUGraphicsPipeline* TransparencyPipeline;
+extern SDL_GPUGraphicsPipeline* AuxTransparencyPipeline;
 extern SDL_GPUTexture* SceneColorTexture;
 extern SDL_GPUTexture* SceneDepthTexture;
-
+extern SDL_GPUTexture* SceneTransparencyTexture;
+extern SDL_GPUTexture* AuxTransparencyTexture;
 extern SDL_GPUGraphicsPipeline* EffectPipeline;
 extern SDL_GPUBuffer* EffectVertexBuffer;
 extern SDL_GPUBuffer* EffectIndexBuffer;
 extern SDL_GPUSampler* EffectSampler;
-
+extern SDL_GPUSampler* AuxiliarySampler;
 extern int SceneWidth, SceneHeight;
 extern double pos_x,pos_y,pos_z;
 double toadd_x, toadd_y, toadd_z;

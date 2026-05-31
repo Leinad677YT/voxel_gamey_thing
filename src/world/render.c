@@ -1,5 +1,6 @@
 #include "render.h"
 
+#include "../data/types.h"
 #include "../data/app.h"
 #include "../data/globals.h"
 #include "../data/control_shortcuts.h"
@@ -8,12 +9,11 @@
 #include "../libs/bit_manipulation.h"
 
 #include "../math/matrix.h"
-#include "../math/trigonometry.h"
 
-#include "../world/blockdata.h"
 #include "../render/textures.h"
+#include "data.h"
 
-LEINAD_FCALL int leinad_render_world(){
+LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
     SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(device);
     if (cmdbuf == NULL) {
         SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
@@ -35,7 +35,12 @@ LEINAD_FCALL int leinad_render_world(){
         float nearPlane = 0.0625f;
         float farPlane = 600.0f;
 
-        
+        struct _chunkrenderdata chunk_renderdata = {
+            .pos = pos,
+            .viewvec = view_vec
+        };
+
+
       { // create viewproj matrix
             matrix4x4 proj = Matrix4x4_CreatePerspectiveFieldOfView(
                 80.0f * SDL_PI_F / 180.0f,
@@ -44,15 +49,15 @@ LEINAD_FCALL int leinad_render_world(){
                 farPlane
             );
             matrix4x4 view = Matrix4x4_CreateLookAt( // si CAM - LOOKAT = vec(0,whatever,0) hay div0
-                (vec3) { pos_x, pos_y, pos_z },
-                (vec3) { 0, 0, 0 },
+                (vec3) { pos.x, pos.y, pos.z },
+                (vec3) { pos.x + view_vec.x,pos.y + view_vec.y,pos.z + view_vec.z },
                 (vec3) { 0, 1, 0 }
             );
 
             viewproj = Matrix4x4_Multiply(view, proj);
       }
 
-      { // @todo draw sky
+      { // draw sky @todo hacerlo bonito
         SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
         colorTargetInfo.texture = SceneColorTexture; // RGBA
         colorTargetInfo.clear_color = (SDL_FColor){ 0.2f, 0.7f, 1.0f, 0.0f };
@@ -60,20 +65,17 @@ LEINAD_FCALL int leinad_render_world(){
         colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
         renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, NULL);
-
         SDL_BindGPUGraphicsPipeline(renderPass, SkyPipeline);
         SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding){ .buffer = EffectVertexBuffer, .offset = 0 }, 1);
         SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding){ .buffer = EffectIndexBuffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT);
         SDL_DrawGPUIndexedPrimitives(renderPass, 6, 1, 0, 0, 0);
         SDL_EndGPURenderPass(renderPass);
 
-
       }
 
       { // draw opaques
         SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
         colorTargetInfo.texture = SceneColorTexture; // RGBA
-        colorTargetInfo.clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 0.0f };
         colorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
         colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
@@ -95,17 +97,8 @@ LEINAD_FCALL int leinad_render_world(){
         renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, &depthStencilTargetInfo);
 
         SDL_BindGPUGraphicsPipeline(renderPass, ScenePipeline);
-        SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding){.buffer = chunk_test->mesh[0]->vertex, .offset = 0 },1);
-        SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding){ .buffer = chunk_test->mesh[0]->index, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
-
-
-        SDL_BindGPUFragmentSamplers(renderPass, 0, (SDL_GPUTextureSamplerBinding[]){
-            { .texture = block_atlas.texture, .sampler = block_atlas.sampler }
-        }, 1);
-        SDL_DrawGPUIndexedPrimitives(renderPass, 0+
-                chunk_test->mesh[0]->ind_unspecified + chunk_test->mesh[0]->ind_x + chunk_test->mesh[0]->ind_x_ + chunk_test->mesh[0]->ind_z 
-            + chunk_test->mesh[0]->ind_z_ + chunk_test->mesh[0]->ind_y + chunk_test->mesh[0]->ind_y_ 
-            , 1, 0, 0, 0);
+        chunk_renderdata.renderpass = renderPass;
+        loaded_chunks_forall_increasing(leinad_chunk_render_opaque, &chunk_renderdata);
         SDL_EndGPURenderPass(renderPass);
 
         }
@@ -117,7 +110,66 @@ LEINAD_FCALL int leinad_render_world(){
       }
 
       { // @todo draw transparency
+        SDL_GPUColorTargetInfo colorTargetInfo[2] = { 0 };
+        colorTargetInfo[0].texture = SceneTransparencyTexture; // RGBA
+        colorTargetInfo[0].clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 0.0f };
+        colorTargetInfo[0].load_op = SDL_GPU_LOADOP_CLEAR;
+        colorTargetInfo[0].store_op = SDL_GPU_STOREOP_STORE;
 
+        colorTargetInfo[1].texture = AuxTransparencyTexture; // RGBA
+        colorTargetInfo[1].clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 0.0f };
+        colorTargetInfo[1].load_op = SDL_GPU_LOADOP_CLEAR;
+        colorTargetInfo[1].store_op = SDL_GPU_STOREOP_STORE;
+
+        
+        SDL_GPUDepthStencilTargetInfo depthStencilTargetInfo = { 0 };
+        depthStencilTargetInfo.texture = SceneDepthTexture;
+        depthStencilTargetInfo.cycle = false;
+        // depthStencilTargetInfo.clear_depth = 1;
+        depthStencilTargetInfo.clear_stencil = 0;
+        depthStencilTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
+        depthStencilTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+        depthStencilTargetInfo.stencil_load_op = SDL_GPU_LOADOP_CLEAR;
+        depthStencilTargetInfo.stencil_store_op = SDL_GPU_STOREOP_STORE;
+
+        SDL_PushGPUVertexUniformData(cmdbuf, 0, &viewproj, sizeof(viewproj));
+        SDL_PushGPUFragmentUniformData(cmdbuf, 0, (float[]) { nearPlane, farPlane }, 2*sizeof(float));
+
+        { // render all translucent block parts
+
+        renderPass = SDL_BeginGPURenderPass(cmdbuf, colorTargetInfo, 2,&depthStencilTargetInfo);
+
+        SDL_BindGPUGraphicsPipeline(renderPass, TransparencyPipeline);
+        chunk_renderdata.renderpass = renderPass;
+        loaded_chunks_forall_increasing(leinad_chunk_render_transparent, &chunk_renderdata);
+        SDL_EndGPURenderPass(renderPass);
+
+        }
+
+        { // @todo render entities
+
+        }
+
+      }
+
+
+      { // mix transparents and opaques
+
+        SDL_GPUColorTargetInfo textureTargetInfo = { 0 };
+        textureTargetInfo.texture = SceneColorTexture; // RGBA
+        textureTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
+        textureTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+        renderPass = SDL_BeginGPURenderPass(cmdbuf, &textureTargetInfo, 1, NULL);
+        SDL_BindGPUGraphicsPipeline(renderPass, AuxTransparencyPipeline);
+        SDL_BindGPUVertexBuffers(renderPass, 0, &(SDL_GPUBufferBinding){ .buffer = EffectVertexBuffer, .offset = 0 }, 1);
+        SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding){ .buffer = EffectIndexBuffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+        SDL_BindGPUFragmentSamplers(renderPass, 0, (SDL_GPUTextureSamplerBinding[]){
+            { .texture = SceneTransparencyTexture, .sampler = EffectSampler },
+            { .texture = AuxTransparencyTexture, .sampler = AuxiliarySampler }
+        }, 2);
+        SDL_DrawGPUIndexedPrimitives(renderPass, 6, 1, 0, 0, 0);
+        SDL_EndGPURenderPass(renderPass);
       }
 
       { // draw outline
@@ -134,7 +186,7 @@ LEINAD_FCALL int leinad_render_world(){
         SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding){ .buffer = EffectIndexBuffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT);
         SDL_BindGPUFragmentSamplers(renderPass, 0, (SDL_GPUTextureSamplerBinding[]){
             { .texture = SceneColorTexture, .sampler = EffectSampler },
-            { .texture = SceneDepthTexture, .sampler = EffectSampler }
+            { .texture = SceneDepthTexture, .sampler = AuxiliarySampler }
         }, 2);
         SDL_DrawGPUIndexedPrimitives(renderPass, 6, 1, 0, 0, 0);
         SDL_EndGPURenderPass(renderPass);
@@ -175,12 +227,14 @@ LEINAD_FCALL int leinad_render_init() {
 }
 
 
-LEINAD_FCALL void leinad_render_end() {    
-    SDL_ReleaseGPUSampler(device, block_atlas.sampler);
-    SDL_ReleaseGPUTexture(device, block_atlas.texture);
+LEINAD_FCALL void leinad_render_end() {
+    if (block_atlas.sampler != NULL && device != NULL) SDL_ReleaseGPUSampler(device, block_atlas.sampler);
+    if (block_atlas.texture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, block_atlas.texture);
 
-    SDL_ReleaseGPUBuffer(device, chunk_test->mesh[0]->vertex);
-    SDL_ReleaseGPUBuffer(device, chunk_test->mesh[0]->index);
+    if (chunk_test == NULL) return;
+
+    if (chunk_test->mesh[0]->vertex != NULL && device != NULL) SDL_ReleaseGPUBuffer(device, chunk_test->mesh[0]->vertex);
+    if (chunk_test->mesh[0]->index != NULL && device != NULL) SDL_ReleaseGPUBuffer(device, chunk_test->mesh[0]->index);
 }
 
 LEINAD_AUX static int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32 tx_amount, int tx_w, int tx_h) {

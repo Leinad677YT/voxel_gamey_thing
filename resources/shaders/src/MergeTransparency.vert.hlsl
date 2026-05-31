@@ -16,6 +16,6 @@ struct Output {
 Output main(Input input) {
     Output output;
     output.TexCoord = input.TexCoord;
-    output.Position = mul(transform, float4(input.Position, 1.f));
+    output.Position = float4(input.Position, 1); // funny things happen when 4th value set to 0.5f
     return output;
 }

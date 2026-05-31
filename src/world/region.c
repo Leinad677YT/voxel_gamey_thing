@@ -1,5 +1,6 @@
 #include "../data/globals.h"
 #include "../libs/bit_manipulation.h"
+#include "../math/arithmetic.h"
 
 #include "region.h"
 #include "render.h"
@@ -609,52 +610,57 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                 // +y
                 if (
                     (y == (off_y+1) * LEINAD_MESH_RADIUS -1
-                 || !(~leinad_get_block_data(_block(x,y+1,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
-                 )&& !(
+                 || (
+                    leinad_get_block_data(_block(x,y+1,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
+                  && !(
                         leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
                      && _block(x,y,z).id == _block(x,y+1,z).id
-                )) faces |= 0b000001;
+                )))) faces |= 0b000001;
                 
                 // -y
                 if (
                     (y == off_y * LEINAD_MESH_RADIUS
-                 || !(~leinad_get_block_data(_block(x,y-1,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
-                 )&& !(
+                 || (
+                    leinad_get_block_data(_block(x,y-1,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
+                  && !(
                         leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
                      && _block(x,y,z).id == _block(x,y-1,z).id
-                )) faces |= 0b000010;
+                )))) faces |= 0b000010;
 
                 // +z
                 if (
                     (z == (off_z+1) * LEINAD_MESH_RADIUS -1
-                 || !(~leinad_get_block_data(_block(x,y,z+1).id).flags & LEINAD_BLOCKFLAG_hastransparency)
-                 )&& !(
+                 || (
+                    leinad_get_block_data(_block(x,y,z+1).id).flags & LEINAD_BLOCKFLAG_hastransparency
+                  && !(
                         leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
                      && _block(x,y,z).id == _block(x,y,z+1).id
-                )) faces |= 0b000100;
+                )))) faces |= 0b000100;
                 
                 // -z
                 if (
                     (z == off_z * LEINAD_MESH_RADIUS
-                 || !(~leinad_get_block_data(_block(x,y,z-1).id).flags & LEINAD_BLOCKFLAG_hastransparency)
-                 )&& !(
+                 || (
+                    leinad_get_block_data(_block(x,y,z-1).id).flags & LEINAD_BLOCKFLAG_hastransparency
+                  && !(
                         leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
                      && _block(x,y,z).id == _block(x,y,z-1).id
-                )) faces |= 0b001000;
+                )))) faces |= 0b001000;
 
                 // +x
                 if (
                     (x == (off_x+1) * LEINAD_MESH_RADIUS -1
-                 || !(~leinad_get_block_data(_block(x+1,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
-                 )&& !(
+                 || (
+                    leinad_get_block_data(_block(x+1,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
+                  && !(
                         leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
                      && _block(x,y,z).id == _block(x+1,y,z).id
-                )) faces |= 0b010000;
+                )))) faces |= 0b010000;
                 
                 // -x
                 if (
                     (x == off_x * LEINAD_MESH_RADIUS
-                 || !(~leinad_get_block_data(_block(x-1,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
+                 || (leinad_get_block_data(_block(x-1,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
                  )&& !(
                         leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
                      && _block(x,y,z).id == _block(x-1,y,z).id
@@ -728,7 +734,7 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
         }
     }
   }
-  { // create 
+  { // create buffers
     
     #define _aux chunk->mesh[off_y * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS+off_z * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS+ off_x]
     _aux->ind_unspecified = opaque_index_count[0]+transparent_index_count[0];
@@ -774,22 +780,22 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
 
     // measured with 0 as the base index
     Uint32 idx_i_opaque[7] = {
-        0, 
-        opaque_index_count[0],
-        opaque_index_count[0] + opaque_index_count[1],
-        opaque_index_count[0] + opaque_index_count[1] + opaque_index_count[2],
-        opaque_index_count[0] + opaque_index_count[1] + opaque_index_count[2] + opaque_index_count[3],
-        opaque_index_count[0] + opaque_index_count[1] + opaque_index_count[2] + opaque_index_count[3] + opaque_index_count[4],
-        opaque_index_count[0] + opaque_index_count[1] + opaque_index_count[2] + opaque_index_count[3] + opaque_index_count[4] + opaque_index_count[5],
+        /*any*/0, 
+        /*-x*/opaque_index_count[0],
+        /*+x*/opaque_index_count[0] + opaque_index_count[1],
+        /*-z*/opaque_index_count[0] + opaque_index_count[1] + opaque_index_count[2],
+        /*+z*/opaque_index_count[0] + opaque_index_count[1] + opaque_index_count[2] + opaque_index_count[3],
+        /*-y*/opaque_index_count[0] + opaque_index_count[1] + opaque_index_count[2] + opaque_index_count[3] + opaque_index_count[4],
+        /*+y*/opaque_index_count[0] + opaque_index_count[1] + opaque_index_count[2] + opaque_index_count[3] + opaque_index_count[4] + opaque_index_count[5],
     };
     Uint32 idx_i_transparent[7] = {
-        idx_i_opaque[6] + opaque_index_count[6],
-        idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0],
-        idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0] + transparent_index_count[1],
-        idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0] + transparent_index_count[1] + transparent_index_count[2],
-        idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0] + transparent_index_count[1] + transparent_index_count[2] + transparent_index_count[3],
-        idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0] + transparent_index_count[1] + transparent_index_count[2] + transparent_index_count[3] + transparent_index_count[4],
-        idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0] + transparent_index_count[1] + transparent_index_count[2] + transparent_index_count[3] + transparent_index_count[4] + transparent_index_count[5],
+        /*any*/idx_i_opaque[6] + opaque_index_count[6],
+        /*-x*/idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0],
+        /*+x*/idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0] + transparent_index_count[1],
+        /*-z*/idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0] + transparent_index_count[1] + transparent_index_count[2],
+        /*+z*/idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0] + transparent_index_count[1] + transparent_index_count[2] + transparent_index_count[3],
+        /*-y*/idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0] + transparent_index_count[1] + transparent_index_count[2] + transparent_index_count[3] + transparent_index_count[4],
+        /*+y*/idx_i_opaque[6] + opaque_index_count[6] + transparent_index_count[0] + transparent_index_count[1] + transparent_index_count[2] + transparent_index_count[3] + transparent_index_count[4] + transparent_index_count[5],
     };
 
         SDL_GPUTransferBufferCreateInfo createinfo = {
@@ -831,63 +837,71 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                     (leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_isfullblock)
                 ) {
                     // for every face
-                    // 1st if outside range, or collides with opaque SKIP
-                    // 2nd cull if block is opaque
-                    // 3rd if transparency, decide if should draw (!contiguous or not)
+                    // if 
+                    //   faces outside chunk 
+                    //   OR collides with opaque
+                    //   OR contiguous block is same and has continuity
+                    // SKIP
 
                     // +y
                     if (
                         (y == (off_y+1) * LEINAD_MESH_RADIUS -1
-                        || !(~leinad_get_block_data(_block(x,y+1,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
-                        )&& !(
+                        || (
+                            leinad_get_block_data(_block(x,y+1,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
+                         && !(
                             leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
                             && _block(x,y,z).id == _block(x,y+1,z).id
-                    )) faces[0] |= 0b000001;
+                    )))) faces[0] |= 0b000001;
                     
                     // -y
                     if (
                         (y == off_y * LEINAD_MESH_RADIUS
-                        || !(~leinad_get_block_data(_block(x,y-1,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
-                        )&& !(
+                        || (
+                            leinad_get_block_data(_block(x,y-1,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
+                         && !(
                             leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
                             && _block(x,y,z).id == _block(x,y-1,z).id
-                    )) faces[0] |= 0b000010;
+                    )))) faces[0] |= 0b000010;
 
                     // +z
                     if (
                         (z == (off_z+1) * LEINAD_MESH_RADIUS -1
-                        || !(~leinad_get_block_data(_block(x,y,z+1).id).flags & LEINAD_BLOCKFLAG_hastransparency)
-                        )&& !(
+                        || (
+                            leinad_get_block_data(_block(x,y,z+1).id).flags & LEINAD_BLOCKFLAG_hastransparency
+                         && !(
                             leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
                             && _block(x,y,z).id == _block(x,y,z+1).id
-                    )) faces[0] |= 0b000100;
+                    )))) faces[0] |= 0b000100;
                     
                     // -z
                     if (
                         (z == off_z * LEINAD_MESH_RADIUS
-                        || !(~leinad_get_block_data(_block(x,y,z-1).id).flags & LEINAD_BLOCKFLAG_hastransparency)
-                        )&& !(
+                        ||  (
+                            leinad_get_block_data(_block(x,y,z-1).id).flags & LEINAD_BLOCKFLAG_hastransparency
+                         && !(
                             leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
                             && _block(x,y,z).id == _block(x,y,z-1).id
-                    )) faces[0] |= 0b001000;
+                    )))) faces[0] |= 0b001000;
 
                     // +x
                     if (
                         (x == (off_x+1) * LEINAD_MESH_RADIUS -1
-                        || !(~leinad_get_block_data(_block(x+1,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
-                        )&& !(
+                        || (
+                            leinad_get_block_data(_block(x+1,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
+                         && !(
                             leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
                             && _block(x,y,z).id == _block(x+1,y,z).id
-                    )) faces[0] |= 0b010000;
+                    )))) faces[0] |= 0b010000;
                     
                     // -x
                     if (
                         (x == off_x * LEINAD_MESH_RADIUS
-                        || !(~leinad_get_block_data(_block(x-1,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency)
-                        )&& !(
+                        || (
+                            leinad_get_block_data(_block(x-1,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
+                         && !(
                             leinad_get_block_data(_block(x,y,z).id).flags & LEINAD_BLOCKFLAG_iscontiguous
                             && _block(x,y,z).id == _block(x-1,y,z).id
-                    )) faces[0] |= 0b100000;
+                    )))) faces[0] |= 0b100000;
 
                     // custom placement (directional textures)
                     if (
@@ -953,10 +967,6 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                                 transferData[idx_v_transparent+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
                                 transferData[idx_v_transparent+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
                                 transferData[idx_v_transparent+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
-                                SDL_Log("u: %f, v: %f",
-                                    _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index),
-                                    _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index)
-                                );
 
                                 // index
                                 indexData[idx_i_transparent[2]+0] = idx_v_transparent +0;
@@ -1253,3 +1263,75 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
 }
 
 #undef _block
+
+
+
+LEINAD_FRENDER void leinad_chunk_render_opaque(leinad_chunk_t *chunk, void* ptr){
+    struct _chunkrenderdata* data = ptr;
+
+    // if chunk is not loaded, skip
+    if (chunk == NULL) return;
+
+    for(int mesh_id = 0; mesh_id < raise3(LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS); mesh_id++){
+
+        // if chunk is not meshed or mesh doesn't have vertices, skip
+        if (chunk->mesh[mesh_id] == NULL || chunk->mesh[mesh_id]->vertex == NULL) continue;
+
+        SDL_BindGPUVertexBuffers(data->renderpass, 0, &(SDL_GPUBufferBinding){.buffer = chunk->mesh[mesh_id]->vertex, .offset = 0 },1);
+        SDL_BindGPUFragmentSamplers(
+            data->renderpass, 0,
+            (SDL_GPUTextureSamplerBinding[]){
+                { .texture = block_atlas.texture, .sampler = block_atlas.sampler }
+            }, 1
+        );
+
+        // if (data->viewvec.x < 0 && chunk->mesh[mesh_id]->index_directional[0] != NULL) { // -x
+        //     SDL_BindGPUIndexBuffer(data->renderpass, &(SDL_GPUBufferBinding){ .buffer = chunk->mesh[mesh_id]->index_directional[0], .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+
+
+        //     SDL_DrawGPUIndexedPrimitives(data->renderpass, chunk->mesh[mesh_id]->ind_x_ 
+        //         , 1, 0, 0, 0);
+
+        // }
+        
+        SDL_BindGPUIndexBuffer(data->renderpass, &(SDL_GPUBufferBinding){ .buffer = chunk->mesh[mesh_id]->index, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+
+
+        SDL_BindGPUFragmentSamplers(data->renderpass, 0, (SDL_GPUTextureSamplerBinding[]){
+            { .texture = block_atlas.texture, .sampler = block_atlas.sampler }
+        }, 1);
+        SDL_DrawGPUIndexedPrimitives(data->renderpass, 0+
+                chunk->mesh[0]->ind_unspecified + chunk->mesh[0]->ind_x + chunk->mesh[0]->ind_x_ + chunk->mesh[0]->ind_z 
+            + chunk->mesh[0]->ind_z_ + chunk->mesh[0]->ind_y + chunk->mesh[0]->ind_y_ 
+            , 1, 0, 0, 0);
+
+    }
+
+}
+
+LEINAD_FRENDER void leinad_chunk_render_transparent(leinad_chunk_t *chunk, void* ptr){
+    struct _chunkrenderdata* data = ptr;
+
+    // if chunk is not loaded, skip
+    if (chunk == NULL) return;
+
+    for(int mesh_id = 0; mesh_id < raise3(LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS); mesh_id++){
+
+        // if chunk is not meshed or mesh doesn't have vertices, skip
+        if (chunk->mesh[mesh_id] == NULL || chunk->mesh[mesh_id]->vertex == NULL) continue;
+
+        SDL_BindGPUVertexBuffers(data->renderpass, 0, &(SDL_GPUBufferBinding){.buffer = chunk->mesh[0]->vertex, .offset = 0 },1);
+        SDL_BindGPUIndexBuffer(data->renderpass, &(SDL_GPUBufferBinding){ .buffer = chunk->mesh[0]->index, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+
+
+        SDL_BindGPUFragmentSamplers(data->renderpass, 0, (SDL_GPUTextureSamplerBinding[]){
+            { .texture = block_atlas.texture, .sampler = block_atlas.sampler }
+        }, 1);
+        SDL_DrawGPUIndexedPrimitives(data->renderpass, 0+
+                chunk->mesh[0]->ind_unspecified + chunk->mesh[0]->ind_x + chunk->mesh[0]->ind_x_ + chunk->mesh[0]->ind_z 
+            + chunk->mesh[0]->ind_z_ + chunk->mesh[0]->ind_y + chunk->mesh[0]->ind_y_ 
+            , 1, 0, 0, 0);
+
+    }
+
+}

@@ -1,7 +1,9 @@
 #pragma once
 
 #include <SDL3/SDL.h>
+#include "../data/types.h"
 #include "../data/tags.h"
+#include "../math/matrix.h"
 
 #include "block.h"
 
@@ -66,6 +68,8 @@ typedef struct leinad_region {
 struct chunk_mesh {
     SDL_GPUBuffer* vertex;
     SDL_GPUBuffer* index;
+    SDL_GPUBuffer* index_directional[6]; // -x +x -z +z -y +y
+
     Uint32 vert_o_count,vert_t_count;
     Uint32 ind_x,ind_x_, ind_y,ind_y_, ind_z,ind_z_, ind_unspecified;
 };
@@ -89,3 +93,14 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
 LEINAD_FBUILDER leinad_region_t* leinad_region_create_empty();
 
 LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short off_x, short off_y, short off_z);
+
+
+struct _chunkrenderdata {
+    SDL_GPURenderPass* renderpass;
+    struct leinad_position pos;
+    vec3 viewvec;
+};
+
+LEINAD_FRENDER void leinad_chunk_render_opaque(leinad_chunk_t *chunk, void* data);
+
+LEINAD_FRENDER void leinad_chunk_render_transparent(leinad_chunk_t *chunk, void* data);

@@ -73,3 +73,4 @@ void* leinad_dequeue(leinad_queue_t* queue) {
     return x;
 }
 
+#undef next

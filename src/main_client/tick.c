@@ -17,7 +17,7 @@ SDL_AppResult SDL_AppIterate( __attribute__ ((unused)) void *appstate) {
 
 
   { // render world
-    ENFORCE(leinad_render_world());
+    ENFORCE(leinad_render_world((struct leinad_position){pos_x,pos_y,pos_z},(vec3){-pos_x,-pos_y,-pos_z}));
   }
 
 

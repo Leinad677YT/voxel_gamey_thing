@@ -2,6 +2,8 @@
 
 #include <SDL3/SDL_gpu.h>
 #include "../data/tags.h"
+#include "../data/types.h"
+#include "../math/matrix.h"
 
 #define LEINAD_TEXTURE_RADIUS 16
 
@@ -20,7 +22,7 @@ static struct render_atlas block_atlas= {
 };
 
 
-LEINAD_FCALL int leinad_render_world();
+LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec);
 
 LEINAD_FCALL int leinad_render_init();
 LEINAD_FCALL void leinad_render_end();

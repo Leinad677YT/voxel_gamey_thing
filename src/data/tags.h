@@ -32,3 +32,6 @@
 
 #define LEINAD_FGET
     // Gets data from an obj*ct
+
+#define LEINAD_FRENDER
+    // Renders an obj*ct

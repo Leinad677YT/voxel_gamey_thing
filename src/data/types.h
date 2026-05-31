@@ -2,6 +2,27 @@
 
 #include <SDL3/SDL.h>
 
+// gameplay related
+
+struct leinad_position {
+    double x, y, z;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// generic vertex data
+
 typedef struct PositionVertex
 {
 	float x, y, z;

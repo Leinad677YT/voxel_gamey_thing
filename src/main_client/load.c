@@ -95,7 +95,7 @@ SDL_AppResult SDL_AppInit(
   }
 
   if (INIT_render()) {
-        SDL_Log("Couldn't init rendering shaders: %s", SDL_GetError());
+        SDL_Log("Couldn't init rendering shaders\n > SDL_ERRROR [%s]", SDL_GetError());
         return SDL_APP_FAILURE;
     }
 

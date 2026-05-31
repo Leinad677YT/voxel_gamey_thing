@@ -9,6 +9,22 @@ typedef enum {
     LEINAD_BLOCK_STONE = 0,
     LEINAD_BLOCK_AIR,
     LEINAD_BLOCK_GLASS,
+    LEINAD_BLOCK_WHITE_STAINED_GLASS,
+    LEINAD_BLOCK_LIGHT_GRAY_STAINED_GLASS,
+    LEINAD_BLOCK_GRAY_STAINED_GLASS,
+    LEINAD_BLOCK_BLACK_STAINED_GLASS,
+    LEINAD_BLOCK_BROWN_STAINED_GLASS,
+    LEINAD_BLOCK_RED_STAINED_GLASS,
+    LEINAD_BLOCK_ORANGE_STAINED_GLASS,
+    LEINAD_BLOCK_YELLOW_STAINED_GLASS,
+    LEINAD_BLOCK_LIME_STAINED_GLASS,
+    LEINAD_BLOCK_GREEN_STAINED_GLASS,
+    LEINAD_BLOCK_CYAN_STAINED_GLASS,
+    LEINAD_BLOCK_BLUE_STAINED_GLASS,
+    LEINAD_BLOCK_LIGHT_BLUE_STAINED_GLASS,
+    LEINAD_BLOCK_PINK_STAINED_GLASS,
+    LEINAD_BLOCK_MAGENTA_STAINED_GLASS,
+    LEINAD_BLOCK_PURPLE_STAINED_GLASS,
     LEINAD_BLOCK_end,
     
     LEINAD_BLOCK_default = LEINAD_BLOCK_end,
@@ -23,9 +39,22 @@ typedef enum {
     LEINAD_BLOCKTX_init   = 0,
     LEINAD_BLOCKTX_STONE = 0,
     LEINAD_BLOCKTX_GLASS,
-    LEINAD_BLOCKTX_debUG1,
-    LEINAD_BLOCKTX_debUG2,
-    LEINAD_BLOCKTX_debUG3,
+    LEINAD_BLOCKTX_WHITE_STAINED_GLASS,
+    LEINAD_BLOCKTX_LIGHT_GRAY_STAINED_GLASS,
+    LEINAD_BLOCKTX_GRAY_STAINED_GLASS,
+    LEINAD_BLOCKTX_BLACK_STAINED_GLASS,
+    LEINAD_BLOCKTX_BROWN_STAINED_GLASS,
+    LEINAD_BLOCKTX_RED_STAINED_GLASS,
+    LEINAD_BLOCKTX_ORANGE_STAINED_GLASS,
+    LEINAD_BLOCKTX_YELLOW_STAINED_GLASS,
+    LEINAD_BLOCKTX_LIME_STAINED_GLASS,
+    LEINAD_BLOCKTX_GREEN_STAINED_GLASS,
+    LEINAD_BLOCKTX_CYAN_STAINED_GLASS,
+    LEINAD_BLOCKTX_BLUE_STAINED_GLASS,
+    LEINAD_BLOCKTX_LIGHT_BLUE_STAINED_GLASS,
+    LEINAD_BLOCKTX_PINK_STAINED_GLASS,
+    LEINAD_BLOCKTX_MAGENTA_STAINED_GLASS,
+    LEINAD_BLOCKTX_PURPLE_STAINED_GLASS,
     LEINAD_BLOCKTX_end,
     
     LEINAD_BLOCKTX_default = LEINAD_BLOCKTX_end,
@@ -92,9 +121,154 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
     { // LEINAD_BLOCK_GLASS
         .flags = LEINAD_BLOCKFLAG_default
                | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
             .tx_index = LEINAD_BLOCKTX_GLASS
+        }
+    },
+    { // LEINAD_BLOCK_WHITE_STAINED_GLASS
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
+               | LEINAD_BLOCKFLAG_hastransparency,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_WHITE_STAINED_GLASS
+        }
+    },
+    { // LEINAD_BLOCK_LIGHT_GRAY_STAINED_GLASS
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
+               | LEINAD_BLOCKFLAG_hastransparency,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_LIGHT_GRAY_STAINED_GLASS
+        }
+    },
+    { // LEINAD_BLOCK_GRAY_STAINED_GLASS
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
+               | LEINAD_BLOCKFLAG_hastransparency,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_GRAY_STAINED_GLASS
+        }
+    },
+    { // LEINAD_BLOCK_BLACK_STAINED_GLASS
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
+               | LEINAD_BLOCKFLAG_hastransparency,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_BLACK_STAINED_GLASS
+        }
+    },
+    { // LEINAD_BLOCK_BROWN_STAINED_GLASS
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
+               | LEINAD_BLOCKFLAG_hastransparency,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_BROWN_STAINED_GLASS
+        }
+    },
+    { // LEINAD_BLOCK_RED_STAINED_GLASS
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
+               | LEINAD_BLOCKFLAG_hastransparency,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_RED_STAINED_GLASS
+        }
+    },
+    { // LEINAD_BLOCK_ORANGE_STAINED_GLASS
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
+               | LEINAD_BLOCKFLAG_hastransparency,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_ORANGE_STAINED_GLASS
+        }
+    },
+    { // LEINAD_BLOCK_YELLOW_STAINED_GLASS
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
+               | LEINAD_BLOCKFLAG_hastransparency,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_YELLOW_STAINED_GLASS
+        }
+    },
+    { // LEINAD_BLOCK_LIME_STAINED_GLASS
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
+               | LEINAD_BLOCKFLAG_hastransparency,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_LIME_STAINED_GLASS
+        }
+    },
+    { // LEINAD_BLOCK_GREEN_STAINED_GLASS
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
+               | LEINAD_BLOCKFLAG_hastransparency,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_GREEN_STAINED_GLASS
+        }
+    },
+    { // LEINAD_BLOCK_CYAN_STAINED_GLASS
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
+               | LEINAD_BLOCKFLAG_hastransparency,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_CYAN_STAINED_GLASS
+        }
+    },
+    { // LEINAD_BLOCK_BLUE_STAINED_GLASS
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
+               | LEINAD_BLOCKFLAG_hastransparency,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_BLUE_STAINED_GLASS
+        }
+    },
+    { // LEINAD_BLOCK_LIGHT_BLUE_STAINED_GLASS
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
+               | LEINAD_BLOCKFLAG_hastransparency,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_LIGHT_BLUE_STAINED_GLASS
+        }
+    },
+    { // LEINAD_BLOCK_PINK_STAINED_GLASS
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
+               | LEINAD_BLOCKFLAG_hastransparency,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_PINK_STAINED_GLASS
+        }
+    },
+    { // LEINAD_BLOCK_MAGENTA_STAINED_GLASS
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
+               | LEINAD_BLOCKFLAG_hastransparency,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_MAGENTA_STAINED_GLASS
+        }
+    },
+    { // LEINAD_BLOCK_PURPLE_STAINED_GLASS
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock
+               | LEINAD_BLOCKFLAG_iscontiguous
+               | LEINAD_BLOCKFLAG_hastransparency,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_PURPLE_STAINED_GLASS
         }
     },
     
