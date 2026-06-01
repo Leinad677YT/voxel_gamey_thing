@@ -68,6 +68,11 @@ struct block_vertex {
      * Texture coordinates on the atlas
      */
     float u,v;
+
+    /**
+     * Color of the outline effect
+     */
+    float r,g,b,a;
 };
 
 /**

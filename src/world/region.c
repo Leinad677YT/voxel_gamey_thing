@@ -943,10 +943,42 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                             if (faces[0] & 0b100000) { // -x
                                 
                                 // vertex
-                                transferData[idx_v_transparent+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_transparent+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_transparent+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
-                                transferData[idx_v_transparent+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
+                                transferData[idx_v_transparent+0] = (struct block_vertex) {
+                                    .x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                    .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                };
+                                transferData[idx_v_transparent+1] = (struct block_vertex) {
+                                    .x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                    .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                };
+                                transferData[idx_v_transparent+2] = (struct block_vertex) {
+                                    .x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                    .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                };
+                                transferData[idx_v_transparent+3] = (struct block_vertex) {
+                                    .x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                    .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                };
 
                                 // index
                                 indexData[idx_i_transparent[1]+0] = idx_v_transparent +0;
@@ -963,10 +995,38 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                             };
                             if (faces[0] & 0b010000) { // +x
                                 // vertex
-                                transferData[idx_v_transparent+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_transparent+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_transparent+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
-                                transferData[idx_v_transparent+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
+                                transferData[idx_v_transparent+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_transparent+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_transparent+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_transparent+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                    .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                };
 
                                 // index
                                 indexData[idx_i_transparent[2]+0] = idx_v_transparent +0;
@@ -984,10 +1044,38 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                             if (faces[0] & 0b001000) { // -z
 
                                 // vertex
-                                transferData[idx_v_transparent+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_transparent+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
-                                transferData[idx_v_transparent+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_transparent+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
+                                transferData[idx_v_transparent+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_transparent+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_transparent+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_transparent+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
 
                                 // index
                                 indexData[idx_i_transparent[3]+0] = idx_v_transparent +0;
@@ -1005,10 +1093,38 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                             if (faces[0] & 0b000100) { // +z
 
                                 // vertex
-                                transferData[idx_v_transparent+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_transparent+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
-                                transferData[idx_v_transparent+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_transparent+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
+                                transferData[idx_v_transparent+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_transparent+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_transparent+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_transparent+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
 
                                 // index
                                 indexData[idx_i_transparent[4]+0] = idx_v_transparent +0;
@@ -1026,10 +1142,38 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                             if (faces[0] & 0b000010) { // -y
 
                                 // vertex
-                                transferData[idx_v_transparent+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_transparent+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_transparent+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
-                                transferData[idx_v_transparent+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
+                                transferData[idx_v_transparent+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_transparent+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_transparent+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_transparent+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
 
                                 // index
                                 indexData[idx_i_transparent[5]+0] = idx_v_transparent +0;
@@ -1047,10 +1191,38 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                             if (faces[0] & 0b000001) { // +y
 
                                 // vertex
-                                transferData[idx_v_transparent+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_transparent+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_transparent+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
-                                transferData[idx_v_transparent+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
+                                transferData[idx_v_transparent+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_transparent+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_transparent+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_transparent+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
 
                                 // index
                                 indexData[idx_i_transparent[6]+0] = idx_v_transparent +0;
@@ -1073,10 +1245,38 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
 
                                 
                                 // vertex
-                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
-                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
+                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
 
                                 // index
                                 indexData[idx_i_opaque[1]+0] = idx_v_opaque +0;
@@ -1094,10 +1294,38 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                             if (faces[0] & 0b010000) { // +x
 
                                 // vertex
-                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
-                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
+                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
 
                                 // index
                                 indexData[idx_i_opaque[2]+0] = idx_v_opaque +0;
@@ -1115,10 +1343,38 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                             if (faces[0] & 0b001000) { // -z
 
                                 // vertex
-                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
-                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
+                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
 
                                 // index
                                 indexData[idx_i_opaque[3]+0] = idx_v_opaque +0;
@@ -1136,10 +1392,38 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                             if (faces[0] & 0b000100) { // +z
 
                                 // vertex
-                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
-                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
+                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
 
                                 // index
                                 indexData[idx_i_opaque[4]+0] = idx_v_opaque +0;
@@ -1157,10 +1441,38 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                             if (faces[0] & 0b000010) { // -y
 
                                 // vertex
-                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
-                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
+                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
 
                                 // index
                                 indexData[idx_i_opaque[5]+0] = idx_v_opaque +0;
@@ -1178,10 +1490,38 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
                             if (faces[0] & 0b000001) { // +y
 
                                 // vertex
-                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width)};
-                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f, .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
-                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1), .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width), .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f};
+                                transferData[idx_v_opaque+0] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
+                                transferData[idx_v_opaque+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
+                                    .u = _block_texture_u(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + (1.f/block_atlas.width),
+                                    .v = _block_texture_v(leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.tx_index) + 0.0f,
+                                   .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
+                                   .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
+                                   .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
+                                   .a=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.a
+                                   };
 
                                 // index
                                 indexData[idx_i_opaque[6]+0] = idx_v_opaque +0;
@@ -1310,6 +1650,33 @@ LEINAD_FRENDER void leinad_chunk_render_opaque(leinad_chunk_t *chunk, void* ptr)
 }
 
 LEINAD_FRENDER void leinad_chunk_render_transparent(leinad_chunk_t *chunk, void* ptr){
+    struct _chunkrenderdata* data = ptr;
+
+    // if chunk is not loaded, skip
+    if (chunk == NULL) return;
+
+    for(int mesh_id = 0; mesh_id < raise3(LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS); mesh_id++){
+
+        // if chunk is not meshed or mesh doesn't have vertices, skip
+        if (chunk->mesh[mesh_id] == NULL || chunk->mesh[mesh_id]->vertex == NULL) continue;
+
+        SDL_BindGPUVertexBuffers(data->renderpass, 0, &(SDL_GPUBufferBinding){.buffer = chunk->mesh[0]->vertex, .offset = 0 },1);
+        SDL_BindGPUIndexBuffer(data->renderpass, &(SDL_GPUBufferBinding){ .buffer = chunk->mesh[0]->index, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+
+
+        SDL_BindGPUFragmentSamplers(data->renderpass, 0, (SDL_GPUTextureSamplerBinding[]){
+            { .texture = block_atlas.texture, .sampler = block_atlas.sampler }
+        }, 1);
+        SDL_DrawGPUIndexedPrimitives(data->renderpass, 0+
+                chunk->mesh[0]->ind_unspecified + chunk->mesh[0]->ind_x + chunk->mesh[0]->ind_x_ + chunk->mesh[0]->ind_z 
+            + chunk->mesh[0]->ind_z_ + chunk->mesh[0]->ind_y + chunk->mesh[0]->ind_y_ 
+            , 1, 0, 0, 0);
+
+    }
+
+}
+
+LEINAD_FRENDER void leinad_chunk_render_front(leinad_chunk_t *chunk, void* ptr){
     struct _chunkrenderdata* data = ptr;
 
     // if chunk is not loaded, skip

@@ -6,6 +6,7 @@ cbuffer UBO : register(b0, space1)
 struct Input {
     float3 Position : TEXCOORD0;
     float2 TexCoord : TEXCOORD1;
+    float4 BGColor : COLOR0;
 };
 
 struct Output {

@@ -7,8 +7,12 @@
 
 extern int leinad_render2_ui();
 
+
 SDL_AppResult SDL_AppIterate( __attribute__ ((unused)) void *appstate) {
     
+static struct test {double a;int b;} times[20] = {0};
+static int i = {0};
+static int frames = 0;
     
     //   { // set render background
     //     SDL_SetRenderDrawColorFloat(renderer, 0, 0, 0, SDL_ALPHA_TRANSPARENT_FLOAT);
@@ -26,7 +30,7 @@ SDL_AppResult SDL_AppIterate( __attribute__ ((unused)) void *appstate) {
 
 //     SDL_RenderPresent(renderer);
 //   }  
-
+  frames++;
   { // check the time since last tick
     current_ns = SDL_GetTicksNS();
 
@@ -35,8 +39,6 @@ SDL_AppResult SDL_AppIterate( __attribute__ ((unused)) void *appstate) {
     pos_x+= toadd_x / 32.0 ;
     pos_y+= toadd_y / 32.0;
     pos_z+= toadd_z / 32.0;
-
-
 
 previous_ns = current_ns;
 return SDL_APP_CONTINUE;

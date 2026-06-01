@@ -19,9 +19,12 @@ void SDL_AppQuit(
     if (ScenePipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device, ScenePipeline);
     if (TransparencyPipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device, TransparencyPipeline);
     if (AuxTransparencyPipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device, AuxTransparencyPipeline);
+    if (FrontPipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device, FrontPipeline);
     if (SceneColorTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, SceneColorTexture);
     if (SceneTransparencyTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, SceneTransparencyTexture);
     if (AuxTransparencyTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, AuxTransparencyTexture);
+    if (FrontTransparencyTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, FrontTransparencyTexture);
+    if (FrontBGTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, FrontBGTexture);
     if (SceneDepthTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, SceneDepthTexture);
 
     if (EffectPipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device, EffectPipeline);
@@ -29,6 +32,7 @@ void SDL_AppQuit(
     if (EffectIndexBuffer != NULL && device != NULL) SDL_ReleaseGPUBuffer(device, EffectIndexBuffer);
     if (EffectSampler != NULL && device != NULL) SDL_ReleaseGPUSampler(device, EffectSampler);
     if (AuxiliarySampler != NULL && device != NULL) SDL_ReleaseGPUSampler(device, AuxiliarySampler);
+    if (Auxiliary2Sampler != NULL && device != NULL) SDL_ReleaseGPUSampler(device, Auxiliary2Sampler);
 
     if (window != NULL && device != NULL) SDL_ReleaseWindowFromGPUDevice(device, window);
 

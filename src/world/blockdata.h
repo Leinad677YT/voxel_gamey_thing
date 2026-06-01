@@ -86,11 +86,13 @@ struct block {
 
         struct full_single_texture {
             Uint32 tx_index;
+            float r,g,b,a;
         } full_single_texture;
 
         struct full_multiple_texture {
             // y, -y, z, -z, x, -x
             Uint32 tx_index[6];
+            float r,g,b,a;
         } full_multiple_texture;
     
     } data;
@@ -106,7 +108,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
         .flags = LEINAD_BLOCKFLAG_default
                | LEINAD_BLOCKFLAG_isfullblock,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_STONE
+            .tx_index = LEINAD_BLOCKTX_STONE,
+            0.2f,0.2f,0.2f,1.f
         }
     },
     { // LEINAD_BLOCK_AIR
@@ -115,7 +118,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_hastransparency
                | LEINAD_BLOCKFLAG_istransparent,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_invalid
+            .tx_index = LEINAD_BLOCKTX_invalid,
+            1.f,1.f,1.f,1.f
         }
     },
     { // LEINAD_BLOCK_GLASS
@@ -124,7 +128,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_GLASS
+            .tx_index = LEINAD_BLOCKTX_GLASS,
+            1.f,1.f,1.f,1.f
         }
     },
     { // LEINAD_BLOCK_WHITE_STAINED_GLASS
@@ -133,7 +138,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_WHITE_STAINED_GLASS
+            .tx_index = LEINAD_BLOCKTX_WHITE_STAINED_GLASS,
+            1.f,1.f,1.f,1.f
         }
     },
     { // LEINAD_BLOCK_LIGHT_GRAY_STAINED_GLASS
@@ -142,7 +148,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_LIGHT_GRAY_STAINED_GLASS
+            .tx_index = LEINAD_BLOCKTX_LIGHT_GRAY_STAINED_GLASS,
+            0.8f,0.8f,0.8f,1.f
         }
     },
     { // LEINAD_BLOCK_GRAY_STAINED_GLASS
@@ -151,7 +158,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_GRAY_STAINED_GLASS
+            .tx_index = LEINAD_BLOCKTX_GRAY_STAINED_GLASS,
+            0.5f,0.5f,0.5f,1.f
         }
     },
     { // LEINAD_BLOCK_BLACK_STAINED_GLASS
@@ -160,7 +168,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_BLACK_STAINED_GLASS
+            .tx_index = LEINAD_BLOCKTX_BLACK_STAINED_GLASS,
+            0.1f,0.1f,0.1f,1.f
         }
     },
     { // LEINAD_BLOCK_BROWN_STAINED_GLASS
@@ -169,7 +178,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_BROWN_STAINED_GLASS
+            .tx_index = LEINAD_BLOCKTX_BROWN_STAINED_GLASS,
+            0.7f,0.45f,0.3f,1.f
         }
     },
     { // LEINAD_BLOCK_RED_STAINED_GLASS
@@ -178,7 +188,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_RED_STAINED_GLASS
+            .tx_index = LEINAD_BLOCKTX_RED_STAINED_GLASS,
+            1.f,0.f,0.f,1.f
         }
     },
     { // LEINAD_BLOCK_ORANGE_STAINED_GLASS
@@ -187,7 +198,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_ORANGE_STAINED_GLASS
+            .tx_index = LEINAD_BLOCKTX_ORANGE_STAINED_GLASS,
+            1.f,0.7f,0.f,1.f
         }
     },
     { // LEINAD_BLOCK_YELLOW_STAINED_GLASS
@@ -196,7 +208,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_YELLOW_STAINED_GLASS
+            .tx_index = LEINAD_BLOCKTX_YELLOW_STAINED_GLASS,
+            1.f,1.f,0.f,1.f
         }
     },
     { // LEINAD_BLOCK_LIME_STAINED_GLASS
@@ -205,7 +218,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_LIME_STAINED_GLASS
+            .tx_index = LEINAD_BLOCKTX_LIME_STAINED_GLASS,
+            0.7f,1.f,0.3f,1.f
         }
     },
     { // LEINAD_BLOCK_GREEN_STAINED_GLASS
@@ -214,7 +228,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_GREEN_STAINED_GLASS
+            .tx_index = LEINAD_BLOCKTX_GREEN_STAINED_GLASS,
+            0.f,1.f,0.2f,1.f
         }
     },
     { // LEINAD_BLOCK_CYAN_STAINED_GLASS
@@ -223,7 +238,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_CYAN_STAINED_GLASS
+            .tx_index = LEINAD_BLOCKTX_CYAN_STAINED_GLASS,
+            0.f,0.8f,0.8f,1.f
         }
     },
     { // LEINAD_BLOCK_BLUE_STAINED_GLASS
@@ -232,7 +248,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_BLUE_STAINED_GLASS
+            .tx_index = LEINAD_BLOCKTX_BLUE_STAINED_GLASS,
+            0.f,0.f,1.f,1.f
         }
     },
     { // LEINAD_BLOCK_LIGHT_BLUE_STAINED_GLASS
@@ -241,7 +258,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_LIGHT_BLUE_STAINED_GLASS
+            .tx_index = LEINAD_BLOCKTX_LIGHT_BLUE_STAINED_GLASS,
+            0.3f,0.4f,1.f,1.f
         }
     },
     { // LEINAD_BLOCK_PINK_STAINED_GLASS
@@ -250,7 +268,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_PINK_STAINED_GLASS
+            .tx_index = LEINAD_BLOCKTX_PINK_STAINED_GLASS,
+            1.f,0.7f,0.6f,1.f
         }
     },
     { // LEINAD_BLOCK_MAGENTA_STAINED_GLASS
@@ -259,7 +278,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_MAGENTA_STAINED_GLASS
+            .tx_index = LEINAD_BLOCKTX_MAGENTA_STAINED_GLASS,
+            1.f,0.0f,1.0f,1.f
         }
     },
     { // LEINAD_BLOCK_PURPLE_STAINED_GLASS
@@ -268,7 +288,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_iscontiguous
                | LEINAD_BLOCKFLAG_hastransparency,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_PURPLE_STAINED_GLASS
+            .tx_index = LEINAD_BLOCKTX_PURPLE_STAINED_GLASS,
+            0.6f,0.f,0.6f,1.f
         }
     },
     
@@ -279,7 +300,8 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_hastransparency
                | LEINAD_BLOCKFLAG_istransparent,
         .data.full_single_texture = {
-            .tx_index = LEINAD_BLOCKTX_NULL
+            .tx_index = LEINAD_BLOCKTX_NULL,
+            1.f,1.f,1.f,1.f
         }
     }
 };

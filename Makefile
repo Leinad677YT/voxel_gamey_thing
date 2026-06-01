@@ -3,6 +3,8 @@ shaders:
 	cd "./resources/shaders/src" && shadercross "DepthOutline.frag.hlsl" -o "../bin/DepthOutline.frag.spv"
 	cd "./resources/shaders/src" && shadercross "TexturedQuad.vert.hlsl" -o "../bin/TexturedQuad.vert.spv"
 	cd "./resources/shaders/src" && shadercross "TexturedQuad.frag.hlsl" -o "../bin/TexturedQuad.frag.spv"
+	cd "./resources/shaders/src" && shadercross "OutlineTexturedQuad.vert.hlsl" -o "../bin/OutlineTexturedQuad.vert.spv"
+	cd "./resources/shaders/src" && shadercross "OutlineTexturedQuad.frag.hlsl" -o "../bin/OutlineTexturedQuad.frag.spv"
 	cd "./resources/shaders/src" && shadercross "TransparentTexturedQuad.vert.hlsl" -o "../bin/TransparentTexturedQuad.vert.spv"
 	cd "./resources/shaders/src" && shadercross "TransparentTexturedQuad.frag.hlsl" -o "../bin/TransparentTexturedQuad.frag.spv"
 	cd "./resources/shaders/src" && shadercross "MergeTransparency.vert.hlsl" -o "../bin/MergeTransparency.vert.spv"

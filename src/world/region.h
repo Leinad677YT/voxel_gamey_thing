@@ -104,3 +104,5 @@ struct _chunkrenderdata {
 LEINAD_FRENDER void leinad_chunk_render_opaque(leinad_chunk_t *chunk, void* data);
 
 LEINAD_FRENDER void leinad_chunk_render_transparent(leinad_chunk_t *chunk, void* data);
+
+LEINAD_FRENDER void leinad_chunk_render_front(leinad_chunk_t *chunk, void* ptr);

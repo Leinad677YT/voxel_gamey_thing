@@ -40,3 +40,10 @@ typedef struct PositionTextureVertex
     float u, v;
 } PositionTextureVertex;
 
+typedef struct PositionTextureColorVertex
+{
+    float x, y, z;
+    float u, v;
+    float r,g,b,a;
+} PositionTextureColorVertex;
+

@@ -4,6 +4,9 @@ SamplerState ColorSampler : register(s0, space2);
 Texture2D DepthTexture : register(t1, space2);
 SamplerState DepthSampler : register(s1, space2);
 
+Texture2D BlockColorTexture : register(t2, space2);
+SamplerState BlockColorSampler : register(s2, space2);
+
 // Gets the difference between a depth value and adjacent depth pixels
 // This is used to detect "edges", where the depth falls off.
 float GetDifference(float depth, float2 TexCoord, float distance)
@@ -38,13 +41,11 @@ float4 main(float2 TexCoord : TEXCOORD0) : SV_Target0
 
     // get the difference between the edges at 1px and 2px away
     if (diff2 > 2E-10 && abs(2*diff2 - diff4) > diff4*0.875) {
-        edge = step(0.00025f, diff2);
-        edge2 = step(0.00025f, diff4);
+        // edge = step(0.00025f, diff2);
+        // edge2 = step(0.00025f, diff4);
+        
+        res = BlockColorTexture.Sample(BlockColorSampler,TexCoord).rgb;
 
-        // turn inner edges black
-        res = lerp(color.rgb, 0, edge2);
-        // turn the outer edges white
-        res = lerp(res, 1, edge2);
     }
     // combine results
     return float4(res, color.a);

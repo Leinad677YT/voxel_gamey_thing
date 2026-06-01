@@ -32,6 +32,9 @@ LEINAD_FCALL int INIT_render() {
     SDL_GPUShader* transparentTextureVertexShader = NULL;
     SDL_GPUShader* transparentTextureFragmentShader = NULL;
 
+    SDL_GPUShader* outlineTextureVertexShader = NULL;
+    SDL_GPUShader* outlineTextureFragmentShader = NULL;
+
     SDL_GPUShader* auxTransparentVertexShader = NULL;
     SDL_GPUShader* auxTransparentFragmentShader = NULL;
 
@@ -44,72 +47,97 @@ LEINAD_FCALL int INIT_render() {
         skyVertexShader = LoadShader(device, "Sky.vert", 0, 0, 0, 0);
         if (skyVertexShader == NULL) {
             SDL_Log("Failed to create 'Sky' vertex shader!");
-            failed = true; goto end_pipelines;
+            failed = true;
+            goto end_shaders;
         }
 
         // sky_frag
         skyFragmentShader = LoadShader(device, "Sky.frag", 0, 0, 0, 0);
         if (skyFragmentShader == NULL) {
             SDL_Log("Failed to create 'Sky' fragment shader!");
-            failed = true; goto end_pipelines;
+            failed = true;
+            goto end_shaders;
         }
         
         // texture_vert
         textureVertexShader = LoadShader(device, "TexturedQuad.vert", 0, 1, 0, 0);
         if (textureVertexShader == NULL) {
             SDL_Log("Failed to create 'TexturedQuad' vertex shader!");
-            failed = true; goto end_pipelines;
+            failed = true;
+            goto end_shaders;
         }
 
         // texture_frag
         textureFragmentShader = LoadShader(device, "TexturedQuad.frag", 1, 1, 0, 0);
         if (textureFragmentShader == NULL) {
             SDL_Log("Failed to create 'TexturedQuad' fragment shader!");
-            failed = true; goto end_pipelines;
+            failed = true;
+            goto end_shaders;
         }
 
         // transparent_texture_vert
         transparentTextureVertexShader = LoadShader(device, "TransparentTexturedQuad.vert", 0, 1, 0, 0);
         if (transparentTextureVertexShader == NULL) {
             SDL_Log("Failed to create 'TransparentTexturedQuad' vertex shader!");
-            failed = true; goto end_pipelines;
+            failed = true;
+            goto end_shaders;
         }
 
         // transparent_texture_frag
         transparentTextureFragmentShader = LoadShader(device, "TransparentTexturedQuad.frag", 1, 1, 0, 0);
         if (transparentTextureFragmentShader == NULL) {
             SDL_Log("Failed to create 'TransparentTexturedQuad' fragment shader!");
-            failed = true; goto end_pipelines;
+            failed = true;
+            goto end_shaders;
+        }
+
+        // outline_texture_vert
+        outlineTextureVertexShader = LoadShader(device, "OutlineTexturedQuad.vert", 0, 1, 0, 0);
+        if (outlineTextureVertexShader == NULL) {
+            SDL_Log("Failed to create 'OutlineTexturedQuad' vertex shader!");
+            failed = true;
+            goto end_shaders;
+        }
+
+        // outline_texture_frag
+        outlineTextureFragmentShader = LoadShader(device, "OutlineTexturedQuad.frag", 1, 1, 0, 0);
+        if (outlineTextureFragmentShader == NULL) {
+            SDL_Log("Failed to create 'OutlineTexturedQuad' fragment shader!");
+            failed = true;
+            goto end_shaders;
         }
 
         // aux_transparent_texture_vert
         auxTransparentVertexShader = LoadShader(device, "MergeTransparency.vert", 0, 1, 0, 0);
         if (auxTransparentVertexShader == NULL) {
             SDL_Log("Failed to create 'MergeTransparency' vertex shader!");
-            failed = true; goto end_pipelines;
+            failed = true;
+            goto end_shaders;
         }
 
         // aux_transparent_texture_frag
-        auxTransparentFragmentShader = LoadShader(device, "MergeTransparency.frag", 2, 0, 0, 0);
+        auxTransparentFragmentShader = LoadShader(device, "MergeTransparency.frag", 3, 0, 0, 0);
         if (auxTransparentFragmentShader == NULL) {
             SDL_Log("Failed to create 'MergeTransparency' fragment shader!");
-            failed = true; goto end_pipelines;
+            failed = true;
+            goto end_shaders;
         }
 
         // border_vert
         effectVertexShader = LoadShader(device, "DepthOutline.vert", 0, 1, 0, 0);
         if (effectVertexShader == NULL) {
             SDL_Log("Failed to create 'TexturedQuad' vertex shader!");
-            failed = true; goto end_pipelines;
+            failed = true;
+            goto end_shaders;
         }
 
         // border_frag
-        effectFragmentShader = LoadShader(device, "DepthOutline.frag", 2, 0, 0, 0);
+        effectFragmentShader = LoadShader(device, "DepthOutline.frag", 3, 0, 0, 0);
         if (effectFragmentShader == NULL) {
             SDL_Log("Failed to create 'DepthOutline' fragment shader!");
-            failed = true; goto end_pipelines;
+            failed = true;
+            goto end_shaders;
         }
-
   }
 
   { // sky pipeline
@@ -150,7 +178,8 @@ LEINAD_FCALL int INIT_render() {
     SkyPipeline = SDL_CreateGPUGraphicsPipeline(device, &pipelineCreateInfo);
     if (SkyPipeline == NULL) {
         SDL_Log("Failed to create Sky pipeline!");
-        failed = true; goto end_pipelines;
+        failed = true;
+        goto end_pipelines;
     }
   }
 
@@ -168,8 +197,7 @@ LEINAD_FCALL int INIT_render() {
             .enable_depth_test = true,
             .enable_depth_write = true,
             .enable_stencil_test = false,
-            .compare_op = SDL_GPU_COMPAREOP_LESS,
-            .write_mask = 0xFF
+            .compare_op = SDL_GPU_COMPAREOP_LESS
         },
         .rasterizer_state = (SDL_GPURasterizerState){
             .cull_mode = SDL_GPU_CULLMODE_NONE,
@@ -182,9 +210,9 @@ LEINAD_FCALL int INIT_render() {
                 .slot = 0,
                 .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
                 .instance_step_rate = 0,
-                .pitch = sizeof(PositionTextureVertex)
+                .pitch = sizeof(PositionTextureColorVertex)
             }},
-            .num_vertex_attributes = 2,
+            .num_vertex_attributes = 3,
             .vertex_attributes = (SDL_GPUVertexAttribute[]){{
                 .buffer_slot = 0,
                 .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
@@ -195,6 +223,11 @@ LEINAD_FCALL int INIT_render() {
                 .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
                 .location = 1,
                 .offset = sizeof(float) * 3
+            }, {
+                .buffer_slot = 0,
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+                .location = 2,
+                .offset = sizeof(float) * 5
             }}
         },
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
@@ -205,7 +238,8 @@ LEINAD_FCALL int INIT_render() {
     ScenePipeline = SDL_CreateGPUGraphicsPipeline(device, &pipelineCreateInfo);
     if (ScenePipeline == NULL) {
         SDL_Log("Failed to create Scene pipeline!");
-        failed = true; goto end_pipelines;
+        failed = true;
+        goto end_pipelines;
     }
 
   }
@@ -216,7 +250,7 @@ LEINAD_FCALL int INIT_render() {
             .num_color_targets = 2,
             .color_target_descriptions = (SDL_GPUColorTargetDescription[]){
                 (SDL_GPUColorTargetDescription){
-                    .format = SDL_GPU_TEXTUREFORMAT_R10G10B10A2_UNORM,
+                    .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM,
                     .blend_state = (struct SDL_GPUColorTargetBlendState){
                         .enable_blend = true,
                         .enable_color_write_mask = false,
@@ -231,7 +265,7 @@ LEINAD_FCALL int INIT_render() {
                     }
                 },
                 (SDL_GPUColorTargetDescription){
-                    .format = SDL_GPU_TEXTUREFORMAT_R10G10B10A2_UNORM,
+                    .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM,
                     .blend_state = (struct SDL_GPUColorTargetBlendState){
                         .enable_blend = true,
                         .enable_color_write_mask = false,
@@ -267,9 +301,9 @@ LEINAD_FCALL int INIT_render() {
                 .slot = 0,
                 .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
                 .instance_step_rate = 0,
-                .pitch = sizeof(PositionTextureVertex)
+                .pitch = sizeof(PositionTextureColorVertex)
             }},
-            .num_vertex_attributes = 2,
+            .num_vertex_attributes = 3,
             .vertex_attributes = (SDL_GPUVertexAttribute[]){{
                 .buffer_slot = 0,
                 .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
@@ -280,6 +314,11 @@ LEINAD_FCALL int INIT_render() {
                 .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
                 .location = 1,
                 .offset = sizeof(float) * 3
+            }, {
+                .buffer_slot = 0,
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+                .location = 2,
+                .offset = sizeof(float) * 5
             }}
         },
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
@@ -290,7 +329,74 @@ LEINAD_FCALL int INIT_render() {
     TransparencyPipeline = SDL_CreateGPUGraphicsPipeline(device, &pipelineCreateInfo);
     if (TransparencyPipeline == NULL) {
         SDL_Log("Failed to create Transparency pipeline!");
-        failed = true; goto end_pipelines;
+        failed = true;
+        goto end_pipelines;
+    }
+
+  }
+
+  { // posteffect raw color image and front transparency pipeline
+    SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = (SDL_GPUGraphicsPipelineCreateInfo){
+        .target_info = {
+            .num_color_targets = 2,
+            .color_target_descriptions = (SDL_GPUColorTargetDescription[]){
+                (SDL_GPUColorTargetDescription){
+                    .format = SDL_GetGPUSwapchainTextureFormat(device,window)
+                },
+                (SDL_GPUColorTargetDescription){
+                    .format = SDL_GetGPUSwapchainTextureFormat(device,window)
+                }
+            },
+            .has_depth_stencil_target = true,
+            .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM
+        },
+        .depth_stencil_state = (SDL_GPUDepthStencilState){
+            .enable_depth_test = true,
+            .enable_depth_write = true,
+            .enable_stencil_test = false,
+            .compare_op = SDL_GPU_COMPAREOP_LESS_OR_EQUAL
+        },
+        .rasterizer_state = (SDL_GPURasterizerState){
+            .cull_mode = SDL_GPU_CULLMODE_NONE,
+            .fill_mode = SDL_GPU_FILLMODE_FILL,
+            .front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
+        },
+        .vertex_input_state = (SDL_GPUVertexInputState){
+            .num_vertex_buffers = 1,
+            .vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription[]){{
+                .slot = 0,
+                .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+                .instance_step_rate = 0,
+                .pitch = sizeof(PositionTextureColorVertex)
+            }},
+            .num_vertex_attributes = 3,
+            .vertex_attributes = (SDL_GPUVertexAttribute[]){{
+                .buffer_slot = 0,
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+                .location = 0,
+                .offset = 0
+            }, {
+                .buffer_slot = 0,
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+                .location = 1,
+                .offset = sizeof(float) * 3
+            }, {
+                .buffer_slot = 0,
+                .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+                .location = 2,
+                .offset = sizeof(float) * 5
+            }}
+        },
+        .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+        .vertex_shader = outlineTextureVertexShader,
+        .fragment_shader = outlineTextureFragmentShader
+    };
+
+    FrontPipeline = SDL_CreateGPUGraphicsPipeline(device, &pipelineCreateInfo);
+    if (FrontPipeline == NULL) {
+        SDL_Log("Failed to create Transparency pipeline!");
+        failed = true;
+        goto end_pipelines;
     }
 
   }
@@ -342,7 +448,8 @@ LEINAD_FCALL int INIT_render() {
     AuxTransparencyPipeline = SDL_CreateGPUGraphicsPipeline(device, &pipelineCreateInfo);
     if (AuxTransparencyPipeline == NULL) {
         SDL_Log("Failed to create AuxTransparency pipeline!");
-        failed = true; goto end_pipelines;
+        failed = true;
+        goto end_pipelines;
     }
 
   }
@@ -354,7 +461,7 @@ LEINAD_FCALL int INIT_render() {
             .color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
                 .format = SDL_GetGPUSwapchainTextureFormat(device, window),
                 .blend_state = (SDL_GPUColorTargetBlendState) {
-                    .enable_blend = true,
+                    .enable_blend = false,
                     .src_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
                     .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
                     .color_blend_op = SDL_GPU_BLENDOP_ADD,
@@ -393,12 +500,14 @@ LEINAD_FCALL int INIT_render() {
     EffectPipeline = SDL_CreateGPUGraphicsPipeline(device, &pipelineCreateInfo);
     if (EffectPipeline == NULL) {
         SDL_Log("Failed to create Outline Effect pipeline!");
-        failed = true; goto end_pipelines;
+        failed = true;
+        goto end_pipelines;
     }
 
   }
     
-end_pipelines:
+    end_pipelines:
+    end_shaders:
 
     if (skyVertexShader != NULL) SDL_ReleaseGPUShader(device, skyVertexShader);
     if (skyVertexShader != NULL) SDL_ReleaseGPUShader(device, skyFragmentShader);
@@ -409,13 +518,16 @@ end_pipelines:
     if (transparentTextureVertexShader != NULL) SDL_ReleaseGPUShader(device, transparentTextureVertexShader);
     if (transparentTextureFragmentShader != NULL) SDL_ReleaseGPUShader(device, transparentTextureFragmentShader);
     
+    if (outlineTextureVertexShader != NULL) SDL_ReleaseGPUShader(device, outlineTextureVertexShader);
+    if (outlineTextureFragmentShader != NULL) SDL_ReleaseGPUShader(device, outlineTextureFragmentShader);
+    
     if (auxTransparentVertexShader != NULL) SDL_ReleaseGPUShader(device, auxTransparentVertexShader);
     if (auxTransparentFragmentShader != NULL) SDL_ReleaseGPUShader(device, auxTransparentFragmentShader);
     
     if (effectVertexShader != NULL) SDL_ReleaseGPUShader(device, effectVertexShader);
     if (effectFragmentShader != NULL) SDL_ReleaseGPUShader(device, effectFragmentShader);
 
-    if (failed) return -1;
+    if (failed) return SDL_APP_FAILURE;
 
   }
 
@@ -449,12 +561,40 @@ end_pipelines:
                 .layer_count_or_depth = 1,
                 .num_levels = 1,
                 .sample_count = SDL_GPU_SAMPLECOUNT_1,
-                .format = SDL_GetGPUSwapchainTextureFormat(device, window),
+                .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM,
                 .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET
             }
         );
 
         AuxTransparencyTexture = SDL_CreateGPUTexture(
+            device,
+            &(SDL_GPUTextureCreateInfo) {
+                .type = SDL_GPU_TEXTURETYPE_2D,
+                .width = SceneWidth,
+                .height = SceneHeight,
+                .layer_count_or_depth = 1,
+                .num_levels = 1,
+                .sample_count = SDL_GPU_SAMPLECOUNT_1,
+                .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM,
+                .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET
+            }
+        );
+
+        FrontTransparencyTexture = SDL_CreateGPUTexture(
+            device,
+            &(SDL_GPUTextureCreateInfo) {
+                .type = SDL_GPU_TEXTURETYPE_2D,
+                .width = SceneWidth,
+                .height = SceneHeight,
+                .layer_count_or_depth = 1,
+                .num_levels = 1,
+                .sample_count = SDL_GPU_SAMPLECOUNT_1,
+                .format = SDL_GetGPUSwapchainTextureFormat(device, window),
+                .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET
+            }
+        );
+
+        FrontBGTexture = SDL_CreateGPUTexture(
             device,
             &(SDL_GPUTextureCreateInfo) {
                 .type = SDL_GPU_TEXTURETYPE_2D,
@@ -495,6 +635,15 @@ end_pipelines:
     });
 
     AuxiliarySampler = SDL_CreateGPUSampler(device, &(SDL_GPUSamplerCreateInfo){
+        .min_filter = SDL_GPU_FILTER_NEAREST,
+        .mag_filter = SDL_GPU_FILTER_NEAREST,
+        .mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
+        .address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+        .address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+        .address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+    });
+
+    Auxiliary2Sampler = SDL_CreateGPUSampler(device, &(SDL_GPUSamplerCreateInfo){
         .min_filter = SDL_GPU_FILTER_NEAREST,
         .mag_filter = SDL_GPU_FILTER_NEAREST,
         .mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
@@ -641,6 +790,8 @@ end_pipelines:
         loaded_chunks.chunk[LOADED_CHUNKS_RADIUS] = chunk_test;
 
     }
+
+    SDL_Log("[OK] Render initialized");
 
     return SDL_APP_CONTINUE;
 }

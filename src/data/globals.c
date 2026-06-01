@@ -20,6 +20,7 @@ SDL_GPUDevice *device = NULL;
 SDL_GPUTexture *depth_texture = NULL;
 
 SDL_GPUGraphicsPipeline* SkyPipeline = NULL;
+SDL_GPUGraphicsPipeline* FrontPipeline = NULL;
 
 SDL_GPUGraphicsPipeline* ScenePipeline = NULL;
 SDL_GPUGraphicsPipeline* TransparencyPipeline = NULL;
@@ -27,6 +28,8 @@ SDL_GPUGraphicsPipeline* AuxTransparencyPipeline = NULL;
 SDL_GPUTexture* SceneColorTexture = NULL;
 SDL_GPUTexture* SceneTransparencyTexture = NULL;
 SDL_GPUTexture* AuxTransparencyTexture = NULL;
+SDL_GPUTexture* FrontTransparencyTexture = NULL;
+SDL_GPUTexture* FrontBGTexture = NULL;
 SDL_GPUTexture* SceneDepthTexture = NULL;
 
 SDL_GPUGraphicsPipeline* EffectPipeline = NULL;
@@ -34,6 +37,7 @@ SDL_GPUBuffer* EffectVertexBuffer = NULL;
 SDL_GPUBuffer* EffectIndexBuffer = NULL;
 SDL_GPUSampler* EffectSampler = NULL;
 SDL_GPUSampler* AuxiliarySampler = NULL;
+SDL_GPUSampler* Auxiliary2Sampler = NULL;
 
 int SceneWidth, SceneHeight;
 double pos_x = 0,pos_y = 0,pos_z = 0;
