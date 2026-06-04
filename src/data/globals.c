@@ -1,9 +1,5 @@
-#include <SDL3/SDL.h>
 
-// #include "types.h"
-
-#include "../libs/stack.h"
-#include "../ui/data.h"
+#include <leinad/data/globals.h>
 
 #include "../world/region.h"
 
@@ -12,9 +8,6 @@ SDL_Renderer* renderer = NULL;
 
 Uint64 current_ns = 0;
 Uint64 previous_ns = 0;
-
-leinad_stack_t ui_render_stack  = NULL;
-leinad_ui_instance_t* ui_active = NULL;
 
 SDL_GPUDevice *device = NULL;
 SDL_GPUTexture *depth_texture = NULL;
@@ -45,3 +38,9 @@ double toadd_x = 0, toadd_y = 0, toadd_z = 0;
 
 
 leinad_chunk_t* chunk_test = NULL;
+
+NET_Server* server = NULL;
+NET_Address* server_addr = NULL;
+
+NET_StreamSocket* client_sock = NULL;
+NET_Address* client_addr = NULL;

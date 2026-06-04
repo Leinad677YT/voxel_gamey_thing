@@ -1,9 +1,9 @@
 #include "render.h"
 
-#include "../data/types.h"
-#include "../data/app.h"
-#include "../data/globals.h"
-#include "../data/control_shortcuts.h"
+#include <leinad/data/types.h>
+#include <leinad/data/app.h>
+#include <leinad/data/globals.h>
+#include <leinad/data/control_shortcuts.h>
 
 #include "../libs/io.h"
 #include "../libs/bit_manipulation.h"
@@ -32,7 +32,7 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
         matrix4x4 viewproj;
 
         // Render the 3D Scene (Color and Depth pass)
-        float nearPlane = 0.0625f;
+        float nearPlane = 0.125f;
         float farPlane = 600.0f;
 
         struct _chunkrenderdata chunk_renderdata = {
@@ -43,7 +43,7 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
 
       { // create viewproj matrix
             matrix4x4 proj = Matrix4x4_CreatePerspectiveFieldOfView(
-                80.0f * SDL_PI_F / 180.0f,
+                100.0f * SDL_PI_F / 180.0f,
                 SceneWidth / (float)SceneHeight,
                 nearPlane,
                 farPlane
@@ -88,7 +88,7 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
         depthStencilTargetInfo.clear_stencil = 0;
         depthStencilTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
         depthStencilTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
-        depthStencilTargetInfo.stencil_load_op = SDL_GPU_LOADOP_CLEAR;
+        depthStencilTargetInfo.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
         depthStencilTargetInfo.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
 
         SDL_PushGPUVertexUniformData(cmdbuf, 0, &viewproj, sizeof(viewproj));
@@ -132,7 +132,7 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
         depthStencilTargetInfo.clear_stencil = 0;
         depthStencilTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
         depthStencilTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
-        depthStencilTargetInfo.stencil_load_op = SDL_GPU_LOADOP_CLEAR;
+        depthStencilTargetInfo.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
         depthStencilTargetInfo.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
 
         SDL_PushGPUVertexUniformData(cmdbuf, 0, &viewproj, sizeof(viewproj));
@@ -179,7 +179,7 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
         depthStencilTargetInfo.clear_stencil = 0;
         depthStencilTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
         depthStencilTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
-        depthStencilTargetInfo.stencil_load_op = SDL_GPU_LOADOP_CLEAR;
+        depthStencilTargetInfo.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
         depthStencilTargetInfo.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
 
         SDL_PushGPUVertexUniformData(cmdbuf, 0, &viewproj, sizeof(viewproj));

@@ -1,11 +1,10 @@
 #include <SDL3/SDL.h>
-// #include <SDL3_net/SDL_net.h>
-#include <SDL3_ttf/SDL_ttf.h>
+#include <SDL3_net/SDL_net.h>
+// #include <SDL3_ttf/SDL_ttf.h>
 
 // #include <crypt.h>
 
-#include "../data/globals.h"
-#include "../ui/data.h"
+#include <leinad/data/globals.h>
 
 SDL_AppResult SDL_AppEvent(
     __attribute__ ((unused)) void *appstate,
@@ -26,20 +25,6 @@ SDL_AppResult SDL_AppEvent(
 
     }	
 
-
-    // UI interactions
-    switch (manage_ui_interaction(appstate,event)){
-        case LEINAD_UI_STATUS_CONTINUE:
-            break;
-        case LEINAD_UI_STATUS_SUCCESS:
-            return SDL_APP_SUCCESS;
-        case LEINAD_UI_STATUS_FAILURE:
-            return SDL_APP_SUCCESS;
-        case LEINAD_UI_STATUS_INTERCEPTED:
-            return SDL_APP_CONTINUE;
-            
-    }
-
     // normal events (ui can skip them)
     switch (event->type){
 
@@ -48,17 +33,32 @@ SDL_AppResult SDL_AppEvent(
             if (event->key.repeat) break;
             switch(event->key.key) {
                 case SDLK_A:
-                    toadd_x--; break;
+                    toadd_x--; 
+                    NET_WriteToStreamSocket(client_sock, "left", 5);
+                    break;
                 case SDLK_D:
-                    toadd_x++; break;
+                    toadd_x++; 
+                    NET_WriteToStreamSocket(client_sock, "right", 6);
+                    break;
                 case SDLK_W:
-                    toadd_z--; break;
+                    toadd_z--; 
+                    NET_WriteToStreamSocket(client_sock, "forward", 8);
+                    break;
                 case SDLK_S:
-                    toadd_z++; break;
+                    toadd_z++; 
+                    NET_WriteToStreamSocket(client_sock, "down", 5);
+                    break;
                 case SDLK_LCTRL:
-                    toadd_y--; break;
+                    toadd_y--; 
+                    NET_WriteToStreamSocket(client_sock, "crouch", 7);
+                    break;
                 case SDLK_SPACE:
-                    toadd_y++; break;
+                    toadd_y++; 
+                    NET_WriteToStreamSocket(client_sock, "jump", 5);
+                    break;
+                case SDLK_ESCAPE:
+                    NET_WriteToStreamSocket(client_sock, "close", 6);
+                    return SDL_APP_SUCCESS;
             }
             break;
 
@@ -66,17 +66,29 @@ SDL_AppResult SDL_AppEvent(
             if (event->key.repeat) break;
             switch(event->key.key) {
                 case SDLK_A:
-                    toadd_x++; break;
+                    toadd_x++; 
+                    NET_WriteToStreamSocket(client_sock, "_left", 6);
+                    break;
                 case SDLK_D:
-                    toadd_x--; break;
+                    toadd_x--; 
+                    NET_WriteToStreamSocket(client_sock, "_right", 7);
+                    break;
                 case SDLK_W:
-                    toadd_z++; break;
+                    toadd_z++; 
+                    NET_WriteToStreamSocket(client_sock, "_forward", 8);
+                    break;
                 case SDLK_S:
-                    toadd_z--; break;
+                    toadd_z--; 
+                    NET_WriteToStreamSocket(client_sock, "_down", 6);
+                    break;
                 case SDLK_LCTRL:
-                    toadd_y++; break;
+                    toadd_y++; 
+                    NET_WriteToStreamSocket(client_sock, "_crouch", 8);
+                    break;
                 case SDLK_SPACE:
-                    toadd_y--; break;
+                    toadd_y--; 
+                    NET_WriteToStreamSocket(client_sock, "_jump", 6);
+                    break;
             }
 
         default: break;

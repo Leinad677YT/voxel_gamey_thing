@@ -1,6 +1,6 @@
-#include "../data/app.h"
+#include <leinad/data/app.h>
 
-#include "../data/globals.h"
+#include <leinad/data/globals.h>
 
 SDL_GPUShader *LoadShader (
     SDL_GPUDevice *gpu_device,

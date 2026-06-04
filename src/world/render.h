@@ -1,8 +1,8 @@
 #pragma once
 
 #include <SDL3/SDL_gpu.h>
-#include "../data/tags.h"
-#include "../data/types.h"
+#include <leinad/data/tags.h>
+#include <leinad/data/types.h>
 #include "../math/matrix.h"
 
 #define LEINAD_TEXTURE_RADIUS 16

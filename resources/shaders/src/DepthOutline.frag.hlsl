@@ -27,25 +27,28 @@ float GetDifference(float depth, float2 TexCoord, float distance)
 
 float4 main(float2 TexCoord : TEXCOORD0) : SV_Target0
 {
+
+
     // get our color & depth value
     float4 color = ColorTexture.Sample(ColorSampler, TexCoord);
+
+    if (color.a == 0.f) return color;
+
     float depth = DepthTexture.Sample(DepthSampler, TexCoord).r;
     
     float edge;
     float edge2;
     
     float diff2 = GetDifference(depth, TexCoord, 2.0f);
-    float diff4 = GetDifference(depth, TexCoord, 4.0f);
 
     float3 res = color.rgb;
 
     // get the difference between the edges at 1px and 2px away
-    if (diff2 > 2E-10 && abs(2*diff2 - diff4) > diff4*0.875) {
-        // edge = step(0.00025f, diff2);
-        // edge2 = step(0.00025f, diff4);
-        
+    if (diff2 < 2E-10) return color;
+    
+    float diff4 = GetDifference(depth, TexCoord, 4.0f);
+    if (abs(2*diff2 - diff4) > diff4*0.875) {
         res = BlockColorTexture.Sample(BlockColorSampler,TexCoord).rgb;
-
     }
     // combine results
     return float4(res, color.a);

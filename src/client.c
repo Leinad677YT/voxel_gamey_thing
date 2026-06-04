@@ -14,9 +14,6 @@
     // globals
     #include "data/globals.c"
 
-    // ui
-    #include "ui/data.c"
-
     // render
     #include "render/shaders.c"
     #include "render/textures.c"
@@ -33,7 +30,6 @@
 
 // Init
 #include "main_client/load.c"
-#include "ui/load.c"
 
 // Render loop
 #include "main_client/tick.c"

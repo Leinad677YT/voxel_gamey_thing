@@ -1,12 +1,8 @@
 #include <SDL3/SDL.h>
+#include <SDL3_net/SDL_net.h>
 
-#include "../data/globals.h"
-#include "../data/app.h"
-
-#include "../ui/data.h"
-#include "../ui/screens.h"
-#include "../ui/elements.h"
-#include "../ui/elements/button.h"
+#include <leinad/data/globals.h>
+#include <leinad/data/app.h>
 
 #include "../render/shaders.h"
 
@@ -44,6 +40,10 @@ SDL_AppResult SDL_AppInit(
         return SDL_APP_FAILURE;
     }
 
+    if (!NET_Init()) {
+        SDL_Log("Couldn't initialize SDL_net: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
   }
   
   { // initialize gpu
@@ -66,7 +66,7 @@ SDL_AppResult SDL_AppInit(
         LEINAD_WINDOW_TITLE,
         LEINAD_WINDOW_WIDTH,
         LEINAD_WINDOW_HEIGHT,
-        0
+        0 | LEINAD_WINDOW_FLAGS
     );
 
     if (window == NULL) {
@@ -99,40 +99,28 @@ SDL_AppResult SDL_AppInit(
         return SDL_APP_FAILURE;
     }
 
-  { // create render stack
-    leinad_create_stack(&ui_render_stack, 30);
-  }
-
-
-  { // load yippiee
-
-    leinad_create_button(
-        LEINAD_WELEMD_YIPIEE_BUTTON,
-        80,60,
-        2,2,
-        AUX_PRINT
-    );
-
-    leinad_ui_t* ui = uiStart_load();
-
-    leinad_ui_instance_t* ui_instance = leinad_instanciate_ui(ui,0,0,2);
-
-    if (
-        ui_instance == NULL
-        || !leinad_push_ui(ui_instance)
-        || !leinad_set_active_ui(ui_instance)
-    ) {
-        leinad_destroy_ui_instance(ui_instance);
-        leinad_destroy_ui(ui);
-        return SDL_APP_FAILURE;
-    }
-
-  }
-
     Uint32 drawablew, drawableh;
     SDL_GetWindowSizeInPixels(window, (int *)&drawablew, (int *)&drawableh);
     depth_texture = CreateDepthTexture(drawablew, drawableh);
 
+
+    { // init server and client
+
+    NET_Address** local_addrs;
+    int addr_amount, i;
+
+    client_addr = NET_ResolveHostname(LEINAD_CLIENT_ADDR);
+    server_addr = NET_ResolveHostname(LEINAD_SERVER_ADDR);
+
+    NET_WaitUntilResolved(client_addr, -1);
+    NET_WaitUntilResolved(server_addr, -1);
+
+    server = NET_CreateServer(server_addr, LEINAD_SERVER_PORT);
+    client_sock = NET_CreateClient(client_addr, LEINAD_SERVER_PORT);
+
+    NET_WaitUntilConnected(client_sock, -1);
+
+  }
 
     current_ns = SDL_GetTicksNS();
     previous_ns = SDL_GetTicksNS();

@@ -1,8 +1,8 @@
 #include <SDL3/SDL.h>
 
-#include "../data/globals.h"
-#include "../data/types.h"
-#include "../data/control_shortcuts.h"
+#include <leinad/data/globals.h>
+#include <leinad/data/types.h>
+#include <leinad/data/control_shortcuts.h>
 #include "../render/shaders.h"
 
 #include "../world/render.h"
@@ -251,6 +251,7 @@ LEINAD_FCALL int INIT_render() {
             .color_target_descriptions = (SDL_GPUColorTargetDescription[]){
                 (SDL_GPUColorTargetDescription){
                     .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM,
+                // .format = SDL_GetGPUSwapchainTextureFormat(device, window),
                     .blend_state = (struct SDL_GPUColorTargetBlendState){
                         .enable_blend = true,
                         .enable_color_write_mask = false,
@@ -266,6 +267,7 @@ LEINAD_FCALL int INIT_render() {
                 },
                 (SDL_GPUColorTargetDescription){
                     .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM,
+                // .format = SDL_GetGPUSwapchainTextureFormat(device, window),
                     .blend_state = (struct SDL_GPUColorTargetBlendState){
                         .enable_blend = true,
                         .enable_color_write_mask = false,
@@ -562,6 +564,7 @@ LEINAD_FCALL int INIT_render() {
                 .num_levels = 1,
                 .sample_count = SDL_GPU_SAMPLECOUNT_1,
                 .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM,
+                // .format = SDL_GetGPUSwapchainTextureFormat(device, window),
                 .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET
             }
         );
@@ -576,6 +579,7 @@ LEINAD_FCALL int INIT_render() {
                 .num_levels = 1,
                 .sample_count = SDL_GPU_SAMPLECOUNT_1,
                 .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM,
+                // .format = SDL_GetGPUSwapchainTextureFormat(device, window),
                 .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET
             }
         );

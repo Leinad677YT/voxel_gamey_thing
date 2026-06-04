@@ -1,8 +1,8 @@
 #pragma once
 
 #include <SDL3/SDL.h>
-#include "../data/types.h"
-#include "../data/tags.h"
+#include <leinad/data/types.h>
+#include <leinad/data/tags.h>
 #include "../math/matrix.h"
 
 #include "block.h"

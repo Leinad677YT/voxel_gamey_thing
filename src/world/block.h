@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL.h>
-#include "../data/tags.h"
+#include <leinad/data/tags.h>
 
 
 #include "blockdata.h"

@@ -1,4 +1,4 @@
-#include "../data/globals.h"
+#include <leinad/data/globals.h>
 #include "../libs/bit_manipulation.h"
 #include "../math/arithmetic.h"
 

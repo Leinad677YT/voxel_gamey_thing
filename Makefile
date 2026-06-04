@@ -18,6 +18,7 @@ all: shaders
 	cp -r -t ./build/Debug ./resources
 
 run: all
+	./build/Debug/server_template &
 	./build/Debug/window_template
 
 clean:

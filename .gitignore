@@ -1,5 +1,6 @@
 .cache/
 .vscode/
+.clangd
 build/
 vendored/
 CMakeCache.txt

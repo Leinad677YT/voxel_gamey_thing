@@ -1,13 +1,11 @@
 #pragma once
 
 #include <SDL3/SDL.h>
+#include <SDL3_net/SDL_net.h>
 
 // #include "types.h"
 
-#include "../libs/stack.h"
-#include "../ui/data.h"
-
-#include "../world/region.h"
+#include "../../../src/world/region.h"
 
 extern SDL_Window* window;              // Window
 extern SDL_Renderer* renderer;          // Renderer
@@ -18,11 +16,6 @@ extern SDL_GPUTexture *depth_texture;       // Depth texture
 
 extern Uint64 current_ns;
 extern Uint64 previous_ns;
-
-extern leinad_stack_t ui_render_stack;         // UI layers to render
-extern leinad_ui_instance_t* ui_active;        // active UI
-
-extern leinad_welem_t welem_data[];     // array with the welem data
 
 extern SDL_GPUGraphicsPipeline* SkyPipeline;
 extern SDL_GPUGraphicsPipeline* FrontPipeline;
@@ -47,3 +40,10 @@ extern double pos_x,pos_y,pos_z;
 double toadd_x, toadd_y, toadd_z;
 
 extern leinad_chunk_t* chunk_test;
+
+
+extern NET_Server* server;
+extern NET_Address* server_addr;
+
+extern NET_StreamSocket* client_sock;
+extern NET_Address* client_addr;

@@ -1,6 +1,6 @@
 #include <SDL3/SDL.h>
 
-#include "../data/globals.h"
+#include <leinad/data/globals.h>
 #include "../world/render.h"
 
 void SDL_AppQuit(
@@ -39,5 +39,12 @@ void SDL_AppQuit(
     // free window
     if (window != NULL) SDL_DestroyWindow(window);
     if (device != NULL) SDL_DestroyGPUDevice(device);
+
+
+    // finish network connections
+    if (client_sock != NULL) NET_DestroyStreamSocket(client_sock);
+    
+    NET_Quit();
+    SDL_Quit();
 
 }

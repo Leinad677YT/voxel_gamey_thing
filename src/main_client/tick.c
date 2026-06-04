@@ -1,7 +1,7 @@
 #include <SDL3/SDL.h>
 
-#include "../data/app.h"
-#include "../data/globals.h"
+#include <leinad/data/app.h>
+#include <leinad/data/globals.h>
 
 #include "../world/render.c"
 
@@ -10,9 +10,9 @@ extern int leinad_render2_ui();
 
 SDL_AppResult SDL_AppIterate( __attribute__ ((unused)) void *appstate) {
     
-static struct test {double a;int b;} times[20] = {0};
-static int i = {0};
-static int frames = 0;
+// static struct test {double a;int b;} times[20] = {0};
+// static int i = {0};
+// static int frames = 0;
     
     //   { // set render background
     //     SDL_SetRenderDrawColorFloat(renderer, 0, 0, 0, SDL_ALPHA_TRANSPARENT_FLOAT);
@@ -30,15 +30,31 @@ static int frames = 0;
 
 //     SDL_RenderPresent(renderer);
 //   }  
-  frames++;
+//   frames++;
   { // check the time since last tick
     current_ns = SDL_GetTicksNS();
 
     if (current_ns - previous_ns < LEINAD_TICK_RANGE_NS) return SDL_APP_CONTINUE;
   }
-    pos_x+= toadd_x / 32.0 ;
-    pos_y+= toadd_y / 32.0;
-    pos_z+= toadd_z / 32.0;
+    pos_x+= toadd_x * (current_ns - previous_ns) / 100000000;
+    pos_y+= toadd_y * (current_ns - previous_ns) / 100000000;
+    pos_z+= toadd_z * (current_ns - previous_ns) / 100000000;
+
+    // if (i < 20)
+    //     times[i] = (struct test) {current_ns - previous_ns,frames};
+    // else {
+    //     long long aux;
+    //     double _aux;
+
+    //     for (int j = 0; j < 20; j++) {
+    //         _aux+=times[j].a;
+    //         aux+=times[j].b;
+    //     }
+    //     SDL_Log("fps: %lf",aux / (_aux) / 1000000);
+    //     i = -1;
+    // }
+    // frames = 0;
+    // i++;
 
 previous_ns = current_ns;
 return SDL_APP_CONTINUE;
