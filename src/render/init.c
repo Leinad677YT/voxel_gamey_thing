@@ -5,9 +5,9 @@
 #include <leinad/data/control_shortcuts.h>
 #include "../render/shaders.h"
 
-#include "../world/render.h"
-#include "../world/block.h"
-#include "../world/blockdata.h"
+#include <leinad/render.h>
+#include <leinad/world/block.h>
+#include <leinad/world/blockdata.h>
 
 #include "../world/data.h"
 

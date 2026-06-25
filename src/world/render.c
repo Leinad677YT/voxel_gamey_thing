@@ -1,4 +1,4 @@
-#include "render.h"
+#include <leinad/render.h>
 
 #include <leinad/data/types.h>
 #include <leinad/data/app.h>
@@ -8,7 +8,8 @@
 #include "../libs/io.h"
 #include "../libs/bit_manipulation.h"
 
-#include "../math/matrix.h"
+#include <leinad/type/vec3.h>
+#include <leinad/type/matrix4x4.h>
 
 #include "../render/textures.h"
 #include "data.h"
@@ -100,7 +101,7 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
 
         SDL_BindGPUGraphicsPipeline(renderPass, ScenePipeline);
         chunk_renderdata.renderpass = renderPass;
-        loaded_chunks_forall_increasing(leinad_chunk_render_opaque, &chunk_renderdata);
+        loaded_chunks_forall_decreasing(leinad_chunk_render_opaque, &chunk_renderdata);
         SDL_EndGPURenderPass(renderPass);
 
         }
@@ -144,7 +145,7 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
 
         SDL_BindGPUGraphicsPipeline(renderPass, TransparencyPipeline);
         chunk_renderdata.renderpass = renderPass;
-        loaded_chunks_forall_increasing(leinad_chunk_render_transparent, &chunk_renderdata);
+        loaded_chunks_forall_decreasing(leinad_chunk_render_transparent, &chunk_renderdata);
         SDL_EndGPURenderPass(renderPass);
 
         }
@@ -191,7 +192,7 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
 
         SDL_BindGPUGraphicsPipeline(renderPass, FrontPipeline);
         chunk_renderdata.renderpass = renderPass;
-        loaded_chunks_forall_increasing(leinad_chunk_render_front, &chunk_renderdata);
+        loaded_chunks_forall_decreasing(leinad_chunk_render_front, &chunk_renderdata);
         SDL_EndGPURenderPass(renderPass);
 
         }

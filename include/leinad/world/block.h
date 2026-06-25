@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL.h>
-#include <leinad/data/tags.h>
+#include "../data/tags.h"
 
 
 #include "blockdata.h"
@@ -81,6 +81,13 @@ struct block_vertex {
  */
 #define LEINAD_BLOCK_RENDER_SCALE 1.f
 
+/**
+ * Returns if 2 blocks are identical
+ * @return `0` if they are equal, another value otherwise 
+ */
 LEINAD_FCOMPARATOR int leinad_blockdata_comparator(void* a, void* b);
 
+/**
+ * clones the data of one block into another, this is equivalent to `(*dst) = (struct blockdata) src`
+ */
 LEINAD_FINITIALIZER void leinad_blockdata_clone(struct blockdata src, struct blockdata* dst);

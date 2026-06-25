@@ -3,15 +3,40 @@
 #include <SDL3/SDL_main.h>
 
 #include <time.h>
+#include <stdio.h>
 
 #include "../src/world/block.c"
-#include "../src/data/globals.c"
+#include "../src/world/region.c"
+#include "../src/world/render.c"
+#include "../src/math/matrix.c"
+#include "../src/render/textures.c"
 
 SDL_AppResult SDL_AppInit(
     __attribute__ ((unused)) void **appstate,
     __attribute__ ((unused)) int argc,
     __attribute__ ((unused)) char *argv[]
 ) {
+
+    if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO)) {
+        SDL_Log("Couldn't initialize SDL: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    device = SDL_CreateGPUDevice(
+        SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL,
+        true,
+        NULL
+    );
+
+    if (!device) {
+        SDL_Log("Couldn't create GPU device: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    leinad_render_init();
+
+    block_atlas.height = 120;
+    block_atlas.width = 120;
 
     // full region
     leinad_region_t region_full = {

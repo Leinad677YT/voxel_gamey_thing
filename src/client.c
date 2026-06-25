@@ -11,8 +11,6 @@
 
 // AUX
 
-    // globals
-    #include "data/globals.c"
 
     // render
     #include "render/shaders.c"

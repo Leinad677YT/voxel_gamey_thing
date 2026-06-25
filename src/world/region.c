@@ -2,9 +2,9 @@
 #include "../libs/bit_manipulation.h"
 #include "../math/arithmetic.h"
 
-#include "region.h"
-#include "render.h"
-#include "block.h"
+#include <leinad/world/region.h>
+#include <leinad/render.h>
+#include <leinad/world/block.h>
 
 LEINAD_AUX // fills masks used to get data depending on subregion-offset [0,7]
            // if both umask and pmask are the same variable, result = umask

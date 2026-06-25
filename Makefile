@@ -25,6 +25,5 @@ clean:
 	rm -rf ./build/Debug
 
 test: all
-	gcc test/region_n_block.c -lSDL3
-	./a.out
-	rm -f ./a.out
+	./build/Debug/test_regionnblock
+	./build/Debug/test_enbt

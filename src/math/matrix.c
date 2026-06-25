@@ -1,6 +1,6 @@
 #include <SDL3/SDL.h>
 
-#include "matrix.h"
+#include <leinad/type/matrix4x4.h>
 
 matrix4x4 Matrix4x4_Multiply(matrix4x4 matrix1, matrix4x4 matrix2) {
     matrix4x4 result;

@@ -1,7 +1,7 @@
 #include <SDL3/SDL.h>
 
 #include <leinad/data/globals.h>
-#include "../world/render.h"
+#include <leinad/render.h>
 
 void SDL_AppQuit(
     __attribute__ ((unused)) void *appstate,

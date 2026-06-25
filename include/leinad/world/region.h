@@ -1,9 +1,8 @@
 #pragma once
 
 #include <SDL3/SDL.h>
-#include <leinad/data/types.h>
-#include <leinad/data/tags.h>
-#include "../math/matrix.h"
+#include "../data/types.h"
+#include "../data/tags.h"
 
 #include "block.h"
 
@@ -95,14 +94,29 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_empty();
 LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short off_x, short off_y, short off_z);
 
 
+/**
+ * @note struct used to send the data to the chunk rendering functions
+ */
 struct _chunkrenderdata {
     SDL_GPURenderPass* renderpass;
     struct leinad_position pos;
     vec3 viewvec;
 };
 
+/**
+ * @param chunk chunk to work over
+ * @param data data to render the chunk with, this being a pointer to a `struct _chunkrenderdata`
+ */
 LEINAD_FRENDER void leinad_chunk_render_opaque(leinad_chunk_t *chunk, void* data);
 
+/**
+ * @param chunk chunk to work over
+ * @param data data to render the chunk with, this being a pointer to a `struct _chunkrenderdata`
+ */
 LEINAD_FRENDER void leinad_chunk_render_transparent(leinad_chunk_t *chunk, void* data);
 
+/**
+ * @param chunk chunk to work over
+ * @param data data to render the chunk with, this being a pointer to a `struct _chunkrenderdata`
+ */
 LEINAD_FRENDER void leinad_chunk_render_front(leinad_chunk_t *chunk, void* ptr);

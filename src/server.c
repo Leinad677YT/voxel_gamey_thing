@@ -4,7 +4,7 @@
 
 #include <leinad/data/control_shortcuts.h>
 #include <leinad/data/app.h>
-#include "data/globals.c"
+#include <leinad/data/globals.h>
 
 int main(int argc, char* argv[]){
 
@@ -47,6 +47,16 @@ int main(int argc, char* argv[]){
 
     loop() {
     
+        SDL_Event event;
+        
+        while(SDL_PollEvent(&event)){
+            switch (event.type) {
+                case SDL_EVENT_QUIT:
+                case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+                return SDL_APP_SUCCESS;
+            }
+        }
+
       { // check the time since last tick
         current_ns = SDL_GetTicksNS();
 

@@ -5,45 +5,45 @@
 
 // #include "types.h"
 
-#include "../../../src/world/region.h"
+#include "../world/region.h"
 
-extern SDL_Window* window;              // Window
-extern SDL_Renderer* renderer;          // Renderer
+static SDL_Window* window = NULL;       // Window
+static SDL_Renderer* renderer = NULL;   // Renderer
 
-extern SDL_GPUDevice *device;               // GPU to use
-extern SDL_GPUGraphicsPipeline *pipeline;   // Shaders pipeline
-extern SDL_GPUTexture *depth_texture;       // Depth texture
+static SDL_GPUDevice *device = NULL;               // GPU to use
+static SDL_GPUGraphicsPipeline *pipeline = NULL;   // Shaders pipeline
+static SDL_GPUTexture *depth_texture = NULL;       // Depth texture
 
-extern Uint64 current_ns;
-extern Uint64 previous_ns;
+static Uint64 current_ns = 0;
+static Uint64 previous_ns = 0;
 
-extern SDL_GPUGraphicsPipeline* SkyPipeline;
-extern SDL_GPUGraphicsPipeline* FrontPipeline;
+static SDL_GPUGraphicsPipeline* SkyPipeline = NULL;
+static SDL_GPUGraphicsPipeline* FrontPipeline = NULL;
 
-extern SDL_GPUGraphicsPipeline* ScenePipeline;
-extern SDL_GPUGraphicsPipeline* TransparencyPipeline;
-extern SDL_GPUGraphicsPipeline* AuxTransparencyPipeline;
-extern SDL_GPUTexture* SceneColorTexture;
-extern SDL_GPUTexture* SceneDepthTexture;
-extern SDL_GPUTexture* SceneTransparencyTexture;
-extern SDL_GPUTexture* AuxTransparencyTexture;
-extern SDL_GPUTexture* FrontTransparencyTexture;
-extern SDL_GPUTexture* FrontBGTexture;
-extern SDL_GPUGraphicsPipeline* EffectPipeline;
-extern SDL_GPUBuffer* EffectVertexBuffer;
-extern SDL_GPUBuffer* EffectIndexBuffer;
-extern SDL_GPUSampler* EffectSampler;
-extern SDL_GPUSampler* AuxiliarySampler;
-extern SDL_GPUSampler* Auxiliary2Sampler;
-extern int SceneWidth, SceneHeight;
-extern double pos_x,pos_y,pos_z;
-double toadd_x, toadd_y, toadd_z;
+static SDL_GPUGraphicsPipeline* ScenePipeline = NULL;
+static SDL_GPUGraphicsPipeline* TransparencyPipeline = NULL;
+static SDL_GPUGraphicsPipeline* AuxTransparencyPipeline = NULL;
+static SDL_GPUTexture* SceneColorTexture = NULL;
+static SDL_GPUTexture* SceneDepthTexture = NULL;
+static SDL_GPUTexture* SceneTransparencyTexture = NULL;
+static SDL_GPUTexture* AuxTransparencyTexture = NULL;
+static SDL_GPUTexture* FrontTransparencyTexture = NULL;
+static SDL_GPUTexture* FrontBGTexture = NULL;
+static SDL_GPUGraphicsPipeline* EffectPipeline = NULL;
+static SDL_GPUBuffer* EffectVertexBuffer = NULL;
+static SDL_GPUBuffer* EffectIndexBuffer = NULL;
+static SDL_GPUSampler* EffectSampler = NULL;
+static SDL_GPUSampler* AuxiliarySampler = NULL;
+static SDL_GPUSampler* Auxiliary2Sampler = NULL;
+static int SceneWidth = 0, SceneHeight = 0;
+static double pos_x = 0, pos_y = 0, pos_z = 0;
+static double toadd_x = 0, toadd_y = 0, toadd_z = 0;
 
-extern leinad_chunk_t* chunk_test;
+static leinad_chunk_t* chunk_test = NULL;
 
 
-extern NET_Server* server;
-extern NET_Address* server_addr;
+static NET_Server* server = NULL;
+static NET_Address* server_addr = NULL;
 
-extern NET_StreamSocket* client_sock;
-extern NET_Address* client_addr;
+static NET_StreamSocket* client_sock = NULL;
+static NET_Address* client_addr = NULL;

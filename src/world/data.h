@@ -1,6 +1,6 @@
 #pragma once
 
-#include "region.h"
+#include <leinad/world/region.h>
 
 #include "../math/arithmetic.h"
 
@@ -36,10 +36,10 @@ static struct {
 };
 
 /**
- * Iterate over the loaded_chunks from nearest to furthest
- * @todo furthest to nearest
+ * Iterate over the loaded_chunks from furthest to nearest
+ * @todo nearest to furthest
  */
-static void loaded_chunks_forall_increasing(void(*fun)(leinad_chunk_t*,void*),void* arg){
+static void loaded_chunks_forall_decreasing(void(*fun)(leinad_chunk_t*,void*),void* arg){
 
     #define invert(x) (LOADED_CHUNKS_LENGTH -x -1)
     
@@ -95,6 +95,8 @@ static void loaded_chunks_forall_increasing(void(*fun)(leinad_chunk_t*,void*),vo
             case 5:  fun(loaded_chunks.chunk[invert(i)*raise2(LOADED_CHUNKS_LENGTH) + LOADED_CHUNKS_RADIUS*LOADED_CHUNKS_LENGTH + LOADED_CHUNKS_RADIUS],arg); break;
         }
     }
+
+    fun(loaded_chunks.chunk[raise3(LOADED_CHUNKS_LENGTH)/2],arg);
 
     #undef invert
 }

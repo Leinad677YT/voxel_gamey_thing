@@ -2,23 +2,42 @@
 
 #include <SDL3/SDL.h>
 
+
+// cover all other type headers
+#include "../type/vec3.h"
+#include "../type/matrix4x4.h"
+#include "../type/text.h"
+#include "../type/enbt.h"
+
+
+// generic
+
+typedef Sint32 uuid[4];
+
+struct namespaced_id {
+    uuid namespace;
+    uuid id;
+};
+
+struct namespace {
+    char* namespace;
+    uuid id;
+};
+
+
 // gameplay related
 
 struct leinad_position {
     double x, y, z;
 };
 
+struct leinad_rotation {
+    double pitch /*1*/, yaw /*0*/, roll;
+};
 
-
-
-
-
-
-
-
-
-
-
+struct leinad_motion {
+    double x, y, z;
+};
 
 
 // generic vertex data
