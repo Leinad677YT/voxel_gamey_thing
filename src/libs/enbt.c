@@ -49,7 +49,7 @@ struct eNBT_list* enbt_create_list(Uint16 estimated_size, enum eNBT_Tag type, ch
         .type = TAG_List,
         .name_length = name_length,
         .name = name,
-        .flags = flags
+        .flags = flags | (ENBT_FLAG_LIST_TYPE & type)
     };
 
     new->size = 0;
@@ -73,9 +73,11 @@ bool enbt_merge_value(void* target, const void* input) {
             if (((struct eNBT_generic*)target)->type == TAG_Byte) 
                 ((struct eNBT_byte*)target)->payload = ((struct eNBT_byte*)input)->payload;
             else {
-                switch()
+                // PENDING
             }
     }
+
+    return true;
 }
 
 
@@ -175,7 +177,7 @@ struct eNBT_generic* enbt_parse_enbt(Uint8 data[], Sint32 length){
     return NULL;
 }
 
-
+// HEY, REMEMBER, COMPOUNDS WILL NOT even HAVE small ALLOCATED AFTER THIS!
 void enbt_release_payload(void* enbt) {
     switch(((struct eNBT_generic*)enbt)->type) {
         default: break;
@@ -195,15 +197,214 @@ void enbt_release_payload(void* enbt) {
             break;
 
         case TAG_List:
-            for (int i = ; i < ; i++) {
+            switch(((struct eNBT_generic*)enbt)->flags & ENBT_FLAG_LIST_TYPE){
+                case TAG_Byte:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_byte**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Short:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                    enbt_free(((struct eNBT_short**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Int:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_int**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Long:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_long**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Float:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_float**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Double:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_double**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Byte_Array:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_byte_array**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Int_Array:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_int_array**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Long_Array:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_long_array**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_String:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_string**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_List:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_list**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Compound:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_compound**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+            }
+            break;
+        case TAG_Compound:
+            if (((struct eNBT_compound*)enbt)->small != NULL) {
+                Uint64 remaining = ((struct eNBT_compound*)enbt)->size;
+
+
+                for(int i = 0; i < ENBT_COMPOUND_MAX_SMALL && remaining; i++ ) {
+                    struct eNBT_NODE* iter = ((struct eNBT_compound*)enbt)->small[i];
+                    while (iter != NULL) {
+                        enbt_free(((struct eNBT_compound*)enbt)->small[i]->val);
+                        iter = iter->next;
+                        remaining--;
+                    }
+                }
+                SDL_free(((struct eNBT_compound*)enbt)->small);
+                if (((struct eNBT_compound*)enbt)->medium != NULL) {
+                    for(int i = 0; i < ENBT_COMPOUND_MAX_MEDIUM && remaining; i++ ) {
+                        struct eNBT_NODE* iter = ((struct eNBT_compound*)enbt)->medium[i];
+                        while (iter != NULL) {
+                            enbt_free(((struct eNBT_compound*)enbt)->medium[i]->val);
+                            iter = iter->next;
+                            remaining--;
+                        }
+                    }
+                    SDL_free(((struct eNBT_compound*)enbt)->medium);
+                    if (((struct eNBT_compound*)enbt)->big != NULL) {
+                        for(int i = 0; i < ENBT_COMPOUND_MAX_BIG && remaining; i++ ) {
+                            struct eNBT_NODE* iter = ((struct eNBT_compound*)enbt)->big[i];
+                            while (iter != NULL) {
+                                enbt_free(((struct eNBT_compound*)enbt)->big[i]->val);
+                                iter = iter->next;
+                                remaining--;
+                            }
+                        }
+                        SDL_free(((struct eNBT_compound*)enbt)->big);
+                    }
+
+                }
 
             }
-            SDL_free(((struct eNBT_byte_array*)enbt)->array);
             break;
     }
 }
 
 void enbt_free(void* enbt) {
+    switch(((struct eNBT_generic*)enbt)->type){
+        default:
+            break;
+        case TAG_Byte_Array:
+            SDL_free(((struct eNBT_byte_array*)enbt)->array);
+            break;
+        case TAG_Int_Array:
+            SDL_free(((struct eNBT_int_array*)enbt)->array);
+            break;
+        case TAG_Long_Array:
+            SDL_free(((struct eNBT_long_array*)enbt)->array);
+            break;
+        case TAG_String:
+            SDL_free(((struct eNBT_string*)enbt)->array);
+            break;
+
+        case TAG_List:
+            switch(((struct eNBT_generic*)enbt)->flags & ENBT_FLAG_LIST_TYPE){
+                case TAG_Byte:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_byte**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Short:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                    enbt_free(((struct eNBT_short**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Int:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_int**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Long:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_long**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Float:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_float**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Double:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_double**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Byte_Array:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_byte_array**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Int_Array:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_int_array**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Long_Array:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_long_array**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_String:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_string**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_List:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_list**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+                case TAG_Compound:
+                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_compound**)((struct eNBT_list*)enbt)->list)[i]);
+                    break;
+            }
+            SDL_free(((struct eNBT_list*)enbt)->list);
+            break;
+        case TAG_Compound:
+            if (((struct eNBT_compound*)enbt)->small != NULL) {
+                Uint64 remaining = ((struct eNBT_compound*)enbt)->size;
+
+
+                for(int i = 0; i < ENBT_COMPOUND_MAX_SMALL && remaining; i++ ) {
+                    struct eNBT_NODE* iter = ((struct eNBT_compound*)enbt)->small[i];
+                    while (iter != NULL) {
+                        enbt_free(((struct eNBT_compound*)enbt)->small[i]->val);
+                        iter = iter->next;
+                        remaining--;
+                    }
+                }
+                SDL_free(((struct eNBT_compound*)enbt)->small);
+                if (((struct eNBT_compound*)enbt)->medium != NULL) {
+                    for(int i = 0; i < ENBT_COMPOUND_MAX_MEDIUM && remaining; i++ ) {
+                        struct eNBT_NODE* iter = ((struct eNBT_compound*)enbt)->medium[i];
+                        while (iter != NULL) {
+                            enbt_free(((struct eNBT_compound*)enbt)->medium[i]->val);
+                            iter = iter->next;
+                            remaining--;
+                        }
+                    }
+                    SDL_free(((struct eNBT_compound*)enbt)->medium);
+                    if (((struct eNBT_compound*)enbt)->big != NULL) {
+                        for(int i = 0; i < ENBT_COMPOUND_MAX_BIG && remaining; i++ ) {
+                            struct eNBT_NODE* iter = ((struct eNBT_compound*)enbt)->big[i];
+                            while (iter != NULL) {
+                                enbt_free(((struct eNBT_compound*)enbt)->big[i]->val);
+                                iter = iter->next;
+                                remaining--;
+                            }
+                        }
+                        SDL_free(((struct eNBT_compound*)enbt)->big);
+                    }
+
+                }
+
+            }
+            break;
+    }
+
+    SDL_free(((struct eNBT_generic*)enbt)->name);
+    SDL_free(enbt);
+
     return;
 }
-

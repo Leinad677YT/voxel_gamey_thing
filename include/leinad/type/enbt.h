@@ -57,8 +57,10 @@ struct eNBT_generic {
     char* name;
     Uint16 name_length;
     Uint16 type;
+    
     Uint32 flags;
-    // data + flags
+    // on lists, contains the type of the elements
+    #define ENBT_FLAG_LIST_TYPE 0x000000ff
 };
 
 
@@ -146,7 +148,7 @@ struct eNBT_list {
     struct eNBT_generic data;
     Uint32 size;
     Uint32 current_capacity;
-    struct eNBT **list;
+    struct eNBT_generic **list;
 };
 
 
