@@ -285,6 +285,9 @@ char * enbt_to_snbt(const void *input, size_t* written){
     res[idx] = 0;
     (*written)++;
 
+    // cut unused memory
+    res = SDL_realloc(res,*written);
+
     ret:
         return res;
 
