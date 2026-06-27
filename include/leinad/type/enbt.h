@@ -2,7 +2,7 @@
 
 #include <SDL3/SDL.h>
 
-#define MAX_SNBT_CHARS 4000
+#define BASE_MAX_SNBT_CHARS 4000
 
 /**
  * Sizes and value ranges for the compound hashmaps

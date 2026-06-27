@@ -12,11 +12,17 @@ struct eNBT_compound* enbt_create_compound(char* name, Uint16 name_length, Uint3
         .flags = flags
     };
     new->size = 0;
+    new->small = NULL;
+    new->medium = NULL;
+    new->big = NULL;
 
 ret:
     return new;
 }
 
+/**
+ * @todo optimize lists to be only the data itself and not an entire nbt component
+ */
 struct eNBT_list* enbt_create_list(Uint16 estimated_size, enum eNBT_Tag type, char* name, Uint16 name_length, Uint32 flags){
     struct eNBT_list *new;
 
@@ -80,6 +86,175 @@ bool enbt_merge_value(void* target, const void* input) {
     return true;
 }
 
+// assumes dir != NULL
+static int ensure_capacity(void** restrict dir, const size_t size, size_t* restrict current_max) {
+    void* new_dir = NULL;
+    bool req = false;
+
+    while(size >= *current_max) {
+        *current_max *= 1.5;
+        req = true;
+    }
+
+    if (!req) return false;
+
+    new_dir = SDL_realloc(dir, *current_max);
+
+    if (new_dir == NULL) return true;
+
+    *dir = new_dir;
+    return false;
+
+}
+
+/*auxiliary*/
+static int create_snbt_of_compound(const void* input, char** res, size_t *current_max, int *idx, size_t *written);
+
+/*auxiliary*/
+static int create_snbt_of_content(const void* input, char** res, size_t *current_max, int *idx, size_t *written) {
+    int aux = 0;
+    switch (((struct eNBT_generic*)input)->type) {
+        case TAG_Byte:
+            if (ensure_capacity((void**)res,*written + 6,current_max)) goto fail;
+            aux = SDL_snprintf(&(*res)[(*idx)],6,"%db",((struct eNBT_byte*)input)->payload);
+            break;
+        case TAG_Short:
+            if (ensure_capacity((void**)res,*written + 8,current_max)) goto fail;
+            aux = SDL_snprintf(&(*res)[(*idx)],8,"%ds",((struct eNBT_short*)input)->payload);
+            break;
+        case TAG_Int:
+            if (ensure_capacity((void**)res,*written + 12,current_max)) goto fail;
+            aux = SDL_snprintf(&(*res)[(*idx)],12,"%d",((struct eNBT_int*)input)->payload);
+            break;
+        case TAG_Long:
+            if (ensure_capacity((void**)res,*written + 22,current_max)) goto fail;
+            aux = SDL_snprintf(&(*res)[(*idx)],22,"%ldl",((struct eNBT_long*)input)->payload);
+            break;
+        case TAG_Float:
+            if (ensure_capacity((void**)res,*written + 21,current_max)) goto fail;
+            aux = SDL_snprintf(&(*res)[(*idx)],21,"%f",((struct eNBT_float*)input)->payload);
+            break;
+        case TAG_Double:
+            if (ensure_capacity((void**)res,*written + 21,current_max)) goto fail;
+            aux = SDL_snprintf(&(*res)[(*idx)],21,"%lf",((struct eNBT_double*)input)->payload);
+            break;
+        case TAG_Byte_Array:
+            if (ensure_capacity((void**)res,*written + ((struct eNBT_byte_array*)input)->len * 7 + 4,current_max)) goto fail;
+            aux = 3; (*res)[(*idx)] = '['; (*res)[(*idx)+1] = 'B'; (*res)[(*idx)+2] = ';';
+            for (int i = 0; i < ((struct eNBT_byte_array*)input)->len; i++)
+                aux += SDL_snprintf(&(*res)[(*idx + aux)],7,i?",%db":"%db",((struct eNBT_byte_array*)input)->array[i]);
+            (*res)[(*idx)+aux] = ']'; aux++;
+            break;
+        case TAG_Int_Array:
+            if (ensure_capacity((void**)res,*written + ((struct eNBT_byte_array*)input)->len * 13 + 4,current_max)) goto fail;
+            aux = 3; (*res)[(*idx)] = '['; (*res)[(*idx)+1] = 'I'; (*res)[(*idx)+2] = ';';
+            for (int i = 0; i < ((struct eNBT_int_array*)input)->len; i++)
+                aux += SDL_snprintf(&(*res)[(*idx + aux)],13,i?",%d":"%d",((struct eNBT_int_array*)input)->array[i]);
+            (*res)[(*idx)+aux] = ']'; aux++;
+            break;
+        case TAG_Long_Array:
+            if (ensure_capacity((void**)res,*written + ((struct eNBT_byte_array*)input)->len * 23 + 4,current_max)) goto fail;
+            aux = 3; (*res)[(*idx)] = '['; (*res)[(*idx)+1] = 'L'; (*res)[(*idx)+2] = ';';
+            for (int i = 0; i < ((struct eNBT_long_array*)input)->len; i++)
+                aux += SDL_snprintf(&(*res)[(*idx + aux)],23,i?",%ldl":"%ldl",((struct eNBT_long_array*)input)->array[i]);
+            (*res)[(*idx)+aux] = ']'; aux++;
+            break;
+        case TAG_String:
+            if (ensure_capacity((void**)res,*written + ((struct eNBT_string*)input)->size + 2,current_max)) goto fail;
+            aux = SDL_snprintf(&(*res)[(*idx)],((struct eNBT_string*)input)->size+3,"\"%s\"",((struct eNBT_string*)input)->array);
+            break;
+        case TAG_List:
+            if (ensure_capacity((void**)res,*written + ((struct eNBT_list*)input)->size + 1,current_max)) goto fail;
+            *written += 1 + ((struct eNBT_list*)input)->size; 
+            (*res)[(*idx)] = '['; (*idx)++;
+            for (int i = 0; i < ((struct eNBT_list*)input)->size; i++) {
+                if (i) {(*res)[(*idx)] = ','; (*idx)++;}
+                if (create_snbt_of_content(((struct eNBT_list*)input)->list[i],res,current_max,idx,written)) goto fail;
+            }
+            (*res)[(*idx)] = ']'; (*idx)++;
+            break;
+        case TAG_Compound:
+            if (ensure_capacity((void**)res,*written + ((struct eNBT_compound*)input)->size + 1,current_max)) goto fail;
+            *written += 1 + ((struct eNBT_compound*)input)->size; 
+            (*res)[(*idx)] = '{'; (*idx)++;
+            aux = 0;
+            if (((struct eNBT_compound*)input)->small != NULL)
+             for (int i = 0; i < ENBT_COMPOUND_MAX_SMALL && aux < ((struct eNBT_list*)input)->size; i++) {
+                struct eNBT_NODE* temp = ((struct eNBT_compound*)input)->small[i];
+                while(temp != NULL) {
+                    if (aux) {
+                        (*res)[(*idx)] = ',';
+                        (*idx)++;
+                    }
+                    if (create_snbt_of_compound(temp->val,res,current_max,idx,written)) goto fail;
+                    aux++; temp = temp->next;
+                }
+            }
+            if (((struct eNBT_compound*)input)->medium != NULL)
+             for (int i = 0; i < ENBT_COMPOUND_MAX_MEDIUM && aux < ((struct eNBT_list*)input)->size; i++) {
+                struct eNBT_NODE* temp = ((struct eNBT_compound*)input)->medium[i];
+                while(temp != NULL) {
+                    if (aux) {
+                        (*res)[(*idx)] = ',';
+                        (*idx)++;
+                    }
+                    if (create_snbt_of_compound(temp->val,res,current_max,idx,written)) goto fail;
+                    aux++; temp = temp->next;
+                }
+            }
+            if (((struct eNBT_compound*)input)->big != NULL)
+             for (int i = 0; i < ENBT_COMPOUND_MAX_BIG && aux < ((struct eNBT_list*)input)->size; i++) {
+                struct eNBT_NODE* temp = ((struct eNBT_compound*)input)->big[i];
+                while(temp != NULL) {
+                    if (aux) {
+                        (*res)[(*idx)] = ',';
+                        (*idx)++;
+                    }
+                    if (create_snbt_of_compound(temp->val,res,current_max,idx,written)) goto fail;
+                    aux++; temp = temp->next;
+                }
+            }
+            (*res)[(*idx)] = '}'; (*idx)++;
+            break;
+        default:
+            // non-defined TAGs
+            aux = 0;
+            break;
+
+    }
+    if (((struct eNBT_generic*)input)->type != TAG_List && ((struct eNBT_generic*)input)->type != TAG_Compound) {
+        *written += aux;
+        *idx += aux;
+    }
+    return 0;
+
+    fail:
+        return 1;
+}
+
+/*auxiliary*/
+static int create_snbt_of_compound(const void* input, char** res, size_t *current_max, int *idx, size_t *written){
+
+    if (ensure_capacity((void**)&res,3+((struct eNBT_generic*)input)->name_length,current_max)) goto fail;
+
+    // tag name
+    (*res)[*idx] = '"';
+
+    int aux = SDL_utf8strlcpy(&(*res)[*idx+1],((struct eNBT_generic*)input)->name, ((struct eNBT_generic*)input)->name_length+1);
+    *idx += aux; *written += aux;
+    (*res)[*idx+1] = '"'; (*res)[*idx+2] = ':';
+    *idx+=3; *written += 3;
+
+    // tag content
+    if (create_snbt_of_content(input,res,current_max,idx,written)) goto fail;
+    
+    return 0;
+
+    fail:
+        return 1;
+
+}
+
 
 /**
  * @todo check if the compiler separates the first iteration of arrays because
@@ -87,76 +262,35 @@ bool enbt_merge_value(void* target, const void* input) {
  */
 char * enbt_to_snbt(const void *input, size_t* written){
 
-    char * res = SDL_malloc(sizeof(char) * MAX_SNBT_CHARS);
-    int idx = 0;
-    int aux = 0;
+    char * res = SDL_malloc(sizeof(char) * BASE_MAX_SNBT_CHARS);
+    if (res == NULL) {*written = -1; goto ret;}
 
-    if (res == NULL) {idx = -1; goto ret;}
+    size_t current_max = BASE_MAX_SNBT_CHARS;
+    int idx = 0;
+    *written = 0;
+
+    if (ensure_capacity((void**)&res,4+((struct eNBT_generic*)input)->name_length,&current_max)) goto fail;
 
     // tag name
     res[idx] = '"';
 
-    idx += SDL_utf8strlcpy(&res[idx+1],((struct eNBT_generic*)input)->name, ((struct eNBT_generic*)input)->name_length+1);
-    res[idx+1] = '"'; res[idx+2] = ':'; idx+=3;
-    int test;
+    *written = idx += SDL_utf8strlcpy(&res[1],((struct eNBT_generic*)input)->name, ((struct eNBT_generic*)input)->name_length+1);
+    res[idx+1] = '"'; res[idx+2] = ':'; 
+    idx+=3; *written += 3;
+    
     // tag content
-    switch (((struct eNBT_generic*)input)->type){
-        case TAG_Byte:
-            aux = SDL_snprintf(&res[idx],6,"%db",((struct eNBT_byte*)input)->payload);
-            break;
-        case TAG_Short:
-            aux = SDL_snprintf(&res[idx],8,"%ds",((struct eNBT_short*)input)->payload);
-            break;
-        case TAG_Int:
-            aux = SDL_snprintf(&res[idx],12,"%d",((struct eNBT_int*)input)->payload);
-            break;
-        case TAG_Long:
-            aux = SDL_snprintf(&res[idx],22,"%ldl",((struct eNBT_long*)input)->payload);
-            break;
-        case TAG_Float:
-            aux = SDL_snprintf(&res[idx],21,"%f",((struct eNBT_float*)input)->payload);
-            break;
-        case TAG_Double:
-            aux = SDL_snprintf(&res[idx],21,"%lf",((struct eNBT_double*)input)->payload);
-            break;
-        case TAG_Byte_Array:
-            aux = 3; res[idx] = '['; res[idx+1] = 'B'; res[idx+2] = ';';
-            for (int i = 0; i < ((struct eNBT_byte_array*)input)->len; i++)
-                aux += SDL_snprintf(&res[idx+aux],7,i?",%db":"%db",((struct eNBT_byte_array*)input)->array[i]);
-            res[idx+aux] = ']'; aux++;
-            break;
-        case TAG_Int_Array:
-            aux = 3; res[idx] = '['; res[idx+1] = 'I'; res[idx+2] = ';';
-            for (int i = 0; i < ((struct eNBT_int_array*)input)->len; i++)
-                aux += SDL_snprintf(&res[idx+aux],13,i?",%d":"%d",((struct eNBT_int_array*)input)->array[i]);
-            res[idx+aux] = ']'; aux++;
-            break;
-        case TAG_Long_Array:
-            aux = 3; res[idx] = '['; res[idx+1] = 'L'; res[idx+2] = ';';
-            for (int i = 0; i < ((struct eNBT_long_array*)input)->len; i++)
-                aux += SDL_snprintf(&res[idx+aux],23,i?",%ldl":"%ldl",((struct eNBT_long_array*)input)->array[i]);
-            res[idx+aux] = ']'; aux++;
-            break;
-        case TAG_List:
-            // PENDING
-            aux = 0;
-            break;
-        case TAG_Compound:
-            // PENDING
-            aux = 0;
-            break;
-        default:
-            // PENDING
-            aux = 0;
-            break;
-
-    }
-
-    res[idx+aux] = 0;
-    *written = (idx + aux +1);
+    int status = create_snbt_of_content(input,&res,&current_max,&idx,written);
+    if (status) goto fail;
+    
+    res[idx] = 0;
+    (*written)++;
 
     ret:
         return res;
+
+    fail:
+        if (res != NULL) SDL_free(res);
+        return NULL;
 }
 
 
