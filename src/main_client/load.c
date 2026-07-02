@@ -8,14 +8,6 @@
 
 #include "../render/init.c"
 
-void AUX_PRINT(void* IGNORED){
-
-    SDL_Log("YIPPIEE");
-
-    return;
-}
-
-
 SDL_AppResult SDL_AppInit(
     __attribute__ ((unused)) void **appstate,
     __attribute__ ((unused)) int argc,

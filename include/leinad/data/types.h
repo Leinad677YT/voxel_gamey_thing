@@ -15,7 +15,7 @@
 typedef Sint32 uuid[4];
 
 struct namespaced_id {
-    uuid namespace;
+    Uint32 namespace;
     uuid id;
 };
 
@@ -32,7 +32,7 @@ struct leinad_position {
 };
 
 struct leinad_rotation {
-    double pitch /*1*/, yaw /*0*/, roll;
+    double yaw /*0*/, pitch /*1*/; // usually used inverted but for datapack compat it is what it is :c
 };
 
 struct leinad_motion {

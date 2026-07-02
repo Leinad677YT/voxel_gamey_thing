@@ -306,11 +306,11 @@ char * enbt_from_snbt(const char* input, size_t len){
 
 
 
-struct eNBT_generic* enbt_parse_nbt(Uint8 data[], Sint32 length){
+struct eNBT_generic* enbt_parse_nbt(Uint8 data[], Sint32 length) {
     return NULL;
 }
 
-struct eNBT_generic* enbt_parse_enbt(Uint8 data[], Sint32 length){
+struct eNBT_generic* enbt_parse_enbt(Uint8 data[], Sint32 length) {
     return NULL;
 }
 
