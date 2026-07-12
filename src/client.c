@@ -11,6 +11,8 @@
 
 // AUX
 
+    // entity types
+    #include "entity/player.c"
 
     // render
     #include "render/shaders.c"
@@ -21,6 +23,7 @@
 
     // world
     #include "world/region.c"
+    #include "world/loading.c"
     #include "world/block.c"
 
 //

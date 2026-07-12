@@ -11,11 +11,11 @@ struct entity_tag_node {
 };
 
 struct entity_passenger_node {
-    struct entity * entity;
+    struct entity_generic * entity;
     struct entity_passenger_node *next;
 };
 
-struct entity {
+struct entity_generic {
     struct namespaced_id id;    // type
     uuid uuid;                  // uuid inside world
 
@@ -42,7 +42,7 @@ struct entity {
     bool on_ground : 1;
     bool silent : 1;
     
-} entity;
+};
 
 struct entity_alive{
     void* effects;
@@ -92,3 +92,6 @@ struct entity_equipment {
     struct item_stack* body;
     struct item_stack* saddle;
 };
+
+inline static struct leinad_position leinad_entity_getpos(const struct entity_generic* entity) {return entity->pos;}
+inline static struct leinad_motion leinad_entity_getmotion(const struct entity_generic* entity) {return entity->motion;}

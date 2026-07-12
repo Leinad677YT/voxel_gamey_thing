@@ -60,7 +60,7 @@ LEINAD_FCALL int INIT_render() {
         }
         
         // texture_vert
-        textureVertexShader = LoadShader(device, "TexturedQuad.vert", 0, 1, 0, 0);
+        textureVertexShader = LoadShader(device, "TexturedQuad.vert", 0, 2, 0, 0);
         if (textureVertexShader == NULL) {
             SDL_Log("Failed to create 'TexturedQuad' vertex shader!");
             failed = true;
@@ -76,7 +76,7 @@ LEINAD_FCALL int INIT_render() {
         }
 
         // transparent_texture_vert
-        transparentTextureVertexShader = LoadShader(device, "TransparentTexturedQuad.vert", 0, 1, 0, 0);
+        transparentTextureVertexShader = LoadShader(device, "TransparentTexturedQuad.vert", 0, 2, 0, 0);
         if (transparentTextureVertexShader == NULL) {
             SDL_Log("Failed to create 'TransparentTexturedQuad' vertex shader!");
             failed = true;
@@ -92,7 +92,7 @@ LEINAD_FCALL int INIT_render() {
         }
 
         // outline_texture_vert
-        outlineTextureVertexShader = LoadShader(device, "OutlineTexturedQuad.vert", 0, 1, 0, 0);
+        outlineTextureVertexShader = LoadShader(device, "OutlineTexturedQuad.vert", 0, 2, 0, 0);
         if (outlineTextureVertexShader == NULL) {
             SDL_Log("Failed to create 'OutlineTexturedQuad' vertex shader!");
             failed = true;
@@ -613,20 +613,9 @@ LEINAD_FCALL int INIT_render() {
         );
 
 
-        SceneDepthTexture = SDL_CreateGPUTexture(
-            device,
-            &(SDL_GPUTextureCreateInfo) {
-                .type = SDL_GPU_TEXTURETYPE_2D,
-                .width = SceneWidth,
-                .height = SceneHeight,
-                .layer_count_or_depth = 1,
-                .num_levels = 1,
-                .sample_count = SDL_GPU_SAMPLECOUNT_1,
-                .format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
-                .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET
-            }
-        );
-  }
+        depth_texture = CreateDepthTexture(SceneWidth,SceneHeight);
+
+    }
 
     // Create Outline Effect Sampler
     EffectSampler = SDL_CreateGPUSampler(device, &(SDL_GPUSamplerCreateInfo){
@@ -741,10 +730,12 @@ LEINAD_FCALL int INIT_render() {
 
 
   { // load test chunk
-        leinad_region_t* region_test = leinad_region_create_empty();
-        chunk_test = leinad_chunk_create();
+        leinad_region_t* region_test = leinad_region_create_empty(0,0,0);// coords here will get ignored, remember!
+        chunk_test = leinad_chunk_create(0,0,0); // displacement to test
         
         leinad_chunk_setfromregion(region_test,chunk_test);
+
+        SDL_free(region_test);
 
         chunk_test->block[leinad_get_chunk_index(11, 0, 0)] = (struct blockdata) {
             .id = LEINAD_BLOCK_STONE,
@@ -770,7 +761,7 @@ LEINAD_FCALL int INIT_render() {
             .custom_data = 0
         };
 
-        for(int i = 0; i<20;i++) for(int j = 0; j < 10; j++) for (int glass = LEINAD_BLOCK_WHITE_STAINED_GLASS; glass <= LEINAD_BLOCK_PURPLE_STAINED_GLASS; glass++) {
+        for (int i = 0; i<20;i++) for (int j = 0; j < 10; j++) for (int glass = LEINAD_BLOCK_WHITE_STAINED_GLASS; glass <= LEINAD_BLOCK_PURPLE_STAINED_GLASS; glass++) {
             chunk_test->block[leinad_get_chunk_index(i, j, glass)] = (struct blockdata) {
                 .id = glass,
                 .rotation_n_subpos = 0,
@@ -788,10 +779,23 @@ LEINAD_FCALL int INIT_render() {
             
         }
 
+        for(int i = 0; i<LEINAD_REGION_RADIUS;i++) for(int j = 0; j < LEINAD_REGION_RADIUS; j++) {
+            chunk_test->block[leinad_get_chunk_index(i, LEINAD_REGION_RADIUS-1, j)] = (struct blockdata) {
+                .id = LEINAD_BLOCK_GLASS,
+                .rotation_n_subpos = 0,
+                .custom_data = 0
+            };
+            
+        }
 
-        leinad_chunk_create_mesh(chunk_test, 0, 0, 0);
 
-        loaded_chunks.chunk[LOADED_CHUNKS_RADIUS] = chunk_test;
+        for (int a = 0; a < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; a++)
+         for (int b = 0; b < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; b++)
+          for (int c = 0; c < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; c++)
+            leinad_chunk_create_mesh(chunk_test, a, b, c);
+
+        loaded_chunks.center_pos[0] = 0; loaded_chunks.center_pos[1] = 0; loaded_chunks.center_pos[2] = 0;
+        loaded_chunks.chunk[raise3(LOADED_CHUNKS_LENGTH)/2] = chunk_test;
 
     }
 

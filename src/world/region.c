@@ -1,6 +1,6 @@
 #include <leinad/data/globals.h>
+#include <leinad/math/arithmetic.h>
 #include "../libs/bit_manipulation.h"
-#include "../math/arithmetic.h"
 
 #include <leinad/world/region.h>
 #include <leinad/render.h>
@@ -134,7 +134,7 @@ LEINAD_FGET struct blockdata leinad_region_getblock(int x, int y, int z, leinad_
     return data;
 }
 
-LEINAD_FBUILDER leinad_chunk_t* leinad_chunk_create() {
+LEINAD_FBUILDER leinad_chunk_t* leinad_chunk_create(float x, float y, float z) {
     leinad_chunk_t* chunk;
     Uint32 i;
 
@@ -142,16 +142,36 @@ LEINAD_FBUILDER leinad_chunk_t* leinad_chunk_create() {
 
     if (chunk == NULL) return NULL;
     
-    for(i = 0; i < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; i++){
+    for(i = 0; i < raise3(LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS); i++){
         chunk->mesh[i] = SDL_malloc(sizeof(struct chunk_mesh));
+        SDL_memset(chunk->mesh[i],0,sizeof(struct chunk_mesh));
     }
 
-    for(i = 0; i< LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS; i++) {
+    for(i = 0; i< raise3(LEINAD_REGION_RADIUS); i++) {
         chunk->block[i] = (struct blockdata){.id = LEINAD_BLOCK_default, .rotation_n_subpos = 0, .custom_data = 0};
     }
 
+    chunk->pos[0] = x; chunk->pos[1] = y; chunk->pos[2] = z;
+
     return chunk;
 }
+
+LEINAD_FCLEANER void leinad_chunk_free(leinad_chunk_t* chunk) {
+    if (chunk == NULL) return;
+    
+    for (int i = 0; i < raise3(LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS); i++) {
+        
+        if (chunk->mesh[i] != NULL) {
+            if (chunk->mesh[i]->index != NULL) SDL_ReleaseGPUBuffer(device,chunk->mesh[i]->index);
+            if (chunk->mesh[i]->vertex != NULL) SDL_ReleaseGPUBuffer(device,chunk->mesh[i]->vertex);
+        }
+
+        SDL_free(chunk->mesh[i]);
+    }
+
+    SDL_free(chunk);
+}
+
 
 /**
  * @todo
@@ -159,6 +179,8 @@ LEINAD_FBUILDER leinad_chunk_t* leinad_chunk_create() {
  *  OPTIMIZED, IF I HAD A NICKEL FOR EVERY OPTIMIZATION THIS CODE COULD
  *  HAVE, I WOULD HAVE MORE THAN, IDK, 4 NICKELS, WHICH ARE A LOT
  *  PLEASE DONT FORGET THIS CODE PLEASE I BEG OF YOU :sob:
+ *
+ * does not override the region's pos, useful for cloning regions or saving data
  */
 LEINAD_FINITIALIZER leinad_chunk_t* leinad_chunk_setfromregion(leinad_region_t* region, leinad_chunk_t* chunk){
     
@@ -388,7 +410,8 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
     // region completa de 1 bloque
     if (full_region_check) {
         result = SDL_malloc( 0 +
-            sizeof(Uint64)                        // count of blocks per level
+            sizeof(float) * 3                     // pos
+            + sizeof(Uint64)                      // count of blocks per level
             + sizeof(Uint32)                      // region data
             + sizeof(Uint8[0b1001001001001001+3]) // redirection flags
             + sizeof(struct blockdata) * 1        // block data
@@ -472,7 +495,8 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
         // I'm almost free :')
 
         result = SDL_malloc( 0 +
-            sizeof(Uint64)                                  // count of blocks per level
+            sizeof(float) * 3                               // pos
+            + sizeof(Uint64)                                // count of blocks per level
             + sizeof(Uint32)                                // region data
             + sizeof(Uint8[0b1001001001001001+3])           // redirection flags
             + sizeof(struct blockdata) * total_block_count  //block data
@@ -553,10 +577,11 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
     SDL_free(maps[4]);
     SDL_free(maps[5]);
 
+    result->pos[0] = chunk->pos[0]; result->pos[1] = chunk->pos[1]; result->pos[2] = chunk->pos[2];
     return result;
 }
 
-LEINAD_FBUILDER leinad_region_t* leinad_region_create_empty(){
+LEINAD_FBUILDER leinad_region_t* leinad_region_create_empty(float x, float y, float z) {
     leinad_region_t* region_full = SDL_malloc(sizeof(leinad_region_t) + sizeof(struct blockdata[1]));
     
     region_full->amounts_perLODlevel = 0 & mask_amount_64x;
@@ -568,6 +593,7 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_empty(){
     ((Uint16*)(region_full->region_data))[0*8+2] = (Uint16) 0;
     ((Uint16*)(region_full->region_data))[0*8+3] = (Uint16) 0;
 
+    region_full->pos[0] = x; region_full->pos[1] = y; region_full->pos[2] = z;
     return region_full;
 }
 
@@ -577,13 +603,11 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_empty(){
 
 
 
-LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short off_x, short off_y, short off_z) {
+LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short off_x, short off_y, short off_z) {
     int x, y, z;
 
     Uint64 opaque_vertex_count = 0;
     Uint64 opaque_index_count[7] = {0};
-
-    
 
     Uint64 transparent_vertex_count = 0;
     Uint64 transparent_index_count[7] = {0};
@@ -746,13 +770,22 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
     _aux->ind_y_ = opaque_index_count[6]+transparent_index_count[6];
     _aux->vert_o_count = opaque_vertex_count;
     _aux->vert_t_count = transparent_vertex_count;
-    #undef _aux
+
+
+
 
     SDL_GPUBufferCreateInfo createinfo = {
         .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
         .size = opaque_vertex_count + transparent_vertex_count,
         .props = 0
     };
+
+    if (createinfo.size == 0) {
+        _aux->vertex = NULL;
+        _aux->index = NULL;
+        goto failure;
+    }
+
     createinfo.size*= sizeof(struct block_vertex);
 
     chunk->mesh[
@@ -774,6 +807,7 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
   }
 
   SDL_GPUTransferBuffer* bufferTransferBuffer;
+
   { // fill buffers
     Uint32 idx_v_opaque = 0;
     Uint32 idx_v_transparent = opaque_vertex_count;
@@ -1599,16 +1633,21 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
 
 
   }
-    return NULL;
-}
 
-#undef _block
+    end:
+        return _aux;
+    failure:
+        return NULL;
+
+    #undef _block
+    #undef _aux
+}
 
 
 
 LEINAD_FRENDER void leinad_chunk_render_opaque(leinad_chunk_t *chunk, void* ptr){
     struct _chunkrenderdata* data = ptr;
-
+    
     // if chunk is not loaded, skip
     if (chunk == NULL) return;
 
@@ -1617,6 +1656,7 @@ LEINAD_FRENDER void leinad_chunk_render_opaque(leinad_chunk_t *chunk, void* ptr)
         // if chunk is not meshed or mesh doesn't have vertices, skip
         if (chunk->mesh[mesh_id] == NULL || chunk->mesh[mesh_id]->vertex == NULL) continue;
 
+        SDL_PushGPUVertexUniformData(data->command_buffer, 1, chunk->pos, 3* sizeof(float));
         SDL_BindGPUVertexBuffers(data->renderpass, 0, &(SDL_GPUBufferBinding){.buffer = chunk->mesh[mesh_id]->vertex, .offset = 0 },1);
         SDL_BindGPUFragmentSamplers(
             data->renderpass, 0,
@@ -1641,8 +1681,8 @@ LEINAD_FRENDER void leinad_chunk_render_opaque(leinad_chunk_t *chunk, void* ptr)
             { .texture = block_atlas.texture, .sampler = block_atlas.sampler }
         }, 1);
         SDL_DrawGPUIndexedPrimitives(data->renderpass, 0+
-                chunk->mesh[0]->ind_unspecified + chunk->mesh[0]->ind_x + chunk->mesh[0]->ind_x_ + chunk->mesh[0]->ind_z 
-            + chunk->mesh[0]->ind_z_ + chunk->mesh[0]->ind_y + chunk->mesh[0]->ind_y_ 
+                chunk->mesh[mesh_id]->ind_unspecified + chunk->mesh[mesh_id]->ind_x + chunk->mesh[mesh_id]->ind_x_ + chunk->mesh[mesh_id]->ind_z 
+            + chunk->mesh[mesh_id]->ind_z_ + chunk->mesh[mesh_id]->ind_y + chunk->mesh[mesh_id]->ind_y_ 
             , 1, 0, 0, 0);
 
     }
@@ -1660,16 +1700,17 @@ LEINAD_FRENDER void leinad_chunk_render_transparent(leinad_chunk_t *chunk, void*
         // if chunk is not meshed or mesh doesn't have vertices, skip
         if (chunk->mesh[mesh_id] == NULL || chunk->mesh[mesh_id]->vertex == NULL) continue;
 
-        SDL_BindGPUVertexBuffers(data->renderpass, 0, &(SDL_GPUBufferBinding){.buffer = chunk->mesh[0]->vertex, .offset = 0 },1);
-        SDL_BindGPUIndexBuffer(data->renderpass, &(SDL_GPUBufferBinding){ .buffer = chunk->mesh[0]->index, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+        SDL_PushGPUVertexUniformData(data->command_buffer, 1, chunk->pos, 3* sizeof(float));
+        SDL_BindGPUVertexBuffers(data->renderpass, 0, &(SDL_GPUBufferBinding){.buffer = chunk->mesh[mesh_id]->vertex, .offset = 0 },1);
+        SDL_BindGPUIndexBuffer(data->renderpass, &(SDL_GPUBufferBinding){ .buffer = chunk->mesh[mesh_id]->index, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
 
 
         SDL_BindGPUFragmentSamplers(data->renderpass, 0, (SDL_GPUTextureSamplerBinding[]){
             { .texture = block_atlas.texture, .sampler = block_atlas.sampler }
         }, 1);
         SDL_DrawGPUIndexedPrimitives(data->renderpass, 0+
-                chunk->mesh[0]->ind_unspecified + chunk->mesh[0]->ind_x + chunk->mesh[0]->ind_x_ + chunk->mesh[0]->ind_z 
-            + chunk->mesh[0]->ind_z_ + chunk->mesh[0]->ind_y + chunk->mesh[0]->ind_y_ 
+                chunk->mesh[mesh_id]->ind_unspecified + chunk->mesh[mesh_id]->ind_x + chunk->mesh[mesh_id]->ind_x_ + chunk->mesh[mesh_id]->ind_z 
+            + chunk->mesh[mesh_id]->ind_z_ + chunk->mesh[mesh_id]->ind_y + chunk->mesh[mesh_id]->ind_y_ 
             , 1, 0, 0, 0);
 
     }
@@ -1687,16 +1728,17 @@ LEINAD_FRENDER void leinad_chunk_render_front(leinad_chunk_t *chunk, void* ptr){
         // if chunk is not meshed or mesh doesn't have vertices, skip
         if (chunk->mesh[mesh_id] == NULL || chunk->mesh[mesh_id]->vertex == NULL) continue;
 
-        SDL_BindGPUVertexBuffers(data->renderpass, 0, &(SDL_GPUBufferBinding){.buffer = chunk->mesh[0]->vertex, .offset = 0 },1);
-        SDL_BindGPUIndexBuffer(data->renderpass, &(SDL_GPUBufferBinding){ .buffer = chunk->mesh[0]->index, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+        SDL_PushGPUVertexUniformData(data->command_buffer, 1, chunk->pos, 3* sizeof(float));
+        SDL_BindGPUVertexBuffers(data->renderpass, 0, &(SDL_GPUBufferBinding){.buffer = chunk->mesh[mesh_id]->vertex, .offset = 0 },1);
+        SDL_BindGPUIndexBuffer(data->renderpass, &(SDL_GPUBufferBinding){ .buffer = chunk->mesh[mesh_id]->index, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
 
 
         SDL_BindGPUFragmentSamplers(data->renderpass, 0, (SDL_GPUTextureSamplerBinding[]){
             { .texture = block_atlas.texture, .sampler = block_atlas.sampler }
         }, 1);
         SDL_DrawGPUIndexedPrimitives(data->renderpass, 0+
-                chunk->mesh[0]->ind_unspecified + chunk->mesh[0]->ind_x + chunk->mesh[0]->ind_x_ + chunk->mesh[0]->ind_z 
-            + chunk->mesh[0]->ind_z_ + chunk->mesh[0]->ind_y + chunk->mesh[0]->ind_y_ 
+                chunk->mesh[mesh_id]->ind_unspecified + chunk->mesh[mesh_id]->ind_x + chunk->mesh[mesh_id]->ind_x_ + chunk->mesh[mesh_id]->ind_z 
+            + chunk->mesh[mesh_id]->ind_z_ + chunk->mesh[mesh_id]->ind_y + chunk->mesh[mesh_id]->ind_y_ 
             , 1, 0, 0, 0);
 
     }

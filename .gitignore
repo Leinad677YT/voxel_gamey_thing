@@ -8,3 +8,5 @@ CMakeCache.txt
 *.png
 *.spv
 _*
+docs
+compile_commands.json

@@ -5,6 +5,7 @@
 // #include <crypt.h>
 
 #include <leinad/data/globals.h>
+#include <leinad/player.h>
 
 SDL_AppResult SDL_AppEvent(
     __attribute__ ((unused)) void *appstate,
@@ -29,31 +30,30 @@ SDL_AppResult SDL_AppEvent(
     switch (event->type){
 
         case SDL_EVENT_KEY_DOWN:
-            // SDL_Log("x= %lf, y= %lf, z= %lf",pos_x,pos_y,pos_z);
             if (event->key.repeat) break;
             switch(event->key.key) {
                 case SDLK_A:
-                    toadd_x--; 
+                    client->generic.motion.x -= client->fly_speed;
                     NET_WriteToStreamSocket(client_sock, "left", 5);
                     break;
                 case SDLK_D:
-                    toadd_x++; 
+                    client->generic.motion.x += client->fly_speed;
                     NET_WriteToStreamSocket(client_sock, "right", 6);
                     break;
                 case SDLK_W:
-                    toadd_z--; 
+                    client->generic.motion.z -= client->fly_speed;
                     NET_WriteToStreamSocket(client_sock, "forward", 8);
                     break;
                 case SDLK_S:
-                    toadd_z++; 
+                    client->generic.motion.z += client->fly_speed;
                     NET_WriteToStreamSocket(client_sock, "down", 5);
                     break;
                 case SDLK_LCTRL:
-                    toadd_y--; 
+                    client->generic.motion.y -= client->fly_speed;
                     NET_WriteToStreamSocket(client_sock, "crouch", 7);
                     break;
                 case SDLK_SPACE:
-                    toadd_y++; 
+                    client->generic.motion.y += client->fly_speed;
                     NET_WriteToStreamSocket(client_sock, "jump", 5);
                     break;
                 case SDLK_ESCAPE:
@@ -66,27 +66,27 @@ SDL_AppResult SDL_AppEvent(
             if (event->key.repeat) break;
             switch(event->key.key) {
                 case SDLK_A:
-                    toadd_x++; 
+                    client->generic.motion.x += client->fly_speed;
                     NET_WriteToStreamSocket(client_sock, "_left", 6);
                     break;
                 case SDLK_D:
-                    toadd_x--; 
+                    client->generic.motion.x -= client->fly_speed;
                     NET_WriteToStreamSocket(client_sock, "_right", 7);
                     break;
                 case SDLK_W:
-                    toadd_z++; 
+                    client->generic.motion.z += client->fly_speed;
                     NET_WriteToStreamSocket(client_sock, "_forward", 8);
                     break;
                 case SDLK_S:
-                    toadd_z--; 
+                    client->generic.motion.z -= client->fly_speed;
                     NET_WriteToStreamSocket(client_sock, "_down", 6);
                     break;
                 case SDLK_LCTRL:
-                    toadd_y++; 
+                    client->generic.motion.y += client->fly_speed;
                     NET_WriteToStreamSocket(client_sock, "_crouch", 8);
                     break;
                 case SDLK_SPACE:
-                    toadd_y--; 
+                    client->generic.motion.y -= client->fly_speed;
                     NET_WriteToStreamSocket(client_sock, "_jump", 6);
                     break;
             }

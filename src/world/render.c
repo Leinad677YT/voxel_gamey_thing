@@ -5,6 +5,8 @@
 #include <leinad/data/globals.h>
 #include <leinad/data/control_shortcuts.h>
 
+#include <leinad/world/loading.h>
+
 #include "../libs/io.h"
 #include "../libs/bit_manipulation.h"
 
@@ -38,7 +40,8 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
 
         struct _chunkrenderdata chunk_renderdata = {
             .pos = pos,
-            .viewvec = view_vec
+            .viewvec = view_vec,
+            .command_buffer = cmdbuf
         };
 
 
@@ -83,7 +86,7 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
         colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
         SDL_GPUDepthStencilTargetInfo depthStencilTargetInfo = { 0 };
-        depthStencilTargetInfo.texture = SceneDepthTexture;
+        depthStencilTargetInfo.texture = depth_texture;
         depthStencilTargetInfo.cycle = true;
         depthStencilTargetInfo.clear_depth = 1;
         depthStencilTargetInfo.clear_stencil = 0;
@@ -127,7 +130,7 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
 
         
         SDL_GPUDepthStencilTargetInfo depthStencilTargetInfo = { 0 };
-        depthStencilTargetInfo.texture = SceneDepthTexture;
+        depthStencilTargetInfo.texture = depth_texture;
         depthStencilTargetInfo.cycle = false;
         // depthStencilTargetInfo.clear_depth = 1;
         depthStencilTargetInfo.clear_stencil = 0;
@@ -174,7 +177,7 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
 
         
         SDL_GPUDepthStencilTargetInfo depthStencilTargetInfo = { 0 };
-        depthStencilTargetInfo.texture = SceneDepthTexture;
+        depthStencilTargetInfo.texture = depth_texture;
         depthStencilTargetInfo.cycle = false;
         // depthStencilTargetInfo.clear_depth = 1;
         depthStencilTargetInfo.clear_stencil = 0;
@@ -240,7 +243,7 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
         SDL_BindGPUIndexBuffer(renderPass, &(SDL_GPUBufferBinding){ .buffer = EffectIndexBuffer, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_16BIT);
         SDL_BindGPUFragmentSamplers(renderPass, 0, (SDL_GPUTextureSamplerBinding[]){
             { .texture = SceneColorTexture, .sampler = EffectSampler },
-            { .texture = SceneDepthTexture, .sampler = AuxiliarySampler },
+            { .texture = depth_texture, .sampler = AuxiliarySampler },
             { .texture = FrontBGTexture, .sampler = Auxiliary2Sampler }
         }, 3);
         SDL_DrawGPUIndexedPrimitives(renderPass, 6, 1, 0, 0, 0);
@@ -281,15 +284,16 @@ LEINAD_FCALL int leinad_render_init() {
     return SDL_APP_CONTINUE;
 }
 
+LEINAD_AUX static void free_chunks(leinad_chunk_t* chunk, __attribute__((unused)) void* _) {
+    leinad_chunk_free(chunk);
+}
+
 
 LEINAD_FCALL void leinad_render_end() {
     if (block_atlas.sampler != NULL && device != NULL) SDL_ReleaseGPUSampler(device, block_atlas.sampler);
     if (block_atlas.texture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, block_atlas.texture);
 
-    if (chunk_test == NULL) return;
-
-    if (chunk_test->mesh[0]->vertex != NULL && device != NULL) SDL_ReleaseGPUBuffer(device, chunk_test->mesh[0]->vertex);
-    if (chunk_test->mesh[0]->index != NULL && device != NULL) SDL_ReleaseGPUBuffer(device, chunk_test->mesh[0]->index);
+    loaded_chunks_forall_decreasing(free_chunks, NULL);
 }
 
 LEINAD_AUX static int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32 tx_amount, int tx_w, int tx_h) {
@@ -316,15 +320,25 @@ LEINAD_AUX static int _update_atlas(struct render_atlas *atlas, char* root_path,
         // you shall start reading NOW!
         if (
             leinad_io_readline(atlas_io, current_tx) <= 0
-        ) continue;
-        tx_surface = NULL;
-        SDL_snprintf(path,LEINAD_MAX_PATH_LENGTH, "%s/%s", root_path, current_tx);
+        ) {
+            current_tx[0] = 'n'; current_tx[1] = 'u'; current_tx[2] = 'l'; current_tx[3] = 'l'; current_tx[4] = '\0';
+            tx_surface = NULL;
+            tx_surface = leinad_load_png(current_tx);            
+        } else {
+            tx_surface = NULL;
+            SDL_snprintf(path,LEINAD_MAX_PATH_LENGTH, "%s/%s", root_path, current_tx);
+            tx_surface = leinad_load_png(path);
 
-        tx_surface = leinad_load_png(path);
+            if (tx_surface == NULL || current_tx[0] == '\0') {
+                current_tx[0] = 'n'; current_tx[1] = 'u'; current_tx[2] = 'l'; current_tx[3] = 'l'; current_tx[4] = '\0';
+                tx_surface = leinad_load_png(current_tx);            
+            }
+        }
 
-        // blit texture on the atlas
         target.x = (i % (atlas->width)) * tx_w;
         target.y = (i / (atlas->width)) * tx_h;
+
+        // blit texture on the atlas
         SDL_BlitSurface(tx_surface, NULL, atlas_surface, &target);
 
         SDL_DestroySurface(tx_surface);

@@ -4,7 +4,7 @@
 #include <leinad/data/globals.h>
 #include <leinad/data/app.h>
 
-#include "../render/shaders.h"
+#include <leinad/player.h>
 
 #include "../render/init.c"
 
@@ -52,7 +52,7 @@ SDL_AppResult SDL_AppInit(
     }
   }
 
-  { // initialize window and renderer
+  { // initialize window
 
     window = SDL_CreateWindow (
         LEINAD_WINDOW_TITLE,
@@ -66,16 +66,6 @@ SDL_AppResult SDL_AppInit(
         return SDL_APP_FAILURE;
     }
 
-    renderer = SDL_CreateGPURenderer(
-        device,
-        window
-    );
-
-    if (renderer == NULL) {
-    SDL_Log("Couldn't create renderer: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-    
   }
 
     { // assign window to gpu
@@ -90,11 +80,6 @@ SDL_AppResult SDL_AppInit(
         SDL_Log("Couldn't init rendering shaders\n > SDL_ERRROR [%s]", SDL_GetError());
         return SDL_APP_FAILURE;
     }
-
-    Uint32 drawablew, drawableh;
-    SDL_GetWindowSizeInPixels(window, (int *)&drawablew, (int *)&drawableh);
-    depth_texture = CreateDepthTexture(drawablew, drawableh);
-
 
     { // init server and client
 
@@ -112,6 +97,10 @@ SDL_AppResult SDL_AppInit(
 
     NET_WaitUntilConnected(client_sock, -1);
 
+  }
+
+  { // load client player
+    ENFORCE(leinad_load_player_client());
   }
 
     current_ns = SDL_GetTicksNS();

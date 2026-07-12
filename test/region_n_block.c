@@ -7,6 +7,7 @@
 
 #include "../src/world/block.c"
 #include "../src/world/region.c"
+#include "../src/world/loading.c"
 #include "../src/world/render.c"
 #include "../src/math/matrix.c"
 #include "../src/render/textures.c"
@@ -52,7 +53,7 @@ SDL_AppResult SDL_AppInit(
 
 
     leinad_chunk_t *chunk = NULL;
-    chunk = leinad_chunk_create();
+    chunk = leinad_chunk_create(0,0,0);
     leinad_chunk_setfromregion(&region_full, chunk);
     if (chunk == NULL) {printf("chunk not properly initialized"); return SDL_APP_FAILURE;}
 

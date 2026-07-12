@@ -102,15 +102,14 @@ SDL_GPUTexture *CreateDepthTexture(Uint32 drawablew, Uint32 drawableh)
 {
 	SDL_GPUTexture *result;
     SDL_GPUTextureCreateInfo createinfo = {
-        .type = SDL_GPU_TEXTURETYPE_2D,
-	    .format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
-	    .width = drawablew,
-	    .height = drawableh,
-	    .layer_count_or_depth = 1,
-	    .num_levels = 1,
-	    .sample_count = 0,
-	    .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
-	    .props = 0
+                .type = SDL_GPU_TEXTURETYPE_2D,
+                .width = drawablew,
+                .height = drawableh,
+                .layer_count_or_depth = 1,
+                .num_levels = 1,
+                .sample_count = SDL_GPU_SAMPLECOUNT_1,
+                .format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
+                .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET
     };
 
 	result = SDL_CreateGPUTexture(device, &createinfo);

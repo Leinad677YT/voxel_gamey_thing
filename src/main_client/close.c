@@ -11,7 +11,6 @@ void SDL_AppQuit(
     // free gpu mine
     if (depth_texture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, depth_texture);
     if (SkyPipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device,SkyPipeline);
-    if (renderer != NULL) SDL_DestroyRenderer(renderer);
 
     leinad_render_end();
 
@@ -25,7 +24,6 @@ void SDL_AppQuit(
     if (AuxTransparencyTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, AuxTransparencyTexture);
     if (FrontTransparencyTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, FrontTransparencyTexture);
     if (FrontBGTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, FrontBGTexture);
-    if (SceneDepthTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, SceneDepthTexture);
 
     if (EffectPipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device, EffectPipeline);
     if (EffectVertexBuffer != NULL && device != NULL) SDL_ReleaseGPUBuffer(device, EffectVertexBuffer);

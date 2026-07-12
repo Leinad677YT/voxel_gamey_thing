@@ -1,6 +1,8 @@
 #pragma once
 
 #include <SDL3/SDL.h>
+
+#include "../math/arithmetic.h"
 #include "../data/types.h"
 #include "../data/tags.h"
 
@@ -25,6 +27,8 @@
  */
 typedef struct leinad_region {
 
+    float pos[3]; // global position of the lowest corner, not present when saving to disk
+
     #define mask_amount_64x 0b0000000000000000000000000000000000000000000000000000000000000111
     #define mask_amount_32x 0b0000000000000000000000000000000000000000000000000000000111111000
     #define mask_amount_16x 0b0000000000000000000000000000000000000000000000111111111000000000
@@ -33,7 +37,7 @@ typedef struct leinad_region {
     #define mask_amount_02x 0b0111111111111111111000000000000000000000000000000000000000000000
     // contains the amount of FILLED subregions that each level has, if
     //  full, ignore. Data is stored in multiples of 3 bits:
-    // 3bits, 6bits, 9bits, 12bits, ... until adding up to 63
+    //  3bits, 6bits, 9bits, 12bits, ... until adding up to 63
     Uint64 amounts_perLODlevel;
 
 
@@ -67,7 +71,6 @@ typedef struct leinad_region {
 struct chunk_mesh {
     SDL_GPUBuffer* vertex;
     SDL_GPUBuffer* index;
-    SDL_GPUBuffer* index_directional[6]; // -x +x -z +z -y +y
 
     Uint32 vert_o_count,vert_t_count;
     Uint32 ind_x,ind_x_, ind_y,ind_y_, ind_z,ind_z_, ind_unspecified;
@@ -75,23 +78,25 @@ struct chunk_mesh {
 
 
 typedef struct leinad_chunk {
-    struct blockdata block[LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS*LEINAD_REGION_RADIUS];
-    struct chunk_mesh* mesh[LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS];
+    float pos[3]; // global position of the lowest corner
+    struct blockdata block[raise3(LEINAD_REGION_RADIUS)];
+    struct chunk_mesh* mesh[raise3(LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS)];
 } leinad_chunk_t;
 
 
 // x,y,z are already modulo'd 128
 LEINAD_FGET struct blockdata leinad_region_getblock(int x, int y, int z, leinad_region_t* region);
 
-LEINAD_FBUILDER leinad_chunk_t* leinad_chunk_create();
+LEINAD_FBUILDER leinad_chunk_t* leinad_chunk_create(float x, float y, float z);
+LEINAD_FCLEANER void leinad_chunk_free(leinad_chunk_t* chunk);
 
 LEINAD_FINITIALIZER leinad_chunk_t* leinad_chunk_setfromregion(leinad_region_t* region, leinad_chunk_t* chunk);
 
 LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t* chunk);
 
-LEINAD_FBUILDER leinad_region_t* leinad_region_create_empty();
+LEINAD_FBUILDER leinad_region_t* leinad_region_create_empty(float x, float y, float z);
 
-LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short off_x, short off_y, short off_z);
+LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short off_x, short off_y, short off_z);
 
 
 /**
@@ -99,6 +104,7 @@ LEINAD_FINITIALIZER void* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short 
  */
 struct _chunkrenderdata {
     SDL_GPURenderPass* renderpass;
+    SDL_GPUCommandBuffer* command_buffer;
     struct leinad_position pos;
     vec3 viewvec;
 };
