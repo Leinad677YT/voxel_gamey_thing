@@ -13,7 +13,7 @@ int leinad_load_player_client() {
     client->generic.motion = (struct leinad_motion){0,0,0};
     client->generic.pos = (struct leinad_position){0,0,0};
 
-    client->fly_speed = 5;
+    client->fly_speed = 2;
     client->walk_speed = 0.1;
 
     success:

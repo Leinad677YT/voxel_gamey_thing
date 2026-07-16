@@ -7,8 +7,8 @@ float4 main(Input input) : SV_Target0
 {
     return float4(
         sin(input.TexCoord.x)/4.f,
-        sin(input.TexCoord.y)/4.f,
-        sin(input.TexCoord.x + input.TexCoord.y)/4.f,
+        sin(input.TexCoord.y)/2.f,
+        sin(input.TexCoord.x + input.TexCoord.y)/2.f,
         1.f
         );
 }

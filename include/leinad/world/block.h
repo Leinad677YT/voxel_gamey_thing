@@ -91,3 +91,11 @@ LEINAD_FCOMPARATOR int leinad_blockdata_comparator(void* a, void* b);
  * clones the data of one block into another, this is equivalent to `(*dst) = (struct blockdata) src`
  */
 LEINAD_FINITIALIZER void leinad_blockdata_clone(struct blockdata src, struct blockdata* dst);
+
+#define LEINAD_BLOCK_SHADE_pX 0.05f
+#define LEINAD_BLOCK_SHADE_pY 0.02f
+#define LEINAD_BLOCK_SHADE_pZ 0.08f
+
+#define LEINAD_BLOCK_SHADE_nX 0.008f
+#define LEINAD_BLOCK_SHADE_nY 0.012f
+#define LEINAD_BLOCK_SHADE_nZ 0.016f

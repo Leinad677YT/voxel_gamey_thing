@@ -4,6 +4,7 @@ SamplerState Sampler : register(s0, space2);
 struct Input {
     float2 TexCoord : TEXCOORD0;
     float4 Position : SV_Position;
+    float4 BGColor : COLOR0;
 };
 
 struct Output {
@@ -20,6 +21,8 @@ Output main(Input input)
     // get the face pixel
     output.Color = Texture.Sample(Sampler, input.TexCoord);
     if (output.Color.a == 0.f) discard;
+
+    output.Color.rgb *= 1 - input.BGColor.a;
 
     // add the data to the averager (+1 to the colors, +a to the alpha)
     output.Color2 = float4(SMOL_FLOAT,0.f,0.f,output.Color.a) * RESCALE_DOWN;

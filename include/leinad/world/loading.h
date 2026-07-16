@@ -88,5 +88,5 @@ enum load_direction {
     LOAD_DIR_nZ,
     LOAD_DIR_none
 };
-
+LEINAD_FINITIALIZER int leinad_chunk_load(leinad_chunk_t** restrict chunk, float x, float y, float z);
 void unload_chunk(leinad_chunk_t** chunk, enum load_direction dir);

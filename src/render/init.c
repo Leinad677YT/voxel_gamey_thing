@@ -8,6 +8,7 @@
 #include <leinad/render.h>
 #include <leinad/world/block.h>
 #include <leinad/world/blockdata.h>
+#include <leinad/world/loading.h>
 
 #include "../world/data.h"
 
@@ -141,6 +142,7 @@ LEINAD_FCALL int INIT_render() {
   }
 
   { // sky pipeline
+    SDL_Log("sky_pipeline_starts_load");
         SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = {
         .target_info = {
             .num_color_targets = 1,
@@ -184,6 +186,7 @@ LEINAD_FCALL int INIT_render() {
   }
 
   { // opaque-textured-3d pipeline
+    SDL_Log("opaque_pipeline_starts_load");
     SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = (SDL_GPUGraphicsPipelineCreateInfo){
         .target_info = {
             .num_color_targets = 1,
@@ -200,7 +203,7 @@ LEINAD_FCALL int INIT_render() {
             .compare_op = SDL_GPU_COMPAREOP_LESS
         },
         .rasterizer_state = (SDL_GPURasterizerState){
-            .cull_mode = SDL_GPU_CULLMODE_NONE,
+            .cull_mode = SDL_GPU_CULLMODE_FRONT,
             .fill_mode = SDL_GPU_FILLMODE_FILL,
             .front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
         },
@@ -245,6 +248,7 @@ LEINAD_FCALL int INIT_render() {
   }
 
   { // transparent-textured-3d pipeline (translucency)
+    SDL_Log("translucent_pipeline_starts_load");
     SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = (SDL_GPUGraphicsPipelineCreateInfo){
         .target_info = {
             .num_color_targets = 2,
@@ -293,7 +297,7 @@ LEINAD_FCALL int INIT_render() {
             .compare_op = SDL_GPU_COMPAREOP_LESS
         },
         .rasterizer_state = (SDL_GPURasterizerState){
-            .cull_mode = SDL_GPU_CULLMODE_NONE,
+            .cull_mode = SDL_GPU_CULLMODE_FRONT,
             .fill_mode = SDL_GPU_FILLMODE_FILL,
             .front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
         },
@@ -338,6 +342,7 @@ LEINAD_FCALL int INIT_render() {
   }
 
   { // posteffect raw color image and front transparency pipeline
+    SDL_Log("aux_translucency_pipeline_starts_load");
     SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = (SDL_GPUGraphicsPipelineCreateInfo){
         .target_info = {
             .num_color_targets = 2,
@@ -356,10 +361,10 @@ LEINAD_FCALL int INIT_render() {
             .enable_depth_test = true,
             .enable_depth_write = true,
             .enable_stencil_test = false,
-            .compare_op = SDL_GPU_COMPAREOP_LESS_OR_EQUAL
+            .compare_op = SDL_GPU_COMPAREOP_LESS
         },
         .rasterizer_state = (SDL_GPURasterizerState){
-            .cull_mode = SDL_GPU_CULLMODE_NONE,
+            .cull_mode = SDL_GPU_CULLMODE_FRONT,
             .fill_mode = SDL_GPU_FILLMODE_FILL,
             .front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE
         },
@@ -404,6 +409,7 @@ LEINAD_FCALL int INIT_render() {
   }
 
   { // aux pipeline that puts together transparency and opaques
+    SDL_Log("merge_translucency_pipeline_starts_load");
     SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = (SDL_GPUGraphicsPipelineCreateInfo) {
         .target_info = {
             .num_color_targets = 1,
@@ -457,6 +463,7 @@ LEINAD_FCALL int INIT_render() {
   }
 
   { // post-effect pipeline
+    SDL_Log("post_effects_pipeline_starts_load");
     SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = (SDL_GPUGraphicsPipelineCreateInfo){
         .target_info = {
             .num_color_targets = 1,
@@ -730,39 +737,46 @@ LEINAD_FCALL int INIT_render() {
 
 
   { // load test chunk
-        leinad_region_t* region_test = leinad_region_create_empty(0,0,0);// coords here will get ignored, remember!
-        chunk_test = leinad_chunk_create(0,0,0); // displacement to test
-        
-        leinad_chunk_setfromregion(region_test,chunk_test);
+        loaded_chunks.center_pos[0] = 0; loaded_chunks.center_pos[1] = 0; loaded_chunks.center_pos[2] = 0;
+        for (int y = 0; y < LOADED_CHUNKS_LENGTH;y++)
+         for (int z = 0; z < LOADED_CHUNKS_LENGTH;z++)
+          for (int x = 0; x < LOADED_CHUNKS_LENGTH;x++){
+            leinad_chunk_load(&loaded_chunks.chunk[y*raise2(LOADED_CHUNKS_LENGTH) + z*LOADED_CHUNKS_LENGTH + x],(x-LOADED_CHUNKS_RADIUS) * 128,(y-LOADED_CHUNKS_RADIUS) * 128,(z-LOADED_CHUNKS_RADIUS) * 128);
+            for (int a = 0; a < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; a++)
+             for (int b = 0; b < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; b++)
+              for (int c = 0; c < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; c++)
+                leinad_chunk_create_mesh(loaded_chunks.chunk[y*raise2(LOADED_CHUNKS_LENGTH) + z*LOADED_CHUNKS_LENGTH + x], a, b, c);
 
-        SDL_free(region_test);
+        }
 
-        chunk_test->block[leinad_get_chunk_index(11, 0, 0)] = (struct blockdata) {
+        #define _chunk_test (loaded_chunks.chunk[0])
+
+        _chunk_test->block[leinad_get_chunk_index(11, 0, 0)] = (struct blockdata) {
             .id = LEINAD_BLOCK_STONE,
             .rotation_n_subpos = 0,
             .custom_data = 0
         };
 
-        chunk_test->block[leinad_get_chunk_index(11, 1, 0)] = (struct blockdata) {
+        _chunk_test->block[leinad_get_chunk_index(11, 1, 0)] = (struct blockdata) {
             .id = LEINAD_BLOCK_STONE,
             .rotation_n_subpos = 0,
             .custom_data = 0
         };
 
-        chunk_test->block[leinad_get_chunk_index(10, 0, 0)] = (struct blockdata) {
+        _chunk_test->block[leinad_get_chunk_index(10, 0, 0)] = (struct blockdata) {
             .id = LEINAD_BLOCK_STONE,
             .rotation_n_subpos = 0,
             .custom_data = 0
         };
 
-        chunk_test->block[leinad_get_chunk_index(11, 0, 1)] = (struct blockdata) {
+        _chunk_test->block[leinad_get_chunk_index(11, 0, 1)] = (struct blockdata) {
             .id = LEINAD_BLOCK_GLASS,
             .rotation_n_subpos = 0,
             .custom_data = 0
         };
 
         for (int i = 0; i<20;i++) for (int j = 0; j < 10; j++) for (int glass = LEINAD_BLOCK_WHITE_STAINED_GLASS; glass <= LEINAD_BLOCK_PURPLE_STAINED_GLASS; glass++) {
-            chunk_test->block[leinad_get_chunk_index(i, j, glass)] = (struct blockdata) {
+            _chunk_test->block[leinad_get_chunk_index(i, j, glass)] = (struct blockdata) {
                 .id = glass,
                 .rotation_n_subpos = 0,
                 .custom_data = 0
@@ -771,7 +785,7 @@ LEINAD_FCALL int INIT_render() {
         }
 
         for(int i = 0; i<32;i++) for(int j = 0; j < 32; j++) {
-            chunk_test->block[leinad_get_chunk_index(i, 0, j)] = (struct blockdata) {
+            _chunk_test->block[leinad_get_chunk_index(i, 0, j)] = (struct blockdata) {
                 .id = LEINAD_BLOCK_STONE,
                 .rotation_n_subpos = 0,
                 .custom_data = 0
@@ -780,7 +794,7 @@ LEINAD_FCALL int INIT_render() {
         }
 
         for(int i = 0; i<LEINAD_REGION_RADIUS;i++) for(int j = 0; j < LEINAD_REGION_RADIUS; j++) {
-            chunk_test->block[leinad_get_chunk_index(i, LEINAD_REGION_RADIUS-1, j)] = (struct blockdata) {
+            _chunk_test->block[leinad_get_chunk_index(i, LEINAD_REGION_RADIUS-1, j)] = (struct blockdata) {
                 .id = LEINAD_BLOCK_GLASS,
                 .rotation_n_subpos = 0,
                 .custom_data = 0
@@ -788,17 +802,14 @@ LEINAD_FCALL int INIT_render() {
             
         }
 
-
         for (int a = 0; a < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; a++)
          for (int b = 0; b < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; b++)
           for (int c = 0; c < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; c++)
-            leinad_chunk_create_mesh(chunk_test, a, b, c);
+            leinad_chunk_create_mesh(_chunk_test, a, b, c);
 
-        loaded_chunks.center_pos[0] = 0; loaded_chunks.center_pos[1] = 0; loaded_chunks.center_pos[2] = 0;
-        loaded_chunks.chunk[raise3(LOADED_CHUNKS_LENGTH)/2] = chunk_test;
 
+        #undef _chunk_test
     }
-
     SDL_Log("[OK] Render initialized");
 
     return SDL_APP_CONTINUE;

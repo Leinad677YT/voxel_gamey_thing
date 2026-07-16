@@ -18,8 +18,8 @@ float4 main(float2 TexCoord : TEXCOORD0) : SV_Target0
     float4 aux = float4(AuxTexture.Sample(AuxSampler, TexCoord).rgba);
     float4 aux2 = float4(AuxTexture2.Sample(AuxSampler2, TexCoord).rgba);
     
-    if (color.a == 0.f) discard;
+    if (color.a == 0.f) discard; // discarding 1.0f seems to reduce the amount of diagonals
     // combine results
-    color = float4(float3(color.rgb / (aux.r / SMOL_FLOAT)),color.a * RESCALE_UP / aux.a / SMOL_FLOAT);
-    return float4(float3(color.rgb * 0.66 + aux2.rgb * 0.34),color.a);
+    color = float4(float3(color.rgb / (aux.r / SMOL_FLOAT)),color.a * RESCALE_UP / SMOL_FLOAT / aux.a);
+    return float4(float3(color.rgb * 0.80 + aux2.rgb * 0.20),color.a);
 }

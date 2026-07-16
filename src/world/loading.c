@@ -76,12 +76,45 @@ void loaded_chunks_forall_decreasing(void(*fun)(leinad_chunk_t*,void*),void* arg
     #undef invert
 }
 
+#define MAX_HEIGHT 128
+#define WATER_LEVEL 64
+LEINAD_FINITIALIZER void leinad_chunk_generate(leinad_chunk_t* restrict reserved_space){
 
+    int heightmap[raise2(LEINAD_REGION_RADIUS)] = {0};
+
+    for (int i = 0; i < raise2(LEINAD_REGION_RADIUS); i++) {
+        heightmap[i] = SDL_sin((i % LOADED_CHUNKS_LENGTH) * 1.f/128 + ((float)i / raise2(LOADED_CHUNKS_LENGTH)) * 1.f/128 +  ((float)(i % raise2(LOADED_CHUNKS_LENGTH)) / LOADED_CHUNKS_LENGTH) * 1.f/128) * MAX_HEIGHT;
+        if (heightmap[i] - reserved_space->pos[1] < 0) heightmap[i] = 0;
+        else heightmap[i] -= reserved_space->pos[1];
+    }        
+
+    for(int z = 0; z < LEINAD_REGION_RADIUS; z++) for(int x = 0; x < LEINAD_REGION_RADIUS; x++) {
+
+    for (int y = 0; y < SDL_min(heightmap[z*LEINAD_REGION_RADIUS + x] - reserved_space->pos[1],LEINAD_REGION_RADIUS); y++)
+        reserved_space->block[y*raise2(LEINAD_REGION_RADIUS) + z*LEINAD_REGION_RADIUS + x].id = LEINAD_BLOCK_STONE;
+    for (int y = SDL_max(heightmap[z*LEINAD_REGION_RADIUS + x] - reserved_space->pos[1],0); y < SDL_min(SDL_max(WATER_LEVEL - reserved_space->pos[1],0),LEINAD_REGION_RADIUS); y++)
+        reserved_space->block[y*raise2(LEINAD_REGION_RADIUS) + z*LEINAD_REGION_RADIUS + x].id = LEINAD_BLOCK_BLUE_STAINED_GLASS;
+    }
+}
 
 
 LEINAD_FINITIALIZER int leinad_chunk_load(leinad_chunk_t** restrict chunk, float x, float y, float z) {
 
-    
+    #define loaded false
+
+    if (loaded) {
+        // idk lol, just grab it
+    }
+    else {
+        *chunk = leinad_chunk_create(x,y,z);
+        if (*chunk == NULL) goto failure;
+
+        leinad_chunk_generate(*chunk);
+
+        (*chunk)->pos[0] = x;
+        (*chunk)->pos[1] = y;
+        (*chunk)->pos[2] = z;
+    }
 
     success:
         return SDL_APP_CONTINUE;
@@ -112,22 +145,30 @@ void load_around_player(struct entity_player* player) {
     #define POS i
     if (player_pos.y < center_pos.y) {
 
+        SDL_Log("# -y");
         // all loaded to Y+1
-        for (int i = raise3(LOADED_CHUNKS_LENGTH) -raise2(LOADED_CHUNKS_LENGTH) -1; i >= 0 ; i--)
+        for (int i = raise3(LOADED_CHUNKS_LENGTH) -raise2(LOADED_CHUNKS_LENGTH) -1; i >= 0 ; i--){
+            if (i >= raise3(LOADED_CHUNKS_LENGTH) -2*raise2(LOADED_CHUNKS_LENGTH))
+                leinad_chunk_free(loaded_chunks.chunk[POS + raise2(LOADED_CHUNKS_LENGTH)]);
             loaded_chunks.chunk[POS + raise2(LOADED_CHUNKS_LENGTH)] = loaded_chunks.chunk[POS];
+        }
         for (int i = 0; i < raise2(LOADED_CHUNKS_LENGTH); i++) 
-            loaded_chunks.chunk[POS] = NULL;
+            leinad_chunk_load(&loaded_chunks.chunk[POS],loaded_chunks.chunk[POS + raise2(LOADED_CHUNKS_LENGTH)]->pos[0],loaded_chunks.chunk[POS + raise2(LOADED_CHUNKS_LENGTH)]->pos[1],loaded_chunks.chunk[POS + raise2(LOADED_CHUNKS_LENGTH)]->pos[2]);
 
         loaded_chunks.center_pos[1] -= LEINAD_REGION_RADIUS;
         tries++; if (tries < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
 
     } else if (player_pos.y - SDL_fmod(player_pos.y, LEINAD_REGION_RADIUS) > center_pos.y + LEINAD_REGION_RADIUS) {
 
+        SDL_Log("# +y");
         // all loaded to Y-1
-        for(int i = 0; i < raise3(LOADED_CHUNKS_LENGTH) - raise2(LOADED_CHUNKS_LENGTH); i++)
+        for(int i = 0; i < raise3(LOADED_CHUNKS_LENGTH) - raise2(LOADED_CHUNKS_LENGTH); i++) {
+            if (i < raise2(LOADED_CHUNKS_LENGTH))
+                leinad_chunk_free(loaded_chunks.chunk[POS]);
             loaded_chunks.chunk[POS] = loaded_chunks.chunk[POS + raise2(LOADED_CHUNKS_LENGTH)];
+        }
         for (int i = raise3(LOADED_CHUNKS_LENGTH) -raise2(LOADED_CHUNKS_LENGTH); i < raise3(LOADED_CHUNKS_LENGTH); i++) 
-            loaded_chunks.chunk[POS] = NULL;
+            leinad_chunk_load(&loaded_chunks.chunk[POS],loaded_chunks.chunk[POS - raise2(LOADED_CHUNKS_LENGTH)]->pos[0],loaded_chunks.chunk[POS - raise2(LOADED_CHUNKS_LENGTH)]->pos[1],loaded_chunks.chunk[POS - raise2(LOADED_CHUNKS_LENGTH)]->pos[2]);
 
         loaded_chunks.center_pos[1] += LEINAD_REGION_RADIUS;
         tries++; if (tries < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
@@ -139,28 +180,35 @@ void load_around_player(struct entity_player* player) {
     #define POS (i*raise2(LOADED_CHUNKS_LENGTH) + j)
     if (player_pos.z < center_pos.z) {
 
+        SDL_Log("# -z");
         // all loaded to Z+1
         for (int i = LOADED_CHUNKS_LENGTH -1; i >= 0; i--)
-         for (int j = raise2(LOADED_CHUNKS_LENGTH) - LOADED_CHUNKS_LENGTH -1; j >= 0; j--)
+         for (int j = raise2(LOADED_CHUNKS_LENGTH) - LOADED_CHUNKS_LENGTH -1; j >= 0; j--) {
+            if (i == LOADED_CHUNKS_LENGTH -2)
+                leinad_chunk_free(loaded_chunks.chunk[POS + LOADED_CHUNKS_LENGTH]);
             loaded_chunks.chunk[POS + LOADED_CHUNKS_LENGTH] = loaded_chunks.chunk[POS];
+        }
 
         for (int i = 0; i < LOADED_CHUNKS_LENGTH; i++)
          for (int j = 0; j < LOADED_CHUNKS_LENGTH; j++)
-            loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) +j] = NULL;
+            leinad_chunk_load(&loaded_chunks.chunk[POS],loaded_chunks.chunk[POS + LOADED_CHUNKS_LENGTH]->pos[0],loaded_chunks.chunk[POS + LOADED_CHUNKS_LENGTH]->pos[1],loaded_chunks.chunk[POS + LOADED_CHUNKS_LENGTH]->pos[2]);
 
         loaded_chunks.center_pos[2] -= LEINAD_REGION_RADIUS;
         tries++; if (tries < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
 
     } else if (player_pos.z - SDL_fmod(player_pos.z, LEINAD_REGION_RADIUS) > center_pos.z + LEINAD_REGION_RADIUS) {
 
+        SDL_Log("# +z");
         // all loaded to Z-1
         for (int i = 0; i < LOADED_CHUNKS_LENGTH; i++)
-         for (int j = 0; j < raise2(LOADED_CHUNKS_LENGTH) - LOADED_CHUNKS_LENGTH; j++)
+         for (int j = 0; j < raise2(LOADED_CHUNKS_LENGTH) - LOADED_CHUNKS_LENGTH; j++) {
+            if (i == 0)
+                leinad_chunk_free(loaded_chunks.chunk[POS]);
             loaded_chunks.chunk[POS] = loaded_chunks.chunk[POS + LOADED_CHUNKS_LENGTH];
-
+        }
         for (int i = 1; i <= LOADED_CHUNKS_LENGTH; i++)
-         for (int j = 0; j < LOADED_CHUNKS_LENGTH; j++)
-            loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) - j] = NULL;
+         for (int j = 1; j <= LOADED_CHUNKS_LENGTH; j++)
+            leinad_chunk_load(&loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) - j],loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) - j - LOADED_CHUNKS_LENGTH]->pos[0],loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) - j - LOADED_CHUNKS_LENGTH]->pos[1],loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) - j - LOADED_CHUNKS_LENGTH]->pos[2]);
 
         loaded_chunks.center_pos[2] += LEINAD_REGION_RADIUS;
         tries++; if (tries < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
@@ -172,27 +220,33 @@ void load_around_player(struct entity_player* player) {
     #define POS (i*LOADED_CHUNKS_LENGTH + j)
     if (player_pos.x < center_pos.x) {
 
+        SDL_Log("# -x");
         // all loaded to X+1
         for (int i = raise2(LOADED_CHUNKS_LENGTH) -1; i >= 0; i--)
-         for (int j = LOADED_CHUNKS_LENGTH - 1; j >= 0; j--)
+         for (int j = LOADED_CHUNKS_LENGTH - 1; j >= 0; j--) {
+            if (j == LOADED_CHUNKS_LENGTH -1)
+                leinad_chunk_free(loaded_chunks.chunk[POS + 1]);
             loaded_chunks.chunk[POS + 1] = loaded_chunks.chunk[POS];
-
+        }
         for (int i = 0; i < LOADED_CHUNKS_LENGTH; i++)
          for (int j = 0; j < LOADED_CHUNKS_LENGTH; j++)
-            loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) + j*LOADED_CHUNKS_LENGTH] = NULL;
+            leinad_chunk_load(&loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) + j*LOADED_CHUNKS_LENGTH],loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) + j*LOADED_CHUNKS_LENGTH +1]->pos[0],loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) + j*LOADED_CHUNKS_LENGTH +1]->pos[1],loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) + j*LOADED_CHUNKS_LENGTH +1]->pos[2]);
 
         loaded_chunks.center_pos[0] -= LEINAD_REGION_RADIUS;
         tries++; if (tries < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
 
     } else if (player_pos.x - SDL_fmod(player_pos.x, LEINAD_REGION_RADIUS) > center_pos.x + LEINAD_REGION_RADIUS) {
 
+        SDL_Log("# +x");
         // all loaded to X-1
         for (int i = 0; i < raise2(LOADED_CHUNKS_LENGTH); i++)
-         for (int j = 0; j < LOADED_CHUNKS_LENGTH - 1; j++)
+         for (int j = 0; j < LOADED_CHUNKS_LENGTH - 1; j++) {
+            if (j == 0)
+                leinad_chunk_free(loaded_chunks.chunk[POS]);
             loaded_chunks.chunk[POS] = loaded_chunks.chunk[POS + 1];
-
+        }
         for (int i = 1; i <= raise2(LOADED_CHUNKS_LENGTH); i++)
-            loaded_chunks.chunk[i*LOADED_CHUNKS_LENGTH -1] = NULL;
+            leinad_chunk_load(&loaded_chunks.chunk[i*LOADED_CHUNKS_LENGTH -1],loaded_chunks.chunk[i*LOADED_CHUNKS_LENGTH -2]->pos[0],loaded_chunks.chunk[i*LOADED_CHUNKS_LENGTH -2]->pos[1],loaded_chunks.chunk[i*LOADED_CHUNKS_LENGTH -2]->pos[2]);
 
         loaded_chunks.center_pos[0] += LEINAD_REGION_RADIUS;
         tries++; if (tries < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;

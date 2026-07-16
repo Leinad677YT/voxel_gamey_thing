@@ -13,9 +13,13 @@ extern int leinad_render2_ui();
 
 
 SDL_AppResult SDL_AppIterate( __attribute__ ((unused)) void *appstate) {
+
+    static int frames = 0;
+    static Uint64 last_ns = 0;
     
   { // render world
     ENFORCE(leinad_render_world(client->generic.pos,(vec3){-client->generic.pos.x,-client->generic.pos.y,-client->generic.pos.z}));
+    frames++;
   }
 
   { // check the time since last tick
@@ -27,14 +31,14 @@ SDL_AppResult SDL_AppIterate( __attribute__ ((unused)) void *appstate) {
     client->generic.pos.y += client->generic.motion.y * (current_ns - previous_ns) / 100000000;
     client->generic.pos.z += client->generic.motion.z * (current_ns - previous_ns) / 100000000;
 
-    static int i = 0;
-    i++;
-
-    if (i > /*1s*/ 1000000000 / LEINAD_TICK_RANGE_NS) {
-        // leinad_render_update_textures();
+    if (current_ns - last_ns > 1000000000) {
+        double fps = (double)(frames) / ((double)(current_ns - last_ns)/1000000000);
+        SDL_Log("> fps: %lf",fps);
         load_around_player(client);
-        if (loaded_chunks.chunk[raise3(LOADED_CHUNKS_LENGTH) / 2] == NULL) SDL_Log("outisde center chunk");
-        i = 0;
+        // leinad_render_update_textures();
+        // if (loaded_chunks.chunk[raise3(LOADED_CHUNKS_LENGTH) / 2] == NULL) SDL_Log("outisde center chunk");
+        frames = 0;
+        last_ns = current_ns; 
     }
 
 previous_ns = current_ns;

@@ -65,7 +65,7 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
       { // draw sky @todo hacerlo bonito
         SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
         colorTargetInfo.texture = SceneColorTexture; // RGBA
-        colorTargetInfo.clear_color = (SDL_FColor){ 0.2f, 0.7f, 1.0f, 0.0f };
+        colorTargetInfo.clear_color = (SDL_FColor){ 0.2f,SDL_sin(current_ns * 0.00000001f)* 0.5f +1.0f, 1.0f, 0.0f };
         colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
         colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
@@ -120,11 +120,13 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
         SDL_GPUColorTargetInfo colorTargetInfo[2] = { 0 };
         colorTargetInfo[0].texture = SceneTransparencyTexture; // RGBA
         colorTargetInfo[0].clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 0.0f };
+        colorTargetInfo[0].cycle = false;
         colorTargetInfo[0].load_op = SDL_GPU_LOADOP_CLEAR;
         colorTargetInfo[0].store_op = SDL_GPU_STOREOP_STORE;
 
         colorTargetInfo[1].texture = AuxTransparencyTexture; // RGBA
         colorTargetInfo[1].clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 0.0f };
+        colorTargetInfo[1].cycle = false;
         colorTargetInfo[1].load_op = SDL_GPU_LOADOP_CLEAR;
         colorTargetInfo[1].store_op = SDL_GPU_STOREOP_STORE;
 
@@ -167,11 +169,13 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
         SDL_GPUColorTargetInfo colorTargetInfo[2] = { 0 };
         colorTargetInfo[0].texture = FrontTransparencyTexture; // RGBA
         colorTargetInfo[0].clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 0.0f };
+        colorTargetInfo[0].cycle = false;
         colorTargetInfo[0].load_op = SDL_GPU_LOADOP_CLEAR;
         colorTargetInfo[0].store_op = SDL_GPU_STOREOP_STORE;
 
         colorTargetInfo[1].texture = FrontBGTexture; // RGBA
         colorTargetInfo[1].clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 0.0f };
+        colorTargetInfo[1].cycle = false;
         colorTargetInfo[1].load_op = SDL_GPU_LOADOP_CLEAR;
         colorTargetInfo[1].store_op = SDL_GPU_STOREOP_STORE;
 
@@ -234,6 +238,7 @@ LEINAD_FCALL int leinad_render_world(struct leinad_position pos, vec3 view_vec){
         SDL_GPUColorTargetInfo swapchainTargetInfo = { 0 };
         swapchainTargetInfo.texture = swapchainTexture; // RGBA
         swapchainTargetInfo.clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 0.0f };
+        swapchainTargetInfo.cycle = false;
         swapchainTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
         swapchainTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
 

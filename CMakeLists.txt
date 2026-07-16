@@ -38,7 +38,7 @@ target_link_libraries(test_regionnblock PRIVATE SDL3_net::SDL3_net)
 
 target_link_libraries(test_enbt PRIVATE SDL3::SDL3)
 
-target_compile_options(window_template PRIVATE -fsanitize=address)
-target_link_options(window_template PRIVATE -fsanitize=address)
+# target_compile_options(window_template PRIVATE -fsanitize=address)
+# target_link_options(window_template PRIVATE -fsanitize=address)
 
 target_include_directories(window_template PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
