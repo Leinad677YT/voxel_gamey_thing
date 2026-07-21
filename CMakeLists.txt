@@ -12,10 +12,10 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 
 # This assumes the SDL source is available in vendored/SDL
 add_subdirectory(vendored/SDL EXCLUDE_FROM_ALL)
-add_subdirectory(vendored/SDL_image EXCLUDE_FROM_ALL)
 add_subdirectory(vendored/SDL_net EXCLUDE_FROM_ALL)
-add_subdirectory(vendored/SDL_ttf EXCLUDE_FROM_ALL)
-add_subdirectory(vendored/SDL_shadercross-main EXCLUDE_FROM_ALL)
+# add_subdirectory(vendored/SDL_image EXCLUDE_FROM_ALL)
+# add_subdirectory(vendored/SDL_ttf EXCLUDE_FROM_ALL)
+# add_subdirectory(vendored/SDL_shadercross-main EXCLUDE_FROM_ALL)
 
 include_directories(SYSTEM include)
 

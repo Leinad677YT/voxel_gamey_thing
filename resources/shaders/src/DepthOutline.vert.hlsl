@@ -9,8 +9,8 @@ struct Input {
 };
 
 struct Output {
-    float2 TexCoord : TEXCOORD0;
     float4 Position : SV_Position;
+    float2 TexCoord : TEXCOORD0;
 };
 
 Output main(Input input) {

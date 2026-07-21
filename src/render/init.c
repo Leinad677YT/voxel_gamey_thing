@@ -27,20 +27,17 @@ LEINAD_FCALL int INIT_render() {
     SDL_GPUShader* skyVertexShader = NULL;
     SDL_GPUShader* skyFragmentShader = NULL;
 
-    SDL_GPUShader* textureVertexShader = NULL;
-    SDL_GPUShader* textureFragmentShader = NULL;
+    SDL_GPUShader* opaqueBlockVertexShader = NULL;
+    SDL_GPUShader* opaqueBlockFragmentShader = NULL;
 
-    SDL_GPUShader* transparentTextureVertexShader = NULL;
-    SDL_GPUShader* transparentTextureFragmentShader = NULL;
+    SDL_GPUShader* transparentBlockVertexShader = NULL;
+    SDL_GPUShader* transparentBlockFragmentShader = NULL;
 
-    SDL_GPUShader* outlineTextureVertexShader = NULL;
-    SDL_GPUShader* outlineTextureFragmentShader = NULL;
+    SDL_GPUShader* frontBlockVertexShader = NULL;
+    SDL_GPUShader* frontBlockFragmentShader = NULL;
 
-    SDL_GPUShader* auxTransparentVertexShader = NULL;
-    SDL_GPUShader* auxTransparentFragmentShader = NULL;
-
-    SDL_GPUShader* effectVertexShader = NULL;
-    SDL_GPUShader* effectFragmentShader = NULL;
+    SDL_GPUShader* outlineVertexShader = NULL;
+    SDL_GPUShader* outlineFragmentShader = NULL;
 
   { // get shaders
 
@@ -59,82 +56,66 @@ LEINAD_FCALL int INIT_render() {
             failed = true;
             goto end_shaders;
         }
-        
+
         // texture_vert
-        textureVertexShader = LoadShader(device, "TexturedQuad.vert", 0, 2, 0, 0);
-        if (textureVertexShader == NULL) {
-            SDL_Log("Failed to create 'TexturedQuad' vertex shader!");
+        opaqueBlockVertexShader = LoadShader(device, "OpaqueBlock.vert", 0, 2, 0, 0);
+        if (opaqueBlockVertexShader == NULL) {
+            SDL_Log("Failed to create 'OpaqueBlock' vertex shader!");
             failed = true;
             goto end_shaders;
         }
 
         // texture_frag
-        textureFragmentShader = LoadShader(device, "TexturedQuad.frag", 1, 1, 0, 0);
-        if (textureFragmentShader == NULL) {
-            SDL_Log("Failed to create 'TexturedQuad' fragment shader!");
+        opaqueBlockFragmentShader = LoadShader(device, "OpaqueBlock.frag", 1, 1, 0, 0);
+        if (opaqueBlockFragmentShader == NULL) {
+            SDL_Log("Failed to create 'OpaqueBlock' fragment shader!");
             failed = true;
             goto end_shaders;
         }
 
         // transparent_texture_vert
-        transparentTextureVertexShader = LoadShader(device, "TransparentTexturedQuad.vert", 0, 2, 0, 0);
-        if (transparentTextureVertexShader == NULL) {
-            SDL_Log("Failed to create 'TransparentTexturedQuad' vertex shader!");
+        transparentBlockVertexShader = LoadShader(device, "TransparentBlock.vert", 0, 2, 0, 0);
+        if (transparentBlockVertexShader == NULL) {
+            SDL_Log("Failed to create 'TransparentBlock' vertex shader!");
             failed = true;
             goto end_shaders;
         }
 
         // transparent_texture_frag
-        transparentTextureFragmentShader = LoadShader(device, "TransparentTexturedQuad.frag", 1, 1, 0, 0);
-        if (transparentTextureFragmentShader == NULL) {
-            SDL_Log("Failed to create 'TransparentTexturedQuad' fragment shader!");
+        transparentBlockFragmentShader = LoadShader(device, "TransparentBlock.frag", 1, 1, 0, 0);
+        if (transparentBlockFragmentShader == NULL) {
+            SDL_Log("Failed to create 'TransparentBlock' fragment shader!");
             failed = true;
             goto end_shaders;
         }
 
-        // outline_texture_vert
-        outlineTextureVertexShader = LoadShader(device, "OutlineTexturedQuad.vert", 0, 2, 0, 0);
-        if (outlineTextureVertexShader == NULL) {
-            SDL_Log("Failed to create 'OutlineTexturedQuad' vertex shader!");
+        // front_texture_vert
+        frontBlockVertexShader = LoadShader(device, "FrontTransparentBlock.vert", 0, 2, 0, 0);
+        if (frontBlockVertexShader == NULL) {
+            SDL_Log("Failed to create 'FrontTransparentBlock' vertex shader!");
             failed = true;
             goto end_shaders;
         }
 
-        // outline_texture_frag
-        outlineTextureFragmentShader = LoadShader(device, "OutlineTexturedQuad.frag", 1, 1, 0, 0);
-        if (outlineTextureFragmentShader == NULL) {
-            SDL_Log("Failed to create 'OutlineTexturedQuad' fragment shader!");
+        // front_texture_frag
+        frontBlockFragmentShader = LoadShader(device, "FrontTransparentBlock.frag", 3, 1, 0, 0);
+        if (frontBlockFragmentShader == NULL) {
+            SDL_Log("Failed to create 'FrontTransparentBlock' fragment shader!");
             failed = true;
             goto end_shaders;
         }
 
-        // aux_transparent_texture_vert
-        auxTransparentVertexShader = LoadShader(device, "MergeTransparency.vert", 0, 1, 0, 0);
-        if (auxTransparentVertexShader == NULL) {
-            SDL_Log("Failed to create 'MergeTransparency' vertex shader!");
+        // outline_vert
+        outlineVertexShader = LoadShader(device, "DepthOutline.vert", 0, 1, 0, 0);
+        if (outlineVertexShader == NULL) {
+            SDL_Log("Failed to create 'DepthOutline' vertex shader!");
             failed = true;
             goto end_shaders;
         }
 
-        // aux_transparent_texture_frag
-        auxTransparentFragmentShader = LoadShader(device, "MergeTransparency.frag", 3, 0, 0, 0);
-        if (auxTransparentFragmentShader == NULL) {
-            SDL_Log("Failed to create 'MergeTransparency' fragment shader!");
-            failed = true;
-            goto end_shaders;
-        }
-
-        // border_vert
-        effectVertexShader = LoadShader(device, "DepthOutline.vert", 0, 1, 0, 0);
-        if (effectVertexShader == NULL) {
-            SDL_Log("Failed to create 'TexturedQuad' vertex shader!");
-            failed = true;
-            goto end_shaders;
-        }
-
-        // border_frag
-        effectFragmentShader = LoadShader(device, "DepthOutline.frag", 3, 0, 0, 0);
-        if (effectFragmentShader == NULL) {
+        // outline_frag
+        outlineFragmentShader = LoadShader(device, "DepthOutline.frag", 2, 0, 0, 0);
+        if (outlineFragmentShader == NULL) {
             SDL_Log("Failed to create 'DepthOutline' fragment shader!");
             failed = true;
             goto end_shaders;
@@ -146,9 +127,11 @@ LEINAD_FCALL int INIT_render() {
         SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = {
         .target_info = {
             .num_color_targets = 1,
-            .color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
-                .format = SDL_GetGPUSwapchainTextureFormat(device, window)
-            }},
+            .color_target_descriptions = (SDL_GPUColorTargetDescription[]){
+                { // swapchain
+                    .format = SDL_GetGPUSwapchainTextureFormat(device, window)
+                }
+            },
             .has_depth_stencil_target = false
         },
         .vertex_input_state = (SDL_GPUVertexInputState){
@@ -187,12 +170,17 @@ LEINAD_FCALL int INIT_render() {
 
   { // opaque-textured-3d pipeline
     SDL_Log("opaque_pipeline_starts_load");
-    SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = (SDL_GPUGraphicsPipelineCreateInfo){
+    SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = {
         .target_info = {
-            .num_color_targets = 1,
-            .color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
-                .format = SDL_GetGPUSwapchainTextureFormat(device, window)
-            }},
+            .num_color_targets = 2,
+            .color_target_descriptions = (SDL_GPUColorTargetDescription[]){
+                { // swapchain
+                    .format = SDL_GetGPUSwapchainTextureFormat(device, window)
+                },
+                { // outline color
+                    .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM
+                }
+            },
             .has_depth_stencil_target = true,
             .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM
         },
@@ -234,8 +222,8 @@ LEINAD_FCALL int INIT_render() {
             }}
         },
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-        .vertex_shader = textureVertexShader,
-        .fragment_shader = textureFragmentShader
+        .vertex_shader = opaqueBlockVertexShader,
+        .fragment_shader = opaqueBlockFragmentShader
     };
 
     ScenePipeline = SDL_CreateGPUGraphicsPipeline(device, &pipelineCreateInfo);
@@ -249,13 +237,12 @@ LEINAD_FCALL int INIT_render() {
 
   { // transparent-textured-3d pipeline (translucency)
     SDL_Log("translucent_pipeline_starts_load");
-    SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = (SDL_GPUGraphicsPipelineCreateInfo){
+    SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = {
         .target_info = {
             .num_color_targets = 2,
             .color_target_descriptions = (SDL_GPUColorTargetDescription[]){
-                (SDL_GPUColorTargetDescription){
+                { // averaged written value translucency
                     .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM,
-                // .format = SDL_GetGPUSwapchainTextureFormat(device, window),
                     .blend_state = (struct SDL_GPUColorTargetBlendState){
                         .enable_blend = true,
                         .enable_color_write_mask = false,
@@ -269,9 +256,8 @@ LEINAD_FCALL int INIT_render() {
                         .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE
                     }
                 },
-                (SDL_GPUColorTargetDescription){
+                { // amount of times written translucency
                     .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM,
-                // .format = SDL_GetGPUSwapchainTextureFormat(device, window),
                     .blend_state = (struct SDL_GPUColorTargetBlendState){
                         .enable_blend = true,
                         .enable_color_write_mask = false,
@@ -284,7 +270,6 @@ LEINAD_FCALL int INIT_render() {
                         .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_CONSTANT_COLOR,
                         .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_CONSTANT_COLOR
                     }
-
                 }
             },
             .has_depth_stencil_target = true,
@@ -328,8 +313,8 @@ LEINAD_FCALL int INIT_render() {
             }}
         },
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-        .vertex_shader = transparentTextureVertexShader,
-        .fragment_shader = transparentTextureFragmentShader
+        .vertex_shader = transparentBlockVertexShader,
+        .fragment_shader = transparentBlockFragmentShader
     };
 
     TransparencyPipeline = SDL_CreateGPUGraphicsPipeline(device, &pipelineCreateInfo);
@@ -341,17 +326,27 @@ LEINAD_FCALL int INIT_render() {
 
   }
 
-  { // posteffect raw color image and front transparency pipeline
+  { // front transparency pipeline
     SDL_Log("aux_translucency_pipeline_starts_load");
-    SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = (SDL_GPUGraphicsPipelineCreateInfo){
+    SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = {
         .target_info = {
             .num_color_targets = 2,
             .color_target_descriptions = (SDL_GPUColorTargetDescription[]){
-                (SDL_GPUColorTargetDescription){
-                    .format = SDL_GetGPUSwapchainTextureFormat(device,window)
+                { // swapchain 
+                    .format = SDL_GetGPUSwapchainTextureFormat(device,window),
+                    .blend_state = {
+                        .enable_blend = true,
+                        .color_blend_op = SDL_GPU_BLENDOP_ADD,
+                        .src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+                        .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+
+                        .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+                        .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_DST_ALPHA,
+                        .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+                    }
                 },
-                (SDL_GPUColorTargetDescription){
-                    .format = SDL_GetGPUSwapchainTextureFormat(device,window)
+                { // outline color
+                    .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM
                 }
             },
             .has_depth_stencil_target = true,
@@ -395,8 +390,8 @@ LEINAD_FCALL int INIT_render() {
             }}
         },
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-        .vertex_shader = outlineTextureVertexShader,
-        .fragment_shader = outlineTextureFragmentShader
+        .vertex_shader = frontBlockVertexShader,
+        .fragment_shader = frontBlockFragmentShader
     };
 
     FrontPipeline = SDL_CreateGPUGraphicsPipeline(device, &pipelineCreateInfo);
@@ -408,24 +403,16 @@ LEINAD_FCALL int INIT_render() {
 
   }
 
-  { // aux pipeline that puts together transparency and opaques
-    SDL_Log("merge_translucency_pipeline_starts_load");
-    SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = (SDL_GPUGraphicsPipelineCreateInfo) {
+  { // outline pipeline
+    SDL_Log("outline_pipeline_starts_load");
+    SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = {
         .target_info = {
             .num_color_targets = 1,
-            .color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
-                .format = SDL_GetGPUSwapchainTextureFormat(device, window),
-                .blend_state = (SDL_GPUColorTargetBlendState) {
-                    .enable_blend = true,
-                    .color_blend_op = SDL_GPU_BLENDOP_ADD,
-                    .src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
-                    .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_DST_ALPHA,
-
-                    .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
-                    .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_DST_ALPHA,
-                    .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+            .color_target_descriptions = (SDL_GPUColorTargetDescription[]){
+                { // swapchain
+                .format = SDL_GetGPUSwapchainTextureFormat(device, window)
                 }
-            }},
+            },
         },
         .vertex_input_state = (SDL_GPUVertexInputState){
             .num_vertex_buffers = 1,
@@ -449,66 +436,13 @@ LEINAD_FCALL int INIT_render() {
             }}
         },
         .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-        .vertex_shader = auxTransparentVertexShader,
-        .fragment_shader = auxTransparentFragmentShader,
+        .vertex_shader = outlineVertexShader,
+        .fragment_shader = outlineFragmentShader,
     };
 
     AuxTransparencyPipeline = SDL_CreateGPUGraphicsPipeline(device, &pipelineCreateInfo);
     if (AuxTransparencyPipeline == NULL) {
         SDL_Log("Failed to create AuxTransparency pipeline!");
-        failed = true;
-        goto end_pipelines;
-    }
-
-  }
-
-  { // post-effect pipeline
-    SDL_Log("post_effects_pipeline_starts_load");
-    SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = (SDL_GPUGraphicsPipelineCreateInfo){
-        .target_info = {
-            .num_color_targets = 1,
-            .color_target_descriptions = (SDL_GPUColorTargetDescription[]){{
-                .format = SDL_GetGPUSwapchainTextureFormat(device, window),
-                .blend_state = (SDL_GPUColorTargetBlendState) {
-                    .enable_blend = false,
-                    .src_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
-                    .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-                    .color_blend_op = SDL_GPU_BLENDOP_ADD,
-                    .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
-                    .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-                    .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
-                }
-            }},
-        },
-        .vertex_input_state = (SDL_GPUVertexInputState){
-            .num_vertex_buffers = 1,
-            .vertex_buffer_descriptions = (SDL_GPUVertexBufferDescription[]){{
-                .slot = 0,
-                .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
-                .instance_step_rate = 0,
-                .pitch = sizeof(PositionTextureVertex)
-            }},
-            .num_vertex_attributes = 2,
-            .vertex_attributes = (SDL_GPUVertexAttribute[]){{
-                .buffer_slot = 0,
-                .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-                .location = 0,
-                .offset = 0
-            }, {
-                .buffer_slot = 0,
-                .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-                .location = 1,
-                .offset = sizeof(float) * 3
-            }}
-        },
-        .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-        .vertex_shader = effectVertexShader,
-        .fragment_shader = effectFragmentShader,
-    };
-
-    EffectPipeline = SDL_CreateGPUGraphicsPipeline(device, &pipelineCreateInfo);
-    if (EffectPipeline == NULL) {
-        SDL_Log("Failed to create Outline Effect pipeline!");
         failed = true;
         goto end_pipelines;
     }
@@ -521,20 +455,17 @@ LEINAD_FCALL int INIT_render() {
     if (skyVertexShader != NULL) SDL_ReleaseGPUShader(device, skyVertexShader);
     if (skyVertexShader != NULL) SDL_ReleaseGPUShader(device, skyFragmentShader);
     
-    if (textureVertexShader != NULL) SDL_ReleaseGPUShader(device, textureVertexShader);
-    if (textureFragmentShader != NULL) SDL_ReleaseGPUShader(device, textureFragmentShader);
+    if (opaqueBlockVertexShader != NULL) SDL_ReleaseGPUShader(device, opaqueBlockVertexShader);
+    if (opaqueBlockFragmentShader != NULL) SDL_ReleaseGPUShader(device, opaqueBlockFragmentShader);
 
-    if (transparentTextureVertexShader != NULL) SDL_ReleaseGPUShader(device, transparentTextureVertexShader);
-    if (transparentTextureFragmentShader != NULL) SDL_ReleaseGPUShader(device, transparentTextureFragmentShader);
+    if (transparentBlockVertexShader != NULL) SDL_ReleaseGPUShader(device, transparentBlockVertexShader);
+    if (transparentBlockFragmentShader != NULL) SDL_ReleaseGPUShader(device, transparentBlockFragmentShader);
     
-    if (outlineTextureVertexShader != NULL) SDL_ReleaseGPUShader(device, outlineTextureVertexShader);
-    if (outlineTextureFragmentShader != NULL) SDL_ReleaseGPUShader(device, outlineTextureFragmentShader);
+    if (frontBlockVertexShader != NULL) SDL_ReleaseGPUShader(device, frontBlockVertexShader);
+    if (frontBlockFragmentShader != NULL) SDL_ReleaseGPUShader(device, frontBlockFragmentShader);
     
-    if (auxTransparentVertexShader != NULL) SDL_ReleaseGPUShader(device, auxTransparentVertexShader);
-    if (auxTransparentFragmentShader != NULL) SDL_ReleaseGPUShader(device, auxTransparentFragmentShader);
-    
-    if (effectVertexShader != NULL) SDL_ReleaseGPUShader(device, effectVertexShader);
-    if (effectFragmentShader != NULL) SDL_ReleaseGPUShader(device, effectFragmentShader);
+    if (outlineVertexShader != NULL) SDL_ReleaseGPUShader(device, outlineVertexShader);
+    if (outlineFragmentShader != NULL) SDL_ReleaseGPUShader(device, outlineFragmentShader);
 
     if (failed) return SDL_APP_FAILURE;
 
@@ -542,24 +473,7 @@ LEINAD_FCALL int INIT_render() {
 
   { // Create the Scene Textures
 
-        int w, h;
-        SDL_GetWindowSizeInPixels(window, &w, &h);
-        SceneWidth = w;
-        SceneHeight = h;
-
-        SceneColorTexture = SDL_CreateGPUTexture(
-            device,
-            &(SDL_GPUTextureCreateInfo) {
-                .type = SDL_GPU_TEXTURETYPE_2D,
-                .width = SceneWidth,
-                .height = SceneHeight,
-                .layer_count_or_depth = 1,
-                .num_levels = 1,
-                .sample_count = SDL_GPU_SAMPLECOUNT_1,
-                .format = SDL_GetGPUSwapchainTextureFormat(device, window),
-                .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET
-            }
-        );
+        SDL_GetWindowSizeInPixels(window, &SceneWidth, &SceneHeight);
 
         SceneTransparencyTexture = SDL_CreateGPUTexture(
             device,
@@ -591,20 +505,6 @@ LEINAD_FCALL int INIT_render() {
             }
         );
 
-        FrontTransparencyTexture = SDL_CreateGPUTexture(
-            device,
-            &(SDL_GPUTextureCreateInfo) {
-                .type = SDL_GPU_TEXTURETYPE_2D,
-                .width = SceneWidth,
-                .height = SceneHeight,
-                .layer_count_or_depth = 1,
-                .num_levels = 1,
-                .sample_count = SDL_GPU_SAMPLECOUNT_1,
-                .format = SDL_GetGPUSwapchainTextureFormat(device, window),
-                .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET
-            }
-        );
-
         FrontBGTexture = SDL_CreateGPUTexture(
             device,
             &(SDL_GPUTextureCreateInfo) {
@@ -614,7 +514,7 @@ LEINAD_FCALL int INIT_render() {
                 .layer_count_or_depth = 1,
                 .num_levels = 1,
                 .sample_count = SDL_GPU_SAMPLECOUNT_1,
-                .format = SDL_GetGPUSwapchainTextureFormat(device, window),
+                .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM,
                 .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET
             }
         );
@@ -742,11 +642,6 @@ LEINAD_FCALL int INIT_render() {
          for (int z = 0; z < LOADED_CHUNKS_LENGTH;z++)
           for (int x = 0; x < LOADED_CHUNKS_LENGTH;x++){
             leinad_chunk_load(&loaded_chunks.chunk[y*raise2(LOADED_CHUNKS_LENGTH) + z*LOADED_CHUNKS_LENGTH + x],(x-LOADED_CHUNKS_RADIUS) * 128,(y-LOADED_CHUNKS_RADIUS) * 128,(z-LOADED_CHUNKS_RADIUS) * 128);
-            for (int a = 0; a < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; a++)
-             for (int b = 0; b < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; b++)
-              for (int c = 0; c < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; c++)
-                leinad_chunk_create_mesh(loaded_chunks.chunk[y*raise2(LOADED_CHUNKS_LENGTH) + z*LOADED_CHUNKS_LENGTH + x], a, b, c);
-
         }
 
         #define _chunk_test (loaded_chunks.chunk[0])

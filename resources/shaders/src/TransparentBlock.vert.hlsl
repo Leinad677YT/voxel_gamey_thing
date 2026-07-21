@@ -1,6 +1,6 @@
 cbuffer UBO : register(b0, space1)
 {
-    float4x4 transform : packoffset(c0);
+    float4x4 transform_matrix : packoffset(c0);
 };
 
 cbuffer UBO2 : register(b1, space1)
@@ -15,15 +15,18 @@ struct Input {
 };
 
 struct Output {
-    float2 TexCoord : TEXCOORD0;
     float4 Position : SV_Position;
     float4 BGColor : COLOR0;
+    float2 TexCoord : TEXCOORD0;
 };
 
 Output main(Input input) {
     Output output;
-    output.TexCoord = input.TexCoord;
-    output.Position = mul(transform, float4(input.Position + translation, 1.0f));
+
+    output.Position = mul(transform_matrix, float4(input.Position + translation, 1.0f));
+
+    output.TexCoord = input.TexCoord;    
     output.BGColor = input.BGColor;
+    
     return output;
 }

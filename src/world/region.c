@@ -162,7 +162,8 @@ LEINAD_FCLEANER void leinad_chunk_free(leinad_chunk_t* chunk) {
     for (int i = 0; i < raise3(LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS); i++) {
         
         if (chunk->mesh[i] != NULL) {
-            if (chunk->mesh[i]->index != NULL) SDL_ReleaseGPUBuffer(device,chunk->mesh[i]->index);
+            // if (chunk->mesh[i]->index != NULL) SDL_Log("released  IDX: %20p\t\tVTX: %20p",chunk->mesh[i]->index,chunk->mesh[i]->vertex);
+            if (chunk->mesh[i]->index != NULL)  SDL_ReleaseGPUBuffer(device,chunk->mesh[i]->index );
             if (chunk->mesh[i]->vertex != NULL) SDL_ReleaseGPUBuffer(device,chunk->mesh[i]->vertex);
         }
 
@@ -633,7 +634,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
 
                 // +y
                 if (
-                    (y == (off_y+1) * LEINAD_MESH_RADIUS -1
+                    (y == LEINAD_REGION_RADIUS-1 //(off_y+1) * LEINAD_MESH_RADIUS -1
                  || (
                     leinad_get_block_data(_block(x,y+1,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
                   && !(
@@ -643,7 +644,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                 
                 // -y
                 if (
-                    (y == off_y * LEINAD_MESH_RADIUS
+                    (y == 0// off_y * LEINAD_MESH_RADIUS
                  || (
                     leinad_get_block_data(_block(x,y-1,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
                   && !(
@@ -653,7 +654,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
 
                 // +z
                 if (
-                    (z == (off_z+1) * LEINAD_MESH_RADIUS -1
+                    (z == LEINAD_REGION_RADIUS-1 // (off_z+1) * LEINAD_MESH_RADIUS -1
                  || (
                     leinad_get_block_data(_block(x,y,z+1).id).flags & LEINAD_BLOCKFLAG_hastransparency
                   && !(
@@ -663,7 +664,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                 
                 // -z
                 if (
-                    (z == off_z * LEINAD_MESH_RADIUS
+                    (z == 0 // off_z * LEINAD_MESH_RADIUS
                  || (
                     leinad_get_block_data(_block(x,y,z-1).id).flags & LEINAD_BLOCKFLAG_hastransparency
                   && !(
@@ -673,7 +674,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
 
                 // +x
                 if (
-                    (x == (off_x+1) * LEINAD_MESH_RADIUS -1
+                    (x == LEINAD_REGION_RADIUS-1 // (off_x+1) * LEINAD_MESH_RADIUS -1
                  || (
                     leinad_get_block_data(_block(x+1,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
                   && !(
@@ -683,7 +684,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                 
                 // -x
                 if (
-                    (x == off_x * LEINAD_MESH_RADIUS
+                    (x == 0 // off_x * LEINAD_MESH_RADIUS
                      || (
                         leinad_get_block_data(_block(x-1,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
                  && !(
@@ -761,18 +762,19 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
   }
   { // create buffers
     
-    #define _aux chunk->mesh[off_y * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS+off_z * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS+ off_x]
-    _aux->ind_unspecified = opaque_index_count[0]+transparent_index_count[0];
-    _aux->ind_x = opaque_index_count[1]+transparent_index_count[1];
-    _aux->ind_x_ = opaque_index_count[2]+transparent_index_count[2];
-    _aux->ind_z = opaque_index_count[3]+transparent_index_count[3];
-    _aux->ind_z_ = opaque_index_count[4]+transparent_index_count[4];
-    _aux->ind_y = opaque_index_count[5]+transparent_index_count[5];
-    _aux->ind_y_ = opaque_index_count[6]+transparent_index_count[6];
-    _aux->vert_o_count = opaque_vertex_count;
-    _aux->vert_t_count = transparent_vertex_count;
-
-
+    #define current_mesh chunk->mesh[off_y * raise2(LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS) + off_z * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS + off_x]
+    current_mesh->ind_unspecified = opaque_index_count[0]+transparent_index_count[0];
+    current_mesh->ind_x = opaque_index_count[1]+transparent_index_count[1];
+    current_mesh->ind_x_ = opaque_index_count[2]+transparent_index_count[2];
+    current_mesh->ind_z = opaque_index_count[3]+transparent_index_count[3];
+    current_mesh->ind_z_ = opaque_index_count[4]+transparent_index_count[4];
+    current_mesh->ind_y = opaque_index_count[5]+transparent_index_count[5];
+    current_mesh->ind_y_ = opaque_index_count[6]+transparent_index_count[6];
+    current_mesh->vert_o_count = opaque_vertex_count;
+    current_mesh->vert_t_count = transparent_vertex_count;
+    // if (current_mesh->vertex != NULL) SDL_Log("released  IDX: %20p\t\tVTX: %20p",current_mesh->index,current_mesh->vertex);
+    if (current_mesh->vertex != NULL) SDL_ReleaseGPUBuffer(device, current_mesh->vertex);
+    if (current_mesh->index != NULL) SDL_ReleaseGPUBuffer(device, current_mesh->index);
 
 
     SDL_GPUBufferCreateInfo createinfo = {
@@ -782,29 +784,23 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
     };
 
     if (createinfo.size == 0) {
-        _aux->vertex = NULL;
-        _aux->index = NULL;
+        current_mesh->vertex = NULL;
+        current_mesh->index = NULL;
         goto failure;
     }
 
     createinfo.size*= sizeof(struct block_vertex);
 
-    chunk->mesh[
-        off_y * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
-      + off_z * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
-      + off_x
-    ]->vertex = SDL_CreateGPUBuffer(device, &createinfo);
+    current_mesh->vertex = SDL_CreateGPUBuffer(device, &createinfo);
     // create index buffer
     createinfo.usage = SDL_GPU_BUFFERUSAGE_INDEX;
     createinfo.size = 0;
 
     for (int i = 0; i < 7; i++) createinfo.size += opaque_index_count[i] + transparent_index_count[i];
     createinfo.size *= sizeof(Uint32);
-    chunk->mesh[
-        off_y * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
-      + off_z * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
-      + off_x
-    ]->index = SDL_CreateGPUBuffer(device, &createinfo);
+    current_mesh->index = SDL_CreateGPUBuffer(device, &createinfo);
+
+    // SDL_Log("allocated IDX: %20p\t\tVTX: %20p",current_mesh->index,current_mesh->vertex);
   }
 
   SDL_GPUTransferBuffer* bufferTransferBuffer;
@@ -880,7 +876,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
 
                     // +y
                     if (
-                        (y == (off_y+1) * LEINAD_MESH_RADIUS -1
+                        (y == LEINAD_REGION_RADIUS -1 // (off_y+1) * LEINAD_MESH_RADIUS -1
                         || (
                             leinad_get_block_data(_block(x,y+1,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
                          && !(
@@ -890,7 +886,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                     
                     // -y
                     if (
-                        (y == off_y * LEINAD_MESH_RADIUS
+                        (y == 0 // off_y * LEINAD_MESH_RADIUS
                         || (
                             leinad_get_block_data(_block(x,y-1,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
                          && !(
@@ -900,7 +896,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
 
                     // +z
                     if (
-                        (z == (off_z+1) * LEINAD_MESH_RADIUS -1
+                        (z ==  LEINAD_REGION_RADIUS -1 // (off_z+1) * LEINAD_MESH_RADIUS -1
                         || (
                             leinad_get_block_data(_block(x,y,z+1).id).flags & LEINAD_BLOCKFLAG_hastransparency
                          && !(
@@ -910,7 +906,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                     
                     // -z
                     if (
-                        (z == off_z * LEINAD_MESH_RADIUS
+                        (z == 0 // off_z * LEINAD_MESH_RADIUS
                         ||  (
                             leinad_get_block_data(_block(x,y,z-1).id).flags & LEINAD_BLOCKFLAG_hastransparency
                          && !(
@@ -920,7 +916,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
 
                     // +x
                     if (
-                        (x == (off_x+1) * LEINAD_MESH_RADIUS -1
+                        (x == LEINAD_REGION_RADIUS -1 // (off_x+1) * LEINAD_MESH_RADIUS -1
                         || (
                             leinad_get_block_data(_block(x+1,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
                          && !(
@@ -930,7 +926,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                     
                     // -x
                     if (
-                        (x == off_x * LEINAD_MESH_RADIUS
+                        (x == 0 // off_x * LEINAD_MESH_RADIUS
                         || (
                             leinad_get_block_data(_block(x-1,y,z).id).flags & LEINAD_BLOCKFLAG_hastransparency
                          && !(
@@ -1595,11 +1591,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                 .offset = 0
             },
             &(SDL_GPUBufferRegion) {
-                .buffer = chunk->mesh[
-                    off_y * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
-                  + off_z * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
-                  + off_x
-                ]->vertex,
+                .buffer = current_mesh->vertex,
                 .offset = 0,
                 .size = sizeof(struct block_vertex) * (opaque_vertex_count + transparent_vertex_count)
             },
@@ -1613,11 +1605,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                 .offset = sizeof(struct block_vertex) * (opaque_vertex_count + transparent_vertex_count)
             },
             &(SDL_GPUBufferRegion) {
-                .buffer = chunk->mesh[
-                    off_y * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
-                  + off_z * LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS
-                  + off_x
-                ]->index,
+                .buffer = current_mesh->index,
                 .offset = 0,
                 .size = sizeof(Uint32) * (
                     opaque_index_count[0]+opaque_index_count[1]+opaque_index_count[2]+opaque_index_count[3]+
@@ -1637,12 +1625,12 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
   }
 
     end:
-        return _aux;
+        return current_mesh;
     failure:
         return NULL;
 
     #undef _block
-    #undef _aux
+    #undef current_mesh
 }
 
 
@@ -1660,12 +1648,6 @@ LEINAD_FRENDER void leinad_chunk_render_opaque(leinad_chunk_t *chunk, void* ptr)
 
         SDL_PushGPUVertexUniformData(data->command_buffer, 1, chunk->pos, 3* sizeof(float));
         SDL_BindGPUVertexBuffers(data->renderpass, 0, &(SDL_GPUBufferBinding){.buffer = chunk->mesh[mesh_id]->vertex, .offset = 0 },1);
-        SDL_BindGPUFragmentSamplers(
-            data->renderpass, 0,
-            (SDL_GPUTextureSamplerBinding[]){
-                { .texture = block_atlas.texture, .sampler = block_atlas.sampler }
-            }, 1
-        );
 
         // if (data->viewvec.x < 0 && chunk->mesh[mesh_id]->index_directional[0] != NULL) { // -x
         //     SDL_BindGPUIndexBuffer(data->renderpass, &(SDL_GPUBufferBinding){ .buffer = chunk->mesh[mesh_id]->index_directional[0], .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
@@ -1678,10 +1660,6 @@ LEINAD_FRENDER void leinad_chunk_render_opaque(leinad_chunk_t *chunk, void* ptr)
         
         SDL_BindGPUIndexBuffer(data->renderpass, &(SDL_GPUBufferBinding){ .buffer = chunk->mesh[mesh_id]->index, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
 
-
-        SDL_BindGPUFragmentSamplers(data->renderpass, 0, (SDL_GPUTextureSamplerBinding[]){
-            { .texture = block_atlas.texture, .sampler = block_atlas.sampler }
-        }, 1);
         SDL_DrawGPUIndexedPrimitives(data->renderpass, 0+
                 chunk->mesh[mesh_id]->ind_unspecified + chunk->mesh[mesh_id]->ind_x + chunk->mesh[mesh_id]->ind_x_ + chunk->mesh[mesh_id]->ind_z 
             + chunk->mesh[mesh_id]->ind_z_ + chunk->mesh[mesh_id]->ind_y + chunk->mesh[mesh_id]->ind_y_ 
@@ -1706,10 +1684,6 @@ LEINAD_FRENDER void leinad_chunk_render_transparent(leinad_chunk_t *chunk, void*
         SDL_BindGPUVertexBuffers(data->renderpass, 0, &(SDL_GPUBufferBinding){.buffer = chunk->mesh[mesh_id]->vertex, .offset = 0 },1);
         SDL_BindGPUIndexBuffer(data->renderpass, &(SDL_GPUBufferBinding){ .buffer = chunk->mesh[mesh_id]->index, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
 
-
-        SDL_BindGPUFragmentSamplers(data->renderpass, 0, (SDL_GPUTextureSamplerBinding[]){
-            { .texture = block_atlas.texture, .sampler = block_atlas.sampler }
-        }, 1);
         SDL_DrawGPUIndexedPrimitives(data->renderpass, 0+
                 chunk->mesh[mesh_id]->ind_unspecified + chunk->mesh[mesh_id]->ind_x + chunk->mesh[mesh_id]->ind_x_ + chunk->mesh[mesh_id]->ind_z 
             + chunk->mesh[mesh_id]->ind_z_ + chunk->mesh[mesh_id]->ind_y + chunk->mesh[mesh_id]->ind_y_ 
@@ -1734,10 +1708,6 @@ LEINAD_FRENDER void leinad_chunk_render_front(leinad_chunk_t *chunk, void* ptr){
         SDL_BindGPUVertexBuffers(data->renderpass, 0, &(SDL_GPUBufferBinding){.buffer = chunk->mesh[mesh_id]->vertex, .offset = 0 },1);
         SDL_BindGPUIndexBuffer(data->renderpass, &(SDL_GPUBufferBinding){ .buffer = chunk->mesh[mesh_id]->index, .offset = 0 }, SDL_GPU_INDEXELEMENTSIZE_32BIT);
 
-
-        SDL_BindGPUFragmentSamplers(data->renderpass, 0, (SDL_GPUTextureSamplerBinding[]){
-            { .texture = block_atlas.texture, .sampler = block_atlas.sampler }
-        }, 1);
         SDL_DrawGPUIndexedPrimitives(data->renderpass, 0+
                 chunk->mesh[mesh_id]->ind_unspecified + chunk->mesh[mesh_id]->ind_x + chunk->mesh[mesh_id]->ind_x_ + chunk->mesh[mesh_id]->ind_z 
             + chunk->mesh[mesh_id]->ind_z_ + chunk->mesh[mesh_id]->ind_y + chunk->mesh[mesh_id]->ind_y_ 

@@ -39,10 +39,18 @@ extern struct _loaded_chunks {
 } loaded_chunks;
 
 /**
- * Iterate over the loaded_chunks from furthest to nearest
- * @todo nearest to furthest
+ * Iterate over the loaded_chunks from furthest to nearest (NOT EXHAUSTIVE!)
+ * This function only ensures that for 2 chunks: A and B; A will run the
+ *  function before B iff d(A) > d(B)
  */
-void loaded_chunks_forall_decreasing(void(*fun)(leinad_chunk_t*,void*),void* arg);
+LEINAD_FITERATOR void loaded_chunks_forall_decreasing(void(*fun)(leinad_chunk_t*,void*),void* arg);
+
+/**
+ * Iterate over the loaded_chunks from nearest to furthest (NOT EXHAUSTIVE!)
+ * This function only ensures that for 2 chunks: A and B; A will run the
+ *  function before B iff d(A) < d(B)
+ */
+LEINAD_FITERATOR void loaded_chunks_forall_increasing(void(*fun)(leinad_chunk_t*,void*),void* arg);
 
 /* order of the array inside the flat representation of a 5x5x5
         4   9   14  19   24
@@ -77,7 +85,7 @@ void loaded_chunks_forall_decreasing(void(*fun)(leinad_chunk_t*,void*),void* arg
 
 */
 
-void load_around_player(struct entity_player* player);
+LEINAD_FCALL void load_around_player(struct entity_player* player);
 
 enum load_direction {
     LOAD_DIR_pX,
@@ -88,5 +96,9 @@ enum load_direction {
     LOAD_DIR_nZ,
     LOAD_DIR_none
 };
+
+LEINAD_FINITIALIZER void leinad_chunk_generate(leinad_chunk_t* restrict reserved_space);
+
 LEINAD_FINITIALIZER int leinad_chunk_load(leinad_chunk_t** restrict chunk, float x, float y, float z);
-void unload_chunk(leinad_chunk_t** chunk, enum load_direction dir);
+
+LEINAD_FCLEANER void unload_chunk(leinad_chunk_t** chunk, enum load_direction dir);

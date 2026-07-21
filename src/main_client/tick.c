@@ -33,7 +33,15 @@ SDL_AppResult SDL_AppIterate( __attribute__ ((unused)) void *appstate) {
 
     if (current_ns - last_ns > 1000000000) {
         double fps = (double)(frames) / ((double)(current_ns - last_ns)/1000000000);
-        SDL_Log("> fps: %lf",fps);
+        SDL_Log(
+            """"""
+            "> fps: %lf\n"
+            "> player: %4.4lf, %4.4lf, %4.4lf"
+            "> center: %4.4lf, %4.4lf, %4.4lf"
+            ,fps
+            ,client->generic.pos.x,client->generic.pos.y,client->generic.pos.z
+            ,loaded_chunks.center_pos[0],loaded_chunks.center_pos[1],loaded_chunks.center_pos[2]
+        );
         load_around_player(client);
         // leinad_render_update_textures();
         // if (loaded_chunks.chunk[raise3(LOADED_CHUNKS_LENGTH) / 2] == NULL) SDL_Log("outisde center chunk");
