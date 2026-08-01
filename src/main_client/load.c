@@ -92,8 +92,8 @@ SDL_AppResult SDL_AppInit(
     NET_WaitUntilResolved(client_addr, -1);
     NET_WaitUntilResolved(server_addr, -1);
 
-    server = NET_CreateServer(server_addr, LEINAD_SERVER_PORT);
-    client_sock = NET_CreateClient(client_addr, LEINAD_SERVER_PORT);
+    server = NET_CreateServer(server_addr, LEINAD_SERVER_PORT,0);
+    client_sock = NET_CreateClient(client_addr, LEINAD_SERVER_PORT,0);
 
     NET_WaitUntilConnected(client_sock, -1);
 
@@ -102,6 +102,8 @@ SDL_AppResult SDL_AppInit(
   { // load client player
     ENFORCE(leinad_load_player_client());
   }
+
+//   SDL_HideCursor();
 
     current_ns = SDL_GetTicksNS();
     previous_ns = SDL_GetTicksNS();

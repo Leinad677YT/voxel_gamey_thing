@@ -37,9 +37,9 @@ Output main(Input input)
     // combine results
     output.FrontColor =
           // avg
-        float4((0.2 * (avg_color.rgb / (avg_amount.r / SMOL_FLOAT))),0.7 * avg_color.a * RESCALE_UP / SMOL_FLOAT / avg_amount.a)
+        float4((0.8f * (avg_color.rgb / (avg_amount.r / SMOL_FLOAT))), 0.3f * avg_color.a * RESCALE_UP / SMOL_FLOAT / avg_amount.a)
         + // front
-        float4(0.8 * front_color.rgb, 0.3 * front_color.a)
+        float4(0.2f * front_color.rgb, 0.8f* front_color.a)
     ;
 
     output.FrontColor.a = front_color.a;

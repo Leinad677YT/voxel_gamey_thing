@@ -24,7 +24,7 @@ Output main(Input input) {
     output.Color.rgb *= 1 - input.BGColor.a;
 
     // add the data to the averager (+1 to the colors, +a to the alpha)
-    output.Color2 = float4(SMOL_FLOAT,0.f,0.f,output.Color.a) * RESCALE_DOWN;
+    output.Color2 = float4(SMOL_FLOAT,0.f,0.f,output.Color.a * SMOL_FLOAT) * RESCALE_DOWN;
     
     output.Color *= RESCALE_DOWN;
 

@@ -4,6 +4,7 @@
 
 // #include <crypt.h>
 
+#include <leinad/math/trigonometry.h>
 #include <leinad/data/globals.h>
 #include <leinad/player.h>
 
@@ -11,6 +12,8 @@ SDL_AppResult SDL_AppEvent(
     __attribute__ ((unused)) void *appstate,
     SDL_Event *event
 ) {
+
+    static bool ignore_mouse = false;
 
     // minimal events
     switch (event->type){
@@ -29,6 +32,24 @@ SDL_AppResult SDL_AppEvent(
     // normal events (ui can skip them)
     switch (event->type){
 
+        case SDL_EVENT_MOUSE_MOTION:
+        
+            if (ignore_mouse) {
+                ignore_mouse = false;
+                break;
+            }
+            client->generic.rotation.yaw += 1.0f * event->motion.xrel;
+            if (client->generic.rotation.yaw >= 180.0f) client->generic.rotation.yaw -= 360.0f;
+            if (client->generic.rotation.yaw < -180.0f) client->generic.rotation.yaw += 360.0f;
+
+            client->generic.rotation.pitch += 1.0f * event->motion.yrel;
+            if (client->generic.rotation.pitch > 89.99f) client->generic.rotation.pitch = 89.99f;
+            else if (client->generic.rotation.pitch < -89.99f) client->generic.rotation.pitch = -89.99f;
+
+            SDL_WarpMouseInWindow(window, SceneWidth * 0.5f, SceneHeight * 0.5f);
+            ignore_mouse = true;
+
+            break;
         case SDL_EVENT_KEY_DOWN:
             if (event->key.repeat) break;
             switch(event->key.key) {

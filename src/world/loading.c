@@ -216,7 +216,7 @@ void load_around_player(struct entity_player* player) {
     struct leinad_position player_pos = leinad_entity_getpos(&player->generic);
     struct leinad_position center_pos = {0};
 
-    int tries = 0;
+    int tries_x, tries_y, tries_z = tries_y = tries_x = 0;
 
 
   { // move already loaded chunks if center does not match
@@ -249,7 +249,7 @@ void load_around_player(struct entity_player* player) {
         );
 
         loaded_chunks.center_pos[1] -= LEINAD_REGION_RADIUS;
-        tries++; if (tries < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
+        tries_y++; if (tries_y < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
 
     } else if (player_pos.y > center_pos.y + LEINAD_REGION_RADIUS) {
 
@@ -269,7 +269,7 @@ void load_around_player(struct entity_player* player) {
             );
 
         loaded_chunks.center_pos[1] += LEINAD_REGION_RADIUS;
-        tries++; if (tries < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
+        tries_y++; if (tries_y < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
 
     }
     #undef POS
@@ -305,7 +305,7 @@ void load_around_player(struct entity_player* player) {
             );
         }
         loaded_chunks.center_pos[2] -= LEINAD_REGION_RADIUS;
-        tries++; if (tries < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
+        tries_z++; if (tries_z < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
 
     } else if (player_pos.z > center_pos.z + LEINAD_REGION_RADIUS) {
 
@@ -328,7 +328,7 @@ void load_around_player(struct entity_player* player) {
             );
         }
         loaded_chunks.center_pos[2] += LEINAD_REGION_RADIUS;
-        tries++; if (tries < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
+        tries_z++; if (tries_z < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
 
     }
     #undef POS
@@ -355,7 +355,7 @@ void load_around_player(struct entity_player* player) {
             );
 
         loaded_chunks.center_pos[0] -= LEINAD_REGION_RADIUS;
-        tries++; if (tries < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
+        tries_x++; if (tries_x < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
 
     } else if (player_pos.x > center_pos.x + LEINAD_REGION_RADIUS) {
 
@@ -376,17 +376,17 @@ void load_around_player(struct entity_player* player) {
             );
         }
         loaded_chunks.center_pos[0] += LEINAD_REGION_RADIUS;
-        tries++; if (tries < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
+        tries_x++; if (tries_x < LOADED_CHUNKS_LENGTH) goto start_move; else goto end_move;
 
     }
     #undef POS
   }
     end_move:
 
-    if (tries == LOADED_CHUNKS_LENGTH) {
-        loaded_chunks.center_pos[0] = player_pos.x - SDL_fmod(player_pos.x,LEINAD_REGION_RADIUS);
-        loaded_chunks.center_pos[1] = player_pos.y - SDL_fmod(player_pos.y,LEINAD_REGION_RADIUS);
-        loaded_chunks.center_pos[2] = player_pos.z - SDL_fmod(player_pos.z,LEINAD_REGION_RADIUS);
+    if (tries_y == LOADED_CHUNKS_LENGTH || tries_z == LOADED_CHUNKS_LENGTH || tries_x == LOADED_CHUNKS_LENGTH) {
+        loaded_chunks.center_pos[0] = player_pos.x - SDL_fmod(SDL_fmod(player_pos.x,LEINAD_REGION_RADIUS) + LEINAD_REGION_RADIUS,LEINAD_REGION_RADIUS);
+        loaded_chunks.center_pos[1] = player_pos.y - SDL_fmod(SDL_fmod(player_pos.y,LEINAD_REGION_RADIUS) + LEINAD_REGION_RADIUS,LEINAD_REGION_RADIUS);
+        loaded_chunks.center_pos[2] = player_pos.z - SDL_fmod(SDL_fmod(player_pos.z,LEINAD_REGION_RADIUS) + LEINAD_REGION_RADIUS,LEINAD_REGION_RADIUS);
     }
 
     center_pos.x = loaded_chunks.center_pos[0];

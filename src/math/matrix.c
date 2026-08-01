@@ -149,7 +149,7 @@ matrix4x4 Matrix4x4_CreateLookAt(
         vectorB.x, vectorC.x, vectorA.x, 0,
         vectorB.y, vectorC.y, vectorA.y, 0,
         vectorB.z, vectorC.z, vectorA.z, 0,
-        -Vec3_Dot(vectorB, cameraPosition), -Vec3_Dot(vectorC, cameraPosition), -Vec3_Dot(vectorA, cameraPosition), 1
+        -vec3_dot(vectorB, cameraPosition), -vec3_dot(vectorC, cameraPosition), -vec3_dot(vectorA, cameraPosition), 1
     };
 }
 
@@ -163,7 +163,7 @@ vec3 Vec3_Normalize(vec3 vec)
     };
 }
 
-float Vec3_Dot(vec3 vecA, vec3 vecB)
+float vec3_dot(vec3 vecA, vec3 vecB)
 {
     return (vecA.x * vecB.x) + (vecA.y * vecB.y) + (vecA.z * vecB.z);
 }

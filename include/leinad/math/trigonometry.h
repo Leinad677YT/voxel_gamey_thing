@@ -7,3 +7,15 @@
         ((variable >= 360) ? (variable-=360): variable); \
         ((variable < 0) ? (variable+=360) : variable ); \
     } while(0)
+
+#define degree_to_radian(degree) ((degree) * SDL_PI_F / 180.0f)
+
+#define cos(x) SDL_cos(x)
+#define sin(x) SDL_sin(x)
+
+/**
+ * @param yaw
+ * @param pitch
+ * @return unitary vec3 that faces in the direction composed by both angles
+ */
+#define angles_to_vec3(yaw, pitch) (vec3){cos(pitch)*cos(yaw),sin(pitch),cos(pitch)*sin(yaw)}

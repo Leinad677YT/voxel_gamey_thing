@@ -105,8 +105,10 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
 struct _chunkrenderdata {
     SDL_GPURenderPass* renderpass;
     SDL_GPUCommandBuffer* command_buffer;
-    struct leinad_position pos;
+    vec4 fov_planes[4];
     vec3 viewvec;
+    struct leinad_position pos;
+    struct leinad_rotation rotation;
 };
 
 /**

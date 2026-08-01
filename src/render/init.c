@@ -114,7 +114,7 @@ LEINAD_FCALL int INIT_render() {
         }
 
         // outline_frag
-        outlineFragmentShader = LoadShader(device, "DepthOutline.frag", 2, 0, 0, 0);
+        outlineFragmentShader = LoadShader(device, "DepthOutline.frag", 3, 0, 0, 0);
         if (outlineFragmentShader == NULL) {
             SDL_Log("Failed to create 'DepthOutline' fragment shader!");
             failed = true;
@@ -263,12 +263,12 @@ LEINAD_FCALL int INIT_render() {
                         .enable_color_write_mask = false,
                         
                         .color_blend_op = SDL_GPU_BLENDOP_ADD,
-                        .src_color_blendfactor = SDL_GPU_BLENDFACTOR_CONSTANT_COLOR,
-                        .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_CONSTANT_COLOR,
+                        .src_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+                        .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
                         
                         .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
-                        .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_CONSTANT_COLOR,
-                        .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_CONSTANT_COLOR
+                        .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+                        .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE
                     }
                 }
             },
@@ -327,23 +327,13 @@ LEINAD_FCALL int INIT_render() {
   }
 
   { // front transparency pipeline
-    SDL_Log("aux_translucency_pipeline_starts_load");
+    SDL_Log("front_translucency_pipeline_starts_load");
     SDL_GPUGraphicsPipelineCreateInfo pipelineCreateInfo = {
         .target_info = {
             .num_color_targets = 2,
             .color_target_descriptions = (SDL_GPUColorTargetDescription[]){
-                { // swapchain 
-                    .format = SDL_GetGPUSwapchainTextureFormat(device,window),
-                    .blend_state = {
-                        .enable_blend = true,
-                        .color_blend_op = SDL_GPU_BLENDOP_ADD,
-                        .src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
-                        .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-
-                        .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
-                        .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_DST_ALPHA,
-                        .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
-                    }
+                { // transparency texture
+                    .format = SDL_GetGPUSwapchainTextureFormat(device,window)
                 },
                 { // outline color
                     .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM
@@ -410,7 +400,17 @@ LEINAD_FCALL int INIT_render() {
             .num_color_targets = 1,
             .color_target_descriptions = (SDL_GPUColorTargetDescription[]){
                 { // swapchain
-                .format = SDL_GetGPUSwapchainTextureFormat(device, window)
+                    .format = SDL_GetGPUSwapchainTextureFormat(device, window),
+                    .blend_state = {
+                        .enable_blend = true,
+                        .color_blend_op = SDL_GPU_BLENDOP_ADD,
+                        .src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+                        .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_DST_ALPHA,
+
+                        .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+                        .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_DST_ALPHA,
+                        .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+                    }
                 }
             },
         },
@@ -491,6 +491,21 @@ LEINAD_FCALL int INIT_render() {
         );
 
         AuxTransparencyTexture = SDL_CreateGPUTexture(
+            device,
+            &(SDL_GPUTextureCreateInfo) {
+                .type = SDL_GPU_TEXTURETYPE_2D,
+                .width = SceneWidth,
+                .height = SceneHeight,
+                .layer_count_or_depth = 1,
+                .num_levels = 1,
+                .sample_count = SDL_GPU_SAMPLECOUNT_1,
+                .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM,
+                // .format = SDL_GetGPUSwapchainTextureFormat(device, window),
+                .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET
+            }
+        );
+        
+        FrontTransparencyTexture = SDL_CreateGPUTexture(
             device,
             &(SDL_GPUTextureCreateInfo) {
                 .type = SDL_GPU_TEXTURETYPE_2D,

@@ -39,11 +39,18 @@ struct blockdata {
 
     /**
      * Positional data or block-specific flags.  
-     * When using positional:
-     * - 0xE000 masks rotation (0b111<<13)
-     * - // 1-6 - Up / North / East / South / West / Down //
+     * When using positional rotation:
+     * - 0xE0 masks rotation (0b111<<13)
+     *   - // 1-6 - Up / North / East / South / West / Down //
      */
-    Uint16 rotation_n_subpos;
+    Uint8 rotation_n_subpos;
+    
+    /**
+     * Light levels of the block
+     *   - 0x000F being blocklight
+     *   - 0x00F0 being skylight (ambient light)
+     */
+    Uint8 light;
     
     /**
      * Depends on block type, may be:
@@ -82,6 +89,11 @@ struct block_vertex {
 #define LEINAD_BLOCK_RENDER_SCALE 1.f
 
 /**
+ * Maximum light level a block can have, both for skylight and blocklight
+ */
+#define LEINAD_BLOCK_MAX_LIGHT_LEVEL 16.f
+
+/**
  * Returns if 2 blocks are identical
  * @return `0` if they are equal, another value otherwise 
  */
@@ -91,6 +103,15 @@ LEINAD_FCOMPARATOR int leinad_blockdata_comparator(void* a, void* b);
  * clones the data of one block into another, this is equivalent to `(*dst) = (struct blockdata) src`
  */
 LEINAD_FINITIALIZER void leinad_blockdata_clone(struct blockdata src, struct blockdata* dst);
+
+/**
+ * @return `true` if the specified id can hold custom data, `false otherwise`
+ * @todo currently irrelevant as all region formats store all data regardless
+ */
+LEINAD_FGET int leinad_get_block_light(struct blockdata block) {
+    return SDL_max(block.light & 0xF,block.light >> 4);
+}
+
 
 #define LEINAD_BLOCK_SHADE_pX 0.05f
 #define LEINAD_BLOCK_SHADE_pY 0.02f

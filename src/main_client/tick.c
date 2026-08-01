@@ -7,7 +7,7 @@
 
 #include <leinad/player.h>
 
-#include "../world/render.c"
+#include "../render/render_main.c"
 
 extern int leinad_render2_ui();
 
@@ -18,7 +18,7 @@ SDL_AppResult SDL_AppIterate( __attribute__ ((unused)) void *appstate) {
     static Uint64 last_ns = 0;
     
   { // render world
-    ENFORCE(leinad_render_world(client->generic.pos,(vec3){-client->generic.pos.x,-client->generic.pos.y,-client->generic.pos.z}));
+    ENFORCE(leinad_render_main(client->generic.pos,client->generic.rotation));
     frames++;
   }
 
@@ -36,11 +36,13 @@ SDL_AppResult SDL_AppIterate( __attribute__ ((unused)) void *appstate) {
         SDL_Log(
             """"""
             "> fps: %lf\n"
-            "> player: %4.4lf, %4.4lf, %4.4lf"
-            "> center: %4.4lf, %4.4lf, %4.4lf"
+            "> player: %4.4lf, %4.4lf, %4.4lf\n"
+            "> center: %4.4lf, %4.4lf, %4.4lf\n"
+            "> rotation: %4.2f, %4.2f"
             ,fps
             ,client->generic.pos.x,client->generic.pos.y,client->generic.pos.z
             ,loaded_chunks.center_pos[0],loaded_chunks.center_pos[1],loaded_chunks.center_pos[2]
+            ,client->generic.rotation.yaw, client->generic.rotation.pitch
         );
         load_around_player(client);
         // leinad_render_update_textures();

@@ -35,7 +35,7 @@ int main(int argc, char* argv[]){
 
     NET_WaitUntilResolved(server_addr, -1);
 
-    server = NET_CreateServer(server_addr, LEINAD_SERVER_PORT);
+    server = NET_CreateServer(server_addr, LEINAD_SERVER_PORT,0);
     
     NET_WaitUntilInputAvailable((void*) &server, 1, -1);
     NET_AcceptClient(server, &client_sock);

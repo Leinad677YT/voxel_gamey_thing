@@ -109,7 +109,7 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
                | LEINAD_BLOCKFLAG_isfullblock,
         .data.full_single_texture = {
             .tx_index = LEINAD_BLOCKTX_STONE,
-            0.2f,0.2f,0.2f,1.f
+            0.35f,0.35f,0.35f,1.f
         }
     },
     { // LEINAD_BLOCK_AIR

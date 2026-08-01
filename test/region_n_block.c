@@ -8,7 +8,7 @@
 #include "../src/world/block.c"
 #include "../src/world/region.c"
 #include "../src/world/loading.c"
-#include "../src/world/render.c"
+#include "../src/render/render_main.c"
 #include "../src/math/matrix.c"
 #include "../src/render/textures.c"
 

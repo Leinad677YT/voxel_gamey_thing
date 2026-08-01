@@ -5,6 +5,7 @@
 
 // cover all other type headers
 #include "../type/vec3.h"
+#include "../type/vec4.h"
 #include "../type/matrix4x4.h"
 #include "../type/text.h"
 #include "../type/enbt.h"
@@ -32,7 +33,7 @@ struct leinad_position {
 };
 
 struct leinad_rotation {
-    double yaw /*0*/, pitch /*1*/; // usually used inverted but for datapack compat it is what it is :c
+    double yaw /*0*/, pitch /*1*/; // indexes specify the datapack equivalent
 };
 
 struct leinad_motion {
