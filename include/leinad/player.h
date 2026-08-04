@@ -70,6 +70,19 @@ struct entity_player {
 
 };
 
+struct player_input {
+    bool up : 1;
+    bool down : 1;
+    bool front : 1;
+    bool back : 1;
+    bool left : 1;
+    bool right : 1;
+};
+
 extern struct entity_player* client;
 
-int leinad_load_player_client();
+extern struct player_input client_inputs;
+
+LEINAD_FCALL int leinad_load_player_client();
+
+LEINAD_FCALL int leinad_update_players();

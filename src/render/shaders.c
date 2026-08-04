@@ -1,6 +1,6 @@
 #include <leinad/data/app.h>
 
-#include <leinad/data/globals.h>
+#include <leinad/app.h>
 
 SDL_GPUShader *LoadShader (
     SDL_GPUDevice *gpu_device,
@@ -112,7 +112,7 @@ SDL_GPUTexture *CreateDepthTexture(Uint32 drawablew, Uint32 drawableh)
                 .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET
     };
 
-	result = SDL_CreateGPUTexture(device, &createinfo);
+	result = SDL_CreateGPUTexture(APP.device, &createinfo);
 	if (!result) {
 		SDL_Log("Failed to create depth texture: %s", SDL_GetError());
 		return NULL;

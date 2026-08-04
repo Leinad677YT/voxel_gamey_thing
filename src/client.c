@@ -11,9 +11,6 @@
 
 // AUX
 
-    // entity types
-    #include "entity/player.c"
-
     // render
     #include "render/shaders.c"
     #include "render/textures.c"
@@ -25,6 +22,10 @@
     #include "world/region.c"
     #include "world/loading.c"
     #include "world/block.c"
+    #include "world/entity.c"
+
+    // entity types
+    #include "entity/player.c"
 
 //
 
@@ -40,3 +41,4 @@
 
 // Close
 #include "main_client/close.c"
+

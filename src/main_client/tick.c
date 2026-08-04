@@ -1,16 +1,12 @@
 #include <SDL3/SDL.h>
 
 #include <leinad/data/app.h>
-#include <leinad/data/globals.h>
-
 #include <leinad/world/loading.h>
 
+#include <leinad/app.h>
 #include <leinad/player.h>
 
 #include "../render/render_main.c"
-
-extern int leinad_render2_ui();
-
 
 SDL_AppResult SDL_AppIterate( __attribute__ ((unused)) void *appstate) {
 
@@ -23,16 +19,18 @@ SDL_AppResult SDL_AppIterate( __attribute__ ((unused)) void *appstate) {
   }
 
   { // check the time since last tick
-    current_ns = SDL_GetTicksNS();
+    APP.current_ns = SDL_GetTicksNS();
 
-    if (current_ns - previous_ns < LEINAD_TICK_RANGE_NS) return SDL_APP_CONTINUE;
+    if (APP.current_ns - APP.previous_ns < LEINAD_TICK_RANGE_NS) return SDL_APP_CONTINUE;
   }
-    client->generic.pos.x += client->generic.motion.x * (current_ns - previous_ns) / 100000000;
-    client->generic.pos.y += client->generic.motion.y * (current_ns - previous_ns) / 100000000;
-    client->generic.pos.z += client->generic.motion.z * (current_ns - previous_ns) / 100000000;
+  
+    leinad_update_entities();
 
-    if (current_ns - last_ns > 1000000000) {
-        double fps = (double)(frames) / ((double)(current_ns - last_ns)/1000000000);
+    leinad_update_players();
+
+
+    if (APP.current_ns - last_ns > 1000000000) {
+        double fps = (double)(frames) / ((double)(APP.current_ns - last_ns)/1000000000);
         SDL_Log(
             """"""
             "> fps: %lf\n"
@@ -48,9 +46,9 @@ SDL_AppResult SDL_AppIterate( __attribute__ ((unused)) void *appstate) {
         // leinad_render_update_textures();
         // if (loaded_chunks.chunk[raise3(LOADED_CHUNKS_LENGTH) / 2] == NULL) SDL_Log("outisde center chunk");
         frames = 0;
-        last_ns = current_ns; 
+        last_ns = APP.current_ns; 
     }
 
-previous_ns = current_ns;
-return SDL_APP_CONTINUE;
+    APP.previous_ns = APP.current_ns;
+    return SDL_APP_CONTINUE;
 }

@@ -1,9 +1,9 @@
-#include <leinad/data/globals.h>
 #include <leinad/math/arithmetic.h>
 #include "../libs/bit_manipulation.h"
 
 #include <leinad/world/region.h>
 #include <leinad/render.h>
+#include <leinad/app.h>
 #include <leinad/world/block.h>
 
 LEINAD_AUX // fills masks used to get data depending on subregion-offset [0,7]
@@ -161,8 +161,8 @@ LEINAD_FCLEANER void leinad_chunk_free(leinad_chunk_t* chunk) {
         
         if (chunk->mesh[i] != NULL) {
             // if (chunk->mesh[i]->index != NULL) SDL_Log("released  IDX: %20p\t\tVTX: %20p",chunk->mesh[i]->index,chunk->mesh[i]->vertex);
-            if (chunk->mesh[i]->index != NULL)  SDL_ReleaseGPUBuffer(device,chunk->mesh[i]->index );
-            if (chunk->mesh[i]->vertex != NULL) SDL_ReleaseGPUBuffer(device,chunk->mesh[i]->vertex);
+            if (chunk->mesh[i]->index != NULL)  SDL_ReleaseGPUBuffer(APP.device,chunk->mesh[i]->index );
+            if (chunk->mesh[i]->vertex != NULL) SDL_ReleaseGPUBuffer(APP.device,chunk->mesh[i]->vertex);
         }
 
         SDL_free(chunk->mesh[i]);
@@ -771,8 +771,8 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
     current_mesh->vert_o_count = opaque_vertex_count;
     current_mesh->vert_t_count = transparent_vertex_count;
     // if (current_mesh->vertex != NULL) SDL_Log("released  IDX: %20p\t\tVTX: %20p",current_mesh->index,current_mesh->vertex);
-    if (current_mesh->vertex != NULL) SDL_ReleaseGPUBuffer(device, current_mesh->vertex);
-    if (current_mesh->index != NULL) SDL_ReleaseGPUBuffer(device, current_mesh->index);
+    if (current_mesh->vertex != NULL) SDL_ReleaseGPUBuffer(APP.device, current_mesh->vertex);
+    if (current_mesh->index != NULL) SDL_ReleaseGPUBuffer(APP.device, current_mesh->index);
 
 
     SDL_GPUBufferCreateInfo createinfo = {
@@ -789,14 +789,14 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
 
     createinfo.size*= sizeof(struct block_vertex);
 
-    current_mesh->vertex = SDL_CreateGPUBuffer(device, &createinfo);
+    current_mesh->vertex = SDL_CreateGPUBuffer(APP.device, &createinfo);
     // create index buffer
     createinfo.usage = SDL_GPU_BUFFERUSAGE_INDEX;
     createinfo.size = 0;
 
     for (int i = 0; i < 7; i++) createinfo.size += opaque_index_count[i] + transparent_index_count[i];
     createinfo.size *= sizeof(Uint32);
-    current_mesh->index = SDL_CreateGPUBuffer(device, &createinfo);
+    current_mesh->index = SDL_CreateGPUBuffer(APP.device, &createinfo);
 
     // SDL_Log("allocated IDX: %20p\t\tVTX: %20p",current_mesh->index,current_mesh->vertex);
   }
@@ -836,12 +836,12 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
         createinfo.size += (sizeof(struct block_vertex) * (opaque_vertex_count+transparent_vertex_count));
 
         bufferTransferBuffer = SDL_CreateGPUTransferBuffer(
-            device,
+            APP.device,
             &createinfo
         );
 
         struct block_vertex* transferData = SDL_MapGPUTransferBuffer(
-            device,
+            APP.device,
             bufferTransferBuffer,
             false
         );
@@ -1574,12 +1574,12 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
 
       }
 
-        SDL_UnmapGPUTransferBuffer(device, bufferTransferBuffer);
+        SDL_UnmapGPUTransferBuffer(APP.device, bufferTransferBuffer);
   }
 
   { // upload buffers
 
-        SDL_GPUCommandBuffer* uploadCmdBuf = SDL_AcquireGPUCommandBuffer(device);
+        SDL_GPUCommandBuffer* uploadCmdBuf = SDL_AcquireGPUCommandBuffer(APP.device);
         SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(uploadCmdBuf);
 
         SDL_UploadToGPUBuffer(
@@ -1617,7 +1617,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
 
         SDL_EndGPUCopyPass(copyPass);
         SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
-        SDL_ReleaseGPUTransferBuffer(device, bufferTransferBuffer);
+        SDL_ReleaseGPUTransferBuffer(APP.device, bufferTransferBuffer);
 
 
   }

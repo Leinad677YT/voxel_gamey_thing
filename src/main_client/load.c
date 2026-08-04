@@ -40,13 +40,13 @@ SDL_AppResult SDL_AppInit(
   
   { // initialize gpu
 
-    device = SDL_CreateGPUDevice(
+    APP.device = SDL_CreateGPUDevice(
         SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL,
         true,
         NULL
     );
 
-    if (!device) {
+    if (!APP.device) {
         SDL_Log("Couldn't create GPU device: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
@@ -54,14 +54,14 @@ SDL_AppResult SDL_AppInit(
 
   { // initialize window
 
-    window = SDL_CreateWindow (
+    APP.window = SDL_CreateWindow (
         LEINAD_WINDOW_TITLE,
         LEINAD_WINDOW_WIDTH,
         LEINAD_WINDOW_HEIGHT,
         0 | LEINAD_WINDOW_FLAGS
     );
 
-    if (window == NULL) {
+    if (APP.window == NULL) {
     SDL_Log("Couldn't create window: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
@@ -70,7 +70,7 @@ SDL_AppResult SDL_AppInit(
 
     { // assign window to gpu
 
-    if (!SDL_ClaimWindowForGPUDevice(device, window)) {
+    if (!SDL_ClaimWindowForGPUDevice(APP.device, APP.window)) {
         SDL_Log("Couldn't claim window for GPU device: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
@@ -105,8 +105,8 @@ SDL_AppResult SDL_AppInit(
 
 //   SDL_HideCursor();
 
-    current_ns = SDL_GetTicksNS();
-    previous_ns = SDL_GetTicksNS();
+    APP.current_ns = SDL_GetTicksNS();
+    APP.previous_ns = SDL_GetTicksNS();
 
     return SDL_APP_CONTINUE;
 }

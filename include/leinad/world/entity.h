@@ -1,7 +1,10 @@
 #pragma once
 
+#include "../data/tags.h"
 #include "../data/types.h"
 #include "../world/item.h"
+
+#define BASE_JUMP_STRENGTH 9.0
 
 
 struct entity_tag_node {
@@ -93,5 +96,10 @@ struct entity_equipment {
     struct item_stack* saddle;
 };
 
-inline static struct leinad_position leinad_entity_getpos(const struct entity_generic* entity) {return entity->pos;}
-inline static struct leinad_motion leinad_entity_getmotion(const struct entity_generic* entity) {return entity->motion;}
+LEINAD_FGET inline static struct leinad_position leinad_entity_getpos(const struct entity_generic* entity) {return entity->pos;}
+LEINAD_FGET inline static struct leinad_motion leinad_entity_getmotion(const struct entity_generic* entity) {return entity->motion;}
+
+LEINAD_FGET inline static double leinad_entity_getjump(const struct entity_generic* entity) {return BASE_JUMP_STRENGTH;}
+LEINAD_FGET inline static double leinad_entity_getgravity(const struct entity_generic* entity) {return BASE_JUMP_STRENGTH;}
+
+LEINAD_FCALL int leinad_update_entities();

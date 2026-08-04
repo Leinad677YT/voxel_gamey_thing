@@ -4,7 +4,7 @@
 #include <leinad/data/globals.h>
 #include <leinad/data/types.h>
 #include <leinad/data/tags.h>
-#include <leinad/data/app.h>
+#include <leinad/app.h>
 #include <leinad/render.h>
 
 #include "textures.h"
@@ -62,7 +62,7 @@ LEINAD_FCALL int leinad_render_world(SDL_GPUCommandBuffer* restrict cmdbuf, SDL_
     // get normal
     aux = angles_to_vec3(degree_to_radian(rot.yaw - RENDER.fov/2 -2),degree_to_radian(-rot.pitch));
     aux = (vec3) {resized_viewvec.x - aux.x,resized_viewvec.y - aux.y,resized_viewvec.z - aux.z};
-    aux = Vec3_Normalize(aux);
+    aux = vec3_normalize(aux);
 
     // get plane constant
     chunk_renderdata.fov_planes[0].x = aux.x; chunk_renderdata.fov_planes[0].y = aux.y; chunk_renderdata.fov_planes[0].z = aux.z;
@@ -73,7 +73,7 @@ LEINAD_FCALL int leinad_render_world(SDL_GPUCommandBuffer* restrict cmdbuf, SDL_
     // get normal
     aux = angles_to_vec3(degree_to_radian(rot.yaw + RENDER.fov/2 +2),degree_to_radian(-rot.pitch));
     aux = (vec3) {resized_viewvec.x - aux.x,resized_viewvec.y - aux.y,resized_viewvec.z - aux.z};
-    aux = Vec3_Normalize(aux);
+    aux = vec3_normalize(aux);
 
     // get plane constant
     chunk_renderdata.fov_planes[1].x = aux.x; chunk_renderdata.fov_planes[1].y = aux.y; chunk_renderdata.fov_planes[1].z = aux.z;
@@ -84,7 +84,7 @@ LEINAD_FCALL int leinad_render_world(SDL_GPUCommandBuffer* restrict cmdbuf, SDL_
     // get normal
     aux = angles_to_vec3(degree_to_radian(rot.yaw),degree_to_radian(-rot.pitch - SDL_atan(SceneWidth / (float)SceneHeight)));
     aux = (vec3) {resized_viewvec.x - aux.x,resized_viewvec.y - aux.y,resized_viewvec.z - aux.z};
-    aux = Vec3_Normalize(aux);
+    aux = vec3_normalize(aux);
 
     // get plane constant
     chunk_renderdata.fov_planes[2].x = aux.x; chunk_renderdata.fov_planes[2].y = aux.y; chunk_renderdata.fov_planes[2].z = aux.z;
@@ -95,7 +95,7 @@ LEINAD_FCALL int leinad_render_world(SDL_GPUCommandBuffer* restrict cmdbuf, SDL_
     // get normal
     aux = angles_to_vec3(degree_to_radian(rot.yaw),degree_to_radian(-rot.pitch + SDL_atan(SceneWidth / (float)SceneHeight)));
     aux = (vec3) {resized_viewvec.x - aux.x,resized_viewvec.y - aux.y,resized_viewvec.z - aux.z};
-    aux = Vec3_Normalize(aux);
+    aux = vec3_normalize(aux);
 
     // get plane constant
     chunk_renderdata.fov_planes[3].x = aux.x; chunk_renderdata.fov_planes[3].y = aux.y; chunk_renderdata.fov_planes[3].z = aux.z;
@@ -348,8 +348,8 @@ LEINAD_AUX static void free_chunks(leinad_chunk_t* chunk, __attribute__((unused)
 
 
 LEINAD_FCALL void leinad_render_end() {
-    if (block_atlas.sampler != NULL && device != NULL) SDL_ReleaseGPUSampler(device, block_atlas.sampler);
-    if (block_atlas.texture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, block_atlas.texture);
+    if (block_atlas.sampler != NULL && APP.device != NULL) SDL_ReleaseGPUSampler(APP.device, block_atlas.sampler);
+    if (block_atlas.texture != NULL && APP.device != NULL) SDL_ReleaseGPUTexture(APP.device, block_atlas.texture);
 
     loaded_chunks_forall_increasing(free_chunks, NULL);
 }

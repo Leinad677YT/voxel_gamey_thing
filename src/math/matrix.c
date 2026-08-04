@@ -106,8 +106,7 @@ matrix4x4 Matrix4x4_Multiply(matrix4x4 matrix1, matrix4x4 matrix2) {
 }
 
 
-matrix4x4 Matrix4x4_CreateTranslation(float x, float y, float z)
-{
+matrix4x4 Matrix4x4_CreateTranslation(float x, float y, float z) {
     return (matrix4x4) {
         1, 0, 0, 0,
         0, 1, 0, 0,
@@ -141,9 +140,9 @@ matrix4x4 Matrix4x4_CreateLookAt(
         cameraPosition.y - cameraTarget.y,
         cameraPosition.z - cameraTarget.z
     };
-    vec3 vectorA = Vec3_Normalize(targetToPosition);
-    vec3 vectorB = Vec3_Normalize(Vec3_Cross(cameraUpVector, vectorA));
-    vec3 vectorC = Vec3_Cross(vectorA, vectorB);
+    vec3 vectorA = vec3_normalize(targetToPosition);
+    vec3 vectorB = vec3_normalize(vec3_cross(cameraUpVector, vectorA));
+    vec3 vectorC = vec3_cross(vectorA, vectorB);
 
     return (matrix4x4) {
         vectorB.x, vectorC.x, vectorA.x, 0,
@@ -153,8 +152,7 @@ matrix4x4 Matrix4x4_CreateLookAt(
     };
 }
 
-vec3 Vec3_Normalize(vec3 vec)
-{
+vec3 vec3_normalize(vec3 vec) {
     float magnitude = SDL_sqrtf((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z));
     return (vec3){
         vec.x / magnitude,
@@ -163,16 +161,22 @@ vec3 Vec3_Normalize(vec3 vec)
     };
 }
 
-float vec3_dot(vec3 vecA, vec3 vecB)
-{
+float vec3_dot(vec3 vecA, vec3 vecB) {
     return (vecA.x * vecB.x) + (vecA.y * vecB.y) + (vecA.z * vecB.z);
 }
 
-vec3 Vec3_Cross(vec3 vecA, vec3 vecB)
-{
+vec3 vec3_cross(vec3 vecA, vec3 vecB) {
     return (vec3) {
         vecA.y * vecB.z - vecB.y * vecA.z,
         -(vecA.x * vecB.z - vecB.x * vecA.z),
         vecA.x * vecB.y - vecB.x * vecA.y
+    };
+}
+
+vec3 vec3_add_scaled(vec3 vecA, vec3 vecB, float scaleB) {
+    return (vec3) {
+        vecA.x + vecB.x * scaleB,
+        vecA.y + vecB.y * scaleB,
+        vecA.z + vecB.z * scaleB
     };
 }

@@ -6,14 +6,14 @@
 #include "render_world.c"
 
 LEINAD_FCALL int leinad_render_main(struct leinad_position pos, struct leinad_rotation rot) {
-    SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(device);
+    SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(APP.device);
     if (cmdbuf == NULL) {
         SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
 
     SDL_GPUTexture* swapchain;
-    if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, window, &swapchain, NULL, NULL)) {
+    if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, APP.window, &swapchain, NULL, NULL)) {
         SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }

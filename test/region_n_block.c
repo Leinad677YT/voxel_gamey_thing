@@ -7,6 +7,7 @@
 
 #include "../src/world/block.c"
 #include "../src/world/region.c"
+#include "../src/world/entity.c"
 #include "../src/world/loading.c"
 #include "../src/render/render_main.c"
 #include "../src/math/matrix.c"
@@ -23,13 +24,13 @@ SDL_AppResult SDL_AppInit(
         return SDL_APP_FAILURE;
     }
 
-    device = SDL_CreateGPUDevice(
+    APP.device = SDL_CreateGPUDevice(
         SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL,
         true,
         NULL
     );
 
-    if (!device) {
+    if (!APP.device) {
         SDL_Log("Couldn't create GPU device: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }

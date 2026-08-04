@@ -7,6 +7,7 @@
 #include <leinad/math/trigonometry.h>
 #include <leinad/data/globals.h>
 #include <leinad/player.h>
+#include <leinad/app.h>
 
 SDL_AppResult SDL_AppEvent(
     __attribute__ ((unused)) void *appstate,
@@ -23,8 +24,8 @@ SDL_AppResult SDL_AppEvent(
             break;
 
         case SDL_EVENT_WINDOW_HIDDEN:
-            SDL_HideWindow(window);
-            SDL_SyncWindow(window);
+            SDL_HideWindow(APP.window);
+            SDL_SyncWindow(APP.window);
             break;
 
     }	
@@ -46,7 +47,7 @@ SDL_AppResult SDL_AppEvent(
             if (client->generic.rotation.pitch > 89.99f) client->generic.rotation.pitch = 89.99f;
             else if (client->generic.rotation.pitch < -89.99f) client->generic.rotation.pitch = -89.99f;
 
-            SDL_WarpMouseInWindow(window, SceneWidth * 0.5f, SceneHeight * 0.5f);
+            SDL_WarpMouseInWindow(APP.window, SceneWidth * 0.5f, SceneHeight * 0.5f);
             ignore_mouse = true;
 
             break;
@@ -54,27 +55,27 @@ SDL_AppResult SDL_AppEvent(
             if (event->key.repeat) break;
             switch(event->key.key) {
                 case SDLK_A:
-                    client->generic.motion.x -= client->fly_speed;
+                    client_inputs.left = true;
                     NET_WriteToStreamSocket(client_sock, "left", 5);
                     break;
                 case SDLK_D:
-                    client->generic.motion.x += client->fly_speed;
+                    client_inputs.right = true;
                     NET_WriteToStreamSocket(client_sock, "right", 6);
                     break;
                 case SDLK_W:
-                    client->generic.motion.z -= client->fly_speed;
+                    client_inputs.front = true;
                     NET_WriteToStreamSocket(client_sock, "forward", 8);
                     break;
                 case SDLK_S:
-                    client->generic.motion.z += client->fly_speed;
+                    client_inputs.back = true;
                     NET_WriteToStreamSocket(client_sock, "down", 5);
                     break;
                 case SDLK_LCTRL:
-                    client->generic.motion.y -= client->fly_speed;
+                    client_inputs.down = true;
                     NET_WriteToStreamSocket(client_sock, "crouch", 7);
                     break;
                 case SDLK_SPACE:
-                    client->generic.motion.y += client->fly_speed;
+                    client_inputs.up = true;
                     NET_WriteToStreamSocket(client_sock, "jump", 5);
                     break;
                 case SDLK_ESCAPE:
@@ -87,27 +88,27 @@ SDL_AppResult SDL_AppEvent(
             if (event->key.repeat) break;
             switch(event->key.key) {
                 case SDLK_A:
-                    client->generic.motion.x += client->fly_speed;
+                    client_inputs.left = false;
                     NET_WriteToStreamSocket(client_sock, "_left", 6);
                     break;
                 case SDLK_D:
-                    client->generic.motion.x -= client->fly_speed;
+                    client_inputs.right = false;
                     NET_WriteToStreamSocket(client_sock, "_right", 7);
                     break;
                 case SDLK_W:
-                    client->generic.motion.z += client->fly_speed;
+                    client_inputs.front = false;
                     NET_WriteToStreamSocket(client_sock, "_forward", 8);
                     break;
                 case SDLK_S:
-                    client->generic.motion.z -= client->fly_speed;
+                    client_inputs.back = false;
                     NET_WriteToStreamSocket(client_sock, "_down", 6);
                     break;
                 case SDLK_LCTRL:
-                    client->generic.motion.y += client->fly_speed;
+                    client_inputs.down = false;
                     NET_WriteToStreamSocket(client_sock, "_crouch", 8);
                     break;
                 case SDLK_SPACE:
-                    client->generic.motion.y -= client->fly_speed;
+                    client_inputs.up = false;
                     NET_WriteToStreamSocket(client_sock, "_jump", 6);
                     break;
             }

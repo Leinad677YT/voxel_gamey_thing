@@ -9,13 +9,8 @@
 
 // basic render variables
 
-static SDL_Window* window = NULL;                  // Window
-static SDL_GPUDevice *device = NULL;               // GPU to use
 static SDL_GPUGraphicsPipeline *pipeline = NULL;   // Shaders pipeline
 static SDL_GPUTexture *depth_texture = NULL;       // Depth texture
-
-static Uint64 current_ns = 0;
-static Uint64 previous_ns = 0;
 
 // ingame gpu pipelines
 

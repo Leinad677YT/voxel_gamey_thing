@@ -2,7 +2,7 @@
 
 #include <leinad/data/app.h>
 #include <leinad/render.h>
-#include <leinad/data/globals.h>
+#include <leinad/app.h>
 
 #include "../libs/io.h"
 #include "../libs/bit_manipulation.h"
@@ -32,8 +32,8 @@ LEINAD_AUX int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32
     struct SDL_Surface *tx_surface, *atlas_surface;
     struct SDL_Rect target = {0,0,tx_w,tx_h};
 
-    if (atlas->texture != NULL) SDL_ReleaseGPUTexture(device,atlas->texture);
-    if (atlas->sampler != NULL) SDL_ReleaseGPUSampler(device,atlas->sampler);
+    if (atlas->texture != NULL) SDL_ReleaseGPUTexture(APP.device,atlas->texture);
+    if (atlas->sampler != NULL) SDL_ReleaseGPUSampler(APP.device,atlas->sampler);
 
     // create the atlas surface
     atlas->width = pow2(next_pow4(tx_amount));
@@ -81,7 +81,7 @@ LEINAD_AUX int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32
         .num_levels = 1,
         .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER
     };
-    atlas->texture = SDL_CreateGPUTexture(device, &texture_info);
+    atlas->texture = SDL_CreateGPUTexture(APP.device, &texture_info);
 
     const SDL_GPUSamplerCreateInfo sampler_info = {
         .min_filter = SDL_GPU_FILTER_NEAREST,
@@ -91,7 +91,7 @@ LEINAD_AUX int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32
         .address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
         .address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
     };
-    atlas->sampler = SDL_CreateGPUSampler(device, &sampler_info);
+    atlas->sampler = SDL_CreateGPUSampler(APP.device, &sampler_info);
 
     if (atlas->texture == NULL) {
         SDL_Log("Couldn't reload the %s atlas: %s",root_path, SDL_GetError());
@@ -105,20 +105,20 @@ LEINAD_AUX int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32
         };
 
         SDL_GPUTransferBuffer* textureTransferBuffer = SDL_CreateGPUTransferBuffer(
-            device,
+            APP.device,
             &transfer_info_texture
         );
 
         Uint8* textureTransferPtr = (Uint8*)SDL_MapGPUTransferBuffer(
-            device,
+            APP.device,
             textureTransferBuffer,
             false
         );
         SDL_memcpy(textureTransferPtr, atlas_surface->pixels, atlas->width * tx_w * atlas->height * tx_h * 4);
-        SDL_UnmapGPUTransferBuffer(device, textureTransferBuffer);
+        SDL_UnmapGPUTransferBuffer(APP.device, textureTransferBuffer);
 
         // copy pass
-        SDL_GPUCommandBuffer* uploadCmdBuf = SDL_AcquireGPUCommandBuffer(device);
+        SDL_GPUCommandBuffer* uploadCmdBuf = SDL_AcquireGPUCommandBuffer(APP.device);
         SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(uploadCmdBuf);
 
 
@@ -142,7 +142,7 @@ LEINAD_AUX int _update_atlas(struct render_atlas *atlas, char* root_path, Uint32
         SDL_SubmitGPUCommandBuffer(uploadCmdBuf);
 
 
-        SDL_ReleaseGPUTransferBuffer(device, textureTransferBuffer);
+        SDL_ReleaseGPUTransferBuffer(APP.device, textureTransferBuffer);
         
                 
     SDL_DestroySurface(atlas_surface);

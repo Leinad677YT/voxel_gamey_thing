@@ -2,6 +2,7 @@
 
 #include <leinad/data/globals.h>
 #include <leinad/render.h>
+#include <leinad/app.h>
 
 void SDL_AppQuit(
     __attribute__ ((unused)) void *appstate,
@@ -9,34 +10,34 @@ void SDL_AppQuit(
 ) {
 
     // free gpu mine
-    if (depth_texture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, depth_texture);
-    if (SkyPipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device,SkyPipeline);
+    if (depth_texture != NULL && APP.device != NULL) SDL_ReleaseGPUTexture(APP.device, depth_texture);
+    if (SkyPipeline != NULL && APP.device != NULL) SDL_ReleaseGPUGraphicsPipeline(APP.device,SkyPipeline);
 
     leinad_render_end();
 
     // free gpu example
-    if (ScenePipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device, ScenePipeline);
-    if (TransparencyPipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device, TransparencyPipeline);
-    if (AuxTransparencyPipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device, AuxTransparencyPipeline);
-    if (FrontPipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device, FrontPipeline);
-    if (SceneColorTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, SceneColorTexture);
-    if (SceneTransparencyTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, SceneTransparencyTexture);
-    if (AuxTransparencyTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, AuxTransparencyTexture);
-    if (FrontTransparencyTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, FrontTransparencyTexture);
-    if (FrontBGTexture != NULL && device != NULL) SDL_ReleaseGPUTexture(device, FrontBGTexture);
+    if (ScenePipeline != NULL && APP.device != NULL) SDL_ReleaseGPUGraphicsPipeline(APP.device, ScenePipeline);
+    if (TransparencyPipeline != NULL && APP.device != NULL) SDL_ReleaseGPUGraphicsPipeline(APP.device, TransparencyPipeline);
+    if (AuxTransparencyPipeline != NULL && APP.device != NULL) SDL_ReleaseGPUGraphicsPipeline(APP.device, AuxTransparencyPipeline);
+    if (FrontPipeline != NULL && APP.device != NULL) SDL_ReleaseGPUGraphicsPipeline(APP.device, FrontPipeline);
+    if (SceneColorTexture != NULL && APP.device != NULL) SDL_ReleaseGPUTexture(APP.device, SceneColorTexture);
+    if (SceneTransparencyTexture != NULL && APP.device != NULL) SDL_ReleaseGPUTexture(APP.device, SceneTransparencyTexture);
+    if (AuxTransparencyTexture != NULL && APP.device != NULL) SDL_ReleaseGPUTexture(APP.device, AuxTransparencyTexture);
+    if (FrontTransparencyTexture != NULL && APP.device != NULL) SDL_ReleaseGPUTexture(APP.device, FrontTransparencyTexture);
+    if (FrontBGTexture != NULL && APP.device != NULL) SDL_ReleaseGPUTexture(APP.device, FrontBGTexture);
 
-    if (EffectPipeline != NULL && device != NULL) SDL_ReleaseGPUGraphicsPipeline(device, EffectPipeline);
-    if (EffectVertexBuffer != NULL && device != NULL) SDL_ReleaseGPUBuffer(device, EffectVertexBuffer);
-    if (EffectIndexBuffer != NULL && device != NULL) SDL_ReleaseGPUBuffer(device, EffectIndexBuffer);
-    if (EffectSampler != NULL && device != NULL) SDL_ReleaseGPUSampler(device, EffectSampler);
-    if (AuxiliarySampler != NULL && device != NULL) SDL_ReleaseGPUSampler(device, AuxiliarySampler);
-    if (Auxiliary2Sampler != NULL && device != NULL) SDL_ReleaseGPUSampler(device, Auxiliary2Sampler);
+    if (EffectPipeline != NULL && APP.device != NULL) SDL_ReleaseGPUGraphicsPipeline(APP.device, EffectPipeline);
+    if (EffectVertexBuffer != NULL && APP.device != NULL) SDL_ReleaseGPUBuffer(APP.device, EffectVertexBuffer);
+    if (EffectIndexBuffer != NULL && APP.device != NULL) SDL_ReleaseGPUBuffer(APP.device, EffectIndexBuffer);
+    if (EffectSampler != NULL && APP.device != NULL) SDL_ReleaseGPUSampler(APP.device, EffectSampler);
+    if (AuxiliarySampler != NULL && APP.device != NULL) SDL_ReleaseGPUSampler(APP.device, AuxiliarySampler);
+    if (Auxiliary2Sampler != NULL && APP.device != NULL) SDL_ReleaseGPUSampler(APP.device, Auxiliary2Sampler);
 
-    if (window != NULL && device != NULL) SDL_ReleaseWindowFromGPUDevice(device, window);
+    if (APP.window != NULL && APP.device != NULL) SDL_ReleaseWindowFromGPUDevice(APP.device, APP.window);
 
     // free window
-    if (window != NULL) SDL_DestroyWindow(window);
-    if (device != NULL) SDL_DestroyGPUDevice(device);
+    if (APP.window != NULL) SDL_DestroyWindow(APP.window);
+    if (APP.device != NULL) SDL_DestroyGPUDevice(APP.device);
 
 
     // finish network connections

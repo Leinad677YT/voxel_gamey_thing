@@ -10,7 +10,7 @@
 #define LEINAD_RENDER_DEFAULT_NEARPLANE 0.125f
 #define LEINAD_RENDER_DEFAULT_FARPLANE 600.0f
 
-struct render_data {
+static struct render_data {
     float fov;
     float near_plane;
     float far_plane;
