@@ -9,7 +9,7 @@
 /**
  * @todo may be better to replace by `has_rotation` and `has_subblock_placement`
  */
-LEINAD_FGET bool block_has_custom_placement(block_id id) {
+LEINAD_FGET bool block_has_custom_placement(block_id_t id) {
 
     return block_data [
         (id >= LEINAD_BLOCK_init && id < LEINAD_BLOCK_end)?
@@ -21,7 +21,7 @@ LEINAD_FGET bool block_has_custom_placement(block_id id) {
  * @return `true` if the specified id can hold custom data, `false otherwise`
  * @todo currently irrelevant as all region formats store all data regardless
  */
-LEINAD_FGET bool block_has_custom_data(block_id id) {
+LEINAD_FGET bool block_has_custom_data(block_id_t id) {
     return block_data [
         (id >= LEINAD_BLOCK_init && id < LEINAD_BLOCK_end)?
         id : LEINAD_BLOCK_default
@@ -109,6 +109,8 @@ LEINAD_FINITIALIZER void leinad_blockdata_clone(struct blockdata src, struct blo
  * @todo currently irrelevant as all region formats store all data regardless
  */
 LEINAD_FGET int leinad_get_block_light(struct blockdata block) {
+    return LEINAD_BLOCK_MAX_LIGHT_LEVEL;
+
     return SDL_max(block.light & 0xF,block.light >> 4);
 }
 

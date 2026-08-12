@@ -333,7 +333,7 @@ LEINAD_FCALL int INIT_render() {
             .num_color_targets = 2,
             .color_target_descriptions = (SDL_GPUColorTargetDescription[]){
                 { // transparency texture
-                    .format = SDL_GetGPUSwapchainTextureFormat(APP.device, APP.window)
+                    .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM
                 },
                 { // outline color
                     .format = SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM
@@ -659,7 +659,7 @@ LEINAD_FCALL int INIT_render() {
             leinad_chunk_load(&loaded_chunks.chunk[y*raise2(LOADED_CHUNKS_LENGTH) + z*LOADED_CHUNKS_LENGTH + x],(x-LOADED_CHUNKS_RADIUS) * 128,(y-LOADED_CHUNKS_RADIUS) * 128,(z-LOADED_CHUNKS_RADIUS) * 128);
         }
 
-        #define _chunk_test (loaded_chunks.chunk[0])
+        #define _chunk_test (loaded_chunks.chunk[raise3(LOADED_CHUNKS_LENGTH)/2])
 
         _chunk_test->block[leinad_get_chunk_index(11, 0, 0)] = (struct blockdata) {
             .id = LEINAD_BLOCK_STONE,
@@ -694,14 +694,14 @@ LEINAD_FCALL int INIT_render() {
             
         }
 
-        for(int i = 0; i<32;i++) for(int j = 0; j < 32; j++) {
-            _chunk_test->block[leinad_get_chunk_index(i, 0, j)] = (struct blockdata) {
-                .id = LEINAD_BLOCK_STONE,
-                .rotation_n_subpos = 0,
-                .custom_data = 0
-            };
+        // for(int i = 0; i<32;i++) for(int j = 0; j < 32; j++) {
+        //     _chunk_test->block[leinad_get_chunk_index(i, 0, j)] = (struct blockdata) {
+        //         .id = LEINAD_BLOCK_STONE,
+        //         .rotation_n_subpos = 0,
+        //         .custom_data = 0
+        //     };
             
-        }
+        // }
 
         for(int i = 0; i<LEINAD_REGION_RADIUS;i++) for(int j = 0; j < LEINAD_REGION_RADIUS; j++) {
             _chunk_test->block[leinad_get_chunk_index(i, LEINAD_REGION_RADIUS-1, j)] = (struct blockdata) {

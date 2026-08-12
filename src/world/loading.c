@@ -161,8 +161,8 @@ LEINAD_FINITIALIZER void leinad_chunk_generate(leinad_chunk_t* restrict reserved
 
     for(int z = 0; z < LEINAD_REGION_RADIUS; z++) for(int x = 0; x < LEINAD_REGION_RADIUS; x++) {
 
-    //     for (int Y = 0; Y < LEINAD_REGION_RADIUS; Y++) reserved_space->block[Y*raise2(LEINAD_REGION_RADIUS)+z*LEINAD_REGION_RADIUS + x].id = LEINAD_BLOCK_STONE;
-
+        // for (int Y = 0; Y < LEINAD_REGION_RADIUS; Y++) reserved_space->block[Y*raise2(LEINAD_REGION_RADIUS)+z*LEINAD_REGION_RADIUS + x].id = LEINAD_BLOCK_AIR;
+        // continue;
 
     //     // for (int _y = 0; _y < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; _y++)
     //     //  for (int _z = 0; _z < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; _z++)

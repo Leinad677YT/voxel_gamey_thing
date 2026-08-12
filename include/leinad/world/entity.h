@@ -20,7 +20,7 @@ struct entity_passenger_node {
 
 struct entity_generic {
     struct namespaced_id id;    // type
-    uuid uuid;                  // uuid inside world
+    uuid_t uuid;                // uuid inside world
 
     struct eNBT *data;          // arbitrary nbt
     struct text_component* name;// "visible name" of the entity
@@ -76,8 +76,8 @@ struct entity_home {
 };
 
 struct entity_hurt {
-    uuid last_hurt_by_entity;
-    uuid last_hurt_by_player;
+    uuid_t last_hurt_by_entity;
+    uuid_t last_hurt_by_player;
 
     Sint32 last_player_hurt_ticks;
     Sint32 last_entity_hurt_ticks;

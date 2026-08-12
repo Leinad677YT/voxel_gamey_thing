@@ -45,7 +45,7 @@ struct entity_player {
     struct entity* shoulder_entity_right;
 
     struct entity* root_vehicle;
-    uuid mounted_vehicle;
+    uuid_t mounted_vehicle;
 
     // abilities
         float fly_speed;

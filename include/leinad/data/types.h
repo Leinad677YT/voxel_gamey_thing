@@ -13,16 +13,23 @@
 
 // generic
 
-typedef Sint32 uuid[4];
+typedef Sint32 uuid_t[4];
 
-struct namespaced_id {
-    Uint32 namespace;
-    uuid id;
-};
+typedef Uint32 id_t;
 
 struct namespace {
     char* namespace;
-    uuid id;
+    id_t id;
+};
+
+struct id {
+    char* name;
+    id_t id;
+};
+
+struct namespaced_id {
+    id_t namespace;
+    id_t id;
 };
 
 

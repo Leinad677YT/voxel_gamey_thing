@@ -69,11 +69,14 @@ typedef struct leinad_region {
 
 
 struct chunk_mesh {
-    SDL_GPUBuffer* vertex;
-    SDL_GPUBuffer* index;
+    SDL_GPUBuffer* vertex_opaque;
+    SDL_GPUBuffer* index_opaque;
 
-    Uint32 vert_o_count,vert_t_count;
-    Uint32 ind_x,ind_x_, ind_y,ind_y_, ind_z,ind_z_, ind_unspecified;
+    SDL_GPUBuffer* vertex_translucent;
+    SDL_GPUBuffer* index_translucent;
+
+    Uint32 vert_o,vert_t;
+    Uint32 ind_o, ind_t;
 };
 
 
@@ -97,7 +100,6 @@ LEINAD_FBUILDER leinad_region_t* leinad_region_create_from_chunk(leinad_chunk_t*
 LEINAD_FBUILDER leinad_region_t* leinad_region_create_empty(float x, float y, float z);
 
 LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *chunk, short off_x, short off_y, short off_z);
-
 
 /**
  * @note struct used to send the data to the chunk rendering functions
