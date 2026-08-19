@@ -4,6 +4,7 @@
 #include <leinad/world/loading.h>
 
 #include <leinad/player.h>
+#include <leinad/datatype/dimension.h>
 
 struct _loaded_chunks loaded_chunks = {
     .chunk = {0},
@@ -148,41 +149,33 @@ void loaded_chunks_forall_increasing(void(*fun)(leinad_chunk_t*,void*),void* arg
 
 #define MAX_HEIGHT 128
 #define WATER_LEVEL 64
-LEINAD_FINITIALIZER void leinad_chunk_generate(leinad_chunk_t* restrict reserved_space){
 
-    long long int heightmap[raise2(LEINAD_REGION_RADIUS)] = {0};
+LEINAD_FINITIALIZER void leinad_chunk_generate(leinad_chunk_t* restrict chunk){
 
-    for (int z = 0; z < LEINAD_REGION_RADIUS; z++)
-     for (int x = 0; x < LEINAD_REGION_RADIUS; x++) {
-        heightmap[z*LEINAD_REGION_RADIUS + x] = SDL_sin((z+reserved_space->pos[2])/(double)10 + (x+reserved_space->pos[0])/(double)1000) * MAX_HEIGHT + (double)MAX_HEIGHT/2;
-        if (heightmap[z*LEINAD_REGION_RADIUS + x] - reserved_space->pos[1] < 0) heightmap[z*LEINAD_REGION_RADIUS + x] = 0;
-        else heightmap[z*LEINAD_REGION_RADIUS + x] -= reserved_space->pos[1];
-    }        
+    switch (chunk->dimension->generator->generic.type) {
+        default:
+        case LEINAD_DIMENSION_GENERATOR_DEBUG:
+            if (chunk->pos[1] != 0 || chunk->pos[0] < 0 || chunk->pos[2] < 0) break;
+            
+            const int y = 0;
 
-    for(int z = 0; z < LEINAD_REGION_RADIUS; z++) for(int x = 0; x < LEINAD_REGION_RADIUS; x++) {
-
-        // for (int Y = 0; Y < LEINAD_REGION_RADIUS; Y++) reserved_space->block[Y*raise2(LEINAD_REGION_RADIUS)+z*LEINAD_REGION_RADIUS + x].id = LEINAD_BLOCK_AIR;
-        // continue;
-
-    //     // for (int _y = 0; _y < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; _y++)
-    //     //  for (int _z = 0; _z < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; _z++)
-    //     //   for (int _x = 0; _x < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; _x++)
-    //     //    for (int _i = 0; _i < LEINAD_MESH_RADIUS; _i++)
-    //     //     for (int _j = 0; _j < LEINAD_MESH_RADIUS; _j++)
-    //     //         reserved_space->block[_y*LEINAD_MESH_RADIUS*raise2(LEINAD_REGION_RADIUS) + _z*LEINAD_MESH_RADIUS*LEINAD_REGION_RADIUS + _x*LEINAD_MESH_RADIUS + _i + _j*LEINAD_REGION_RADIUS].id = LEINAD_BLOCK_STONE;
-
-    // continue;
-
-
-    for (int y = 0; y < SDL_min(heightmap[z*LEINAD_REGION_RADIUS + x] - reserved_space->pos[1],LEINAD_REGION_RADIUS); y++)
-        reserved_space->block[y*raise2(LEINAD_REGION_RADIUS) + z*LEINAD_REGION_RADIUS + x].id = LEINAD_BLOCK_STONE;
-    for (int y = SDL_max(heightmap[z*LEINAD_REGION_RADIUS + x] - reserved_space->pos[1],0); y < SDL_min(SDL_max(WATER_LEVEL - reserved_space->pos[1],0),LEINAD_REGION_RADIUS); y++)
-        reserved_space->block[y*raise2(LEINAD_REGION_RADIUS) + z*LEINAD_REGION_RADIUS + x].id = LEINAD_BLOCK_BLUE_STAINED_GLASS;
+            for (int z = chunk->pos[2]; z < SDL_min(chunk->pos[2] + LEINAD_REGION_RADIUS,3*(int)SDL_ceil(SDL_sqrt(LEINAD_BLOCK_amount))); z+=3)
+             for (int x = chunk->pos[0]; x < SDL_min(chunk->pos[0] + LEINAD_REGION_RADIUS,3*(int)SDL_ceil(SDL_sqrt(LEINAD_BLOCK_amount))); x+=3) {
+                if ((z / 3) * (int)SDL_ceil(SDL_sqrt(LEINAD_BLOCK_amount)) + x / 3 > LEINAD_BLOCK_amount) break;
+                chunk->block[leinad_get_chunk_index(x - (int)chunk->pos[0],y,z - (int)chunk->pos[2])].id = (z / 3) * (int)SDL_ceil(SDL_sqrt(LEINAD_BLOCK_amount)) + x / 3;
+                chunk->block[leinad_get_chunk_index(x - (int)chunk->pos[0],y,z - (int)chunk->pos[2])].light = (LEINAD_BLOCK_MAX_LIGHT_LEVEL) | (LEINAD_BLOCK_MAX_LIGHT_LEVEL << 4);
+                SDL_Log("x: %d z: %d, id- %d",x,z,(z / 3) * (int)SDL_ceil(SDL_sqrt(LEINAD_BLOCK_amount)) + x / 3);
+            }
+            break;
+        case LEINAD_DIMENSION_GENERATOR_FLAT:
+            break;
+        case LEINAD_DIMENSION_GENERATOR_NOISE:
+            break;
     }
 }
 
 
-LEINAD_FINITIALIZER int leinad_chunk_load(leinad_chunk_t** restrict chunk, float x, float y, float z) {
+LEINAD_FINITIALIZER int leinad_chunk_load(leinad_chunk_t** restrict chunk, float x, float y, float z, struct dimension* dimension) {
 
     #define loaded false
 
@@ -190,7 +183,7 @@ LEINAD_FINITIALIZER int leinad_chunk_load(leinad_chunk_t** restrict chunk, float
         // idk lol, just grab it
     }
     else {
-        *chunk = leinad_chunk_create(x,y,z);
+        *chunk = leinad_chunk_create(x,y,z,dimension);
         if (*chunk == NULL) goto failure;
 
         leinad_chunk_generate(*chunk);
@@ -245,7 +238,8 @@ void load_around_player(struct entity_player* player) {
             &(loaded_chunks.chunk[POS]),
             loaded_chunks.chunk[POS + raise2(LOADED_CHUNKS_LENGTH)]->pos[0],
             loaded_chunks.chunk[POS + raise2(LOADED_CHUNKS_LENGTH)]->pos[1] -LEINAD_REGION_RADIUS,
-            loaded_chunks.chunk[POS + raise2(LOADED_CHUNKS_LENGTH)]->pos[2]
+            loaded_chunks.chunk[POS + raise2(LOADED_CHUNKS_LENGTH)]->pos[2],
+            leinad_dimension_getfromid(player->dimension)
         );
 
         loaded_chunks.center_pos[1] -= LEINAD_REGION_RADIUS;
@@ -265,7 +259,8 @@ void load_around_player(struct entity_player* player) {
                 &loaded_chunks.chunk[POS],
                 loaded_chunks.chunk[POS - raise2(LOADED_CHUNKS_LENGTH)]->pos[0],
                 loaded_chunks.chunk[POS - raise2(LOADED_CHUNKS_LENGTH)]->pos[1] +LEINAD_REGION_RADIUS,
-                loaded_chunks.chunk[POS - raise2(LOADED_CHUNKS_LENGTH)]->pos[2]
+                loaded_chunks.chunk[POS - raise2(LOADED_CHUNKS_LENGTH)]->pos[2],
+            leinad_dimension_getfromid(player->dimension)
             );
 
         loaded_chunks.center_pos[1] += LEINAD_REGION_RADIUS;
@@ -301,7 +296,8 @@ void load_around_player(struct entity_player* player) {
                 &loaded_chunks.chunk[POS],
                 loaded_chunks.chunk[POS + LOADED_CHUNKS_LENGTH]->pos[0],
                 loaded_chunks.chunk[POS + LOADED_CHUNKS_LENGTH]->pos[1],
-                loaded_chunks.chunk[POS + LOADED_CHUNKS_LENGTH]->pos[2] -LEINAD_REGION_RADIUS
+                loaded_chunks.chunk[POS + LOADED_CHUNKS_LENGTH]->pos[2] -LEINAD_REGION_RADIUS,
+            leinad_dimension_getfromid(player->dimension)
             );
         }
         loaded_chunks.center_pos[2] -= LEINAD_REGION_RADIUS;
@@ -324,7 +320,8 @@ void load_around_player(struct entity_player* player) {
                 &loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) - j],
                 loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) - j - LOADED_CHUNKS_LENGTH]->pos[0],
                 loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) - j - LOADED_CHUNKS_LENGTH]->pos[1],
-                loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) - j - LOADED_CHUNKS_LENGTH]->pos[2] +LEINAD_REGION_RADIUS
+                loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) - j - LOADED_CHUNKS_LENGTH]->pos[2] +LEINAD_REGION_RADIUS,
+            leinad_dimension_getfromid(player->dimension)
             );
         }
         loaded_chunks.center_pos[2] += LEINAD_REGION_RADIUS;
@@ -351,7 +348,8 @@ void load_around_player(struct entity_player* player) {
                 &loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) + j*LOADED_CHUNKS_LENGTH],
                 loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) + j*LOADED_CHUNKS_LENGTH +1]->pos[0] -LEINAD_REGION_RADIUS,
                 loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) + j*LOADED_CHUNKS_LENGTH +1]->pos[1],
-                loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) + j*LOADED_CHUNKS_LENGTH +1]->pos[2]
+                loaded_chunks.chunk[i*raise2(LOADED_CHUNKS_LENGTH) + j*LOADED_CHUNKS_LENGTH +1]->pos[2],
+            leinad_dimension_getfromid(player->dimension)
             );
 
         loaded_chunks.center_pos[0] -= LEINAD_REGION_RADIUS;
@@ -372,7 +370,8 @@ void load_around_player(struct entity_player* player) {
                 &loaded_chunks.chunk[i*LOADED_CHUNKS_LENGTH -1],
                 loaded_chunks.chunk[i*LOADED_CHUNKS_LENGTH -2]->pos[0] + LEINAD_REGION_RADIUS,
                 loaded_chunks.chunk[i*LOADED_CHUNKS_LENGTH -2]->pos[1],
-                loaded_chunks.chunk[i*LOADED_CHUNKS_LENGTH -2]->pos[2]
+                loaded_chunks.chunk[i*LOADED_CHUNKS_LENGTH -2]->pos[2],
+            leinad_dimension_getfromid(player->dimension)
             );
         }
         loaded_chunks.center_pos[0] += LEINAD_REGION_RADIUS;

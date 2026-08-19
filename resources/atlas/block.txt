@@ -16,4 +16,8 @@ light_blue_stained_glass
 pink_stained_glass
 magenta_stained_glass
 purple_stained_glass
+oak_log_top
+oak_log_side
+birch_log_top
+birch_log_side
 null

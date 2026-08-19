@@ -1,92 +1,43 @@
+#define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL.h>
-#include <SDL3_net/SDL_net.h>
 #include <SDL3/SDL_main.h>
 
-#include <leinad/data/control_shortcuts.h>
-#include <leinad/data/app.h>
-#include <leinad/data/globals.h>
 
-int main(int argc, char* argv[]){
+// LIBRARIES
+    #include "libs/queue.c"
+    #include "libs/stack.c"
+    #include "libs/sorted_list.c"
+//
 
-    Uint64 current_ns, previous_ns;
+// AUX
 
-  { // initialize SDL subsystem
+    // datapacks :tada:
+    #include "libs/namespacing.c"
 
-    SDL_SetAppMetadata(
-        LEINAD_APP_NAME,
-        LEINAD_APP_VERSION,
-        LEINAD_APP_IDENTIFIER
-    );
+    // math
+    #include "math/matrix.c"
 
-    if (!SDL_Init(SDL_INIT_EVENTS)) {
-        SDL_Log("Couldn't initialize SDL: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
+    // world
+    #include "world/region.c"
+    #include "world/loading.c"
+    #include "world/block.c"
+    #include "world/entity.c"
 
-    if (!NET_Init()) {
-        SDL_Log("Couldn't initialize SDL_net: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-  }
+    // entity types
+    #include "entity/player.c"
 
-  { // init server
-
-    server_addr = NET_ResolveHostname(LEINAD_SERVER_ADDR);
-
-    NET_WaitUntilResolved(server_addr, -1);
-
-    server = NET_CreateServer(server_addr, LEINAD_SERVER_PORT,0);
-    
-    NET_WaitUntilInputAvailable((void*) &server, 1, -1);
-    NET_AcceptClient(server, &client_sock);
-  }
-
-    current_ns = SDL_GetTicksNS();
-    previous_ns = SDL_GetTicksNS();
+//
 
 
-    loop() {
-    
-        SDL_Event event;
-        
-        while(SDL_PollEvent(&event)){
-            switch (event.type) {
-                case SDL_EVENT_QUIT:
-                case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-                return SDL_APP_SUCCESS;
-            }
-        }
+// Init
+#include "main_server/load.c"
 
-      { // check the time since last tick
-        current_ns = SDL_GetTicksNS();
+// Render loop
+#include "main_server/tick.c"
 
-        if (current_ns - previous_ns < LEINAD_TICK_RANGE_NS) continue;
-      }
+// Event processing
+#include "main_server/event.c"
 
-        char buffer[100] = {0};
-        int rcvd = 0;
-        
-        if (NET_GetConnectionStatus(client_sock) == NET_FAILURE) {
-            SDL_Log("Closed connection");
-            return SDL_APP_SUCCESS;
-        }
+// Close
+#include "main_server/close.c"
 
-        rcvd = NET_ReadFromStreamSocket(client_sock, buffer, 99);
-
-        if (rcvd == -1) continue;
-        if (rcvd) SDL_Log("%s", buffer);
-
-        if (0 == SDL_strcmp(buffer, "close")) goto close;
-
-        previous_ns = current_ns;
-
-    }
-
-close:
-    NET_DestroyStreamSocket(client_sock);
-    NET_DestroyServer(server);
-
-    NET_Quit();
-    SDL_Quit();
-
-}

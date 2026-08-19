@@ -1,6 +1,10 @@
 #pragma once
 
+#include <leinad/data/namespacing.h>
 #include <leinad/data/types.h>
+#include <leinad/data/tags.h>
+
+#include <leinad/world.h>
 
 enum dimension_generator {
     LEINAD_DIMENSION_GENERATOR_init = 0,
@@ -137,3 +141,5 @@ typedef struct dimension {
     struct namespaced_id dimension_type;
     dimension_generator_t* generator;
 } *dimension_t;
+
+LEINAD_FGET struct dimension* leinad_dimension_getfromid(struct namespaced_id id){ return WORLD.dimensions[0];}

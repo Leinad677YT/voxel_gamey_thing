@@ -10,6 +10,7 @@
 #include <leinad/world/blockdata.h>
 #include <leinad/world/loading.h>
 
+#include <leinad/world.h>
 #include <leinad/app.h>
 
 LEINAD_FCALL int INIT_render() {
@@ -656,61 +657,61 @@ LEINAD_FCALL int INIT_render() {
         for (int y = 0; y < LOADED_CHUNKS_LENGTH;y++)
          for (int z = 0; z < LOADED_CHUNKS_LENGTH;z++)
           for (int x = 0; x < LOADED_CHUNKS_LENGTH;x++){
-            leinad_chunk_load(&loaded_chunks.chunk[y*raise2(LOADED_CHUNKS_LENGTH) + z*LOADED_CHUNKS_LENGTH + x],(x-LOADED_CHUNKS_RADIUS) * 128,(y-LOADED_CHUNKS_RADIUS) * 128,(z-LOADED_CHUNKS_RADIUS) * 128);
+            leinad_chunk_load(&loaded_chunks.chunk[y*raise2(LOADED_CHUNKS_LENGTH) + z*LOADED_CHUNKS_LENGTH + x],(x-LOADED_CHUNKS_RADIUS) * 128,(y-LOADED_CHUNKS_RADIUS) * 128,(z-LOADED_CHUNKS_RADIUS) * 128,WORLD.dimensions[0]);
         }
 
         #define _chunk_test (loaded_chunks.chunk[raise3(LOADED_CHUNKS_LENGTH)/2])
 
-        _chunk_test->block[leinad_get_chunk_index(11, 0, 0)] = (struct blockdata) {
-            .id = LEINAD_BLOCK_STONE,
-            .rotation_n_subpos = 0,
-            .custom_data = 0
-        };
+        // _chunk_test->block[leinad_get_chunk_index(11, 0, 0)] = (struct blockdata) {
+        //     .id = LEINAD_BLOCK_STONE,
+        //     .rotation_n_subpos = 0,
+        //     .custom_data = 0
+        // };
 
-        _chunk_test->block[leinad_get_chunk_index(11, 1, 0)] = (struct blockdata) {
-            .id = LEINAD_BLOCK_STONE,
-            .rotation_n_subpos = 0,
-            .custom_data = 0
-        };
+        // _chunk_test->block[leinad_get_chunk_index(11, 1, 0)] = (struct blockdata) {
+        //     .id = LEINAD_BLOCK_STONE,
+        //     .rotation_n_subpos = 0,
+        //     .custom_data = 0
+        // };
 
-        _chunk_test->block[leinad_get_chunk_index(10, 0, 0)] = (struct blockdata) {
-            .id = LEINAD_BLOCK_STONE,
-            .rotation_n_subpos = 0,
-            .custom_data = 0
-        };
+        // _chunk_test->block[leinad_get_chunk_index(10, 0, 0)] = (struct blockdata) {
+        //     .id = LEINAD_BLOCK_STONE,
+        //     .rotation_n_subpos = 0,
+        //     .custom_data = 0
+        // };
 
-        _chunk_test->block[leinad_get_chunk_index(11, 0, 1)] = (struct blockdata) {
-            .id = LEINAD_BLOCK_GLASS,
-            .rotation_n_subpos = 0,
-            .custom_data = 0
-        };
+        // _chunk_test->block[leinad_get_chunk_index(11, 0, 1)] = (struct blockdata) {
+        //     .id = LEINAD_BLOCK_GLASS,
+        //     .rotation_n_subpos = 0,
+        //     .custom_data = 0
+        // };
 
-        for (int i = 0; i<20;i++) for (int j = 0; j < 10; j++) for (int glass = LEINAD_BLOCK_WHITE_STAINED_GLASS; glass <= LEINAD_BLOCK_PURPLE_STAINED_GLASS; glass++) {
-            _chunk_test->block[leinad_get_chunk_index(i, j, glass)] = (struct blockdata) {
-                .id = glass,
-                .rotation_n_subpos = 0,
-                .custom_data = 0
-            };
-            
-        }
-
-        // for(int i = 0; i<32;i++) for(int j = 0; j < 32; j++) {
-        //     _chunk_test->block[leinad_get_chunk_index(i, 0, j)] = (struct blockdata) {
-        //         .id = LEINAD_BLOCK_STONE,
+        // for (int i = 0; i<20;i++) for (int j = 0; j < 10; j++) for (int glass = LEINAD_BLOCK_WHITE_STAINED_GLASS; glass <= LEINAD_BLOCK_PURPLE_STAINED_GLASS; glass++) {
+        //     _chunk_test->block[leinad_get_chunk_index(i, j, glass)] = (struct blockdata) {
+        //         .id = glass,
         //         .rotation_n_subpos = 0,
         //         .custom_data = 0
         //     };
             
         // }
 
-        for(int i = 0; i<LEINAD_REGION_RADIUS;i++) for(int j = 0; j < LEINAD_REGION_RADIUS; j++) {
-            _chunk_test->block[leinad_get_chunk_index(i, LEINAD_REGION_RADIUS-1, j)] = (struct blockdata) {
-                .id = LEINAD_BLOCK_GLASS,
-                .rotation_n_subpos = 0,
-                .custom_data = 0
-            };
+        // // for(int i = 0; i<32;i++) for(int j = 0; j < 32; j++) {
+        // //     _chunk_test->block[leinad_get_chunk_index(i, 0, j)] = (struct blockdata) {
+        // //         .id = LEINAD_BLOCK_STONE,
+        // //         .rotation_n_subpos = 0,
+        // //         .custom_data = 0
+        // //     };
             
-        }
+        // // }
+
+        // for(int i = 0; i<LEINAD_REGION_RADIUS;i++) for(int j = 0; j < LEINAD_REGION_RADIUS; j++) {
+        //     _chunk_test->block[leinad_get_chunk_index(i, LEINAD_REGION_RADIUS-1, j)] = (struct blockdata) {
+        //         .id = LEINAD_BLOCK_GLASS,
+        //         .rotation_n_subpos = 0,
+        //         .custom_data = 0
+        //     };
+            
+        // }
 
         for (int a = 0; a < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; a++)
          for (int b = 0; b < LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS; b++)

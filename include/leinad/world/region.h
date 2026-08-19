@@ -2,6 +2,7 @@
 
 #include <SDL3/SDL.h>
 
+#include "../datatype/dimension.h"
 #include "../math/arithmetic.h"
 #include "../data/types.h"
 #include "../data/tags.h"
@@ -81,7 +82,8 @@ struct chunk_mesh {
 
 
 typedef struct leinad_chunk {
-    float pos[3]; // global position of the lowest corner
+    float pos[3];                   // global position of the lowest corner
+    struct dimension* dimension;    // dimension of the chunk
     struct blockdata block[raise3(LEINAD_REGION_RADIUS)];
     struct chunk_mesh* mesh[raise3(LEINAD_REGION_RADIUS/LEINAD_MESH_RADIUS)];
 } leinad_chunk_t;
@@ -90,7 +92,7 @@ typedef struct leinad_chunk {
 // x,y,z are already modulo'd 128
 LEINAD_FGET struct blockdata leinad_region_getblock(int x, int y, int z, leinad_region_t* region);
 
-LEINAD_FBUILDER leinad_chunk_t* leinad_chunk_create(float x, float y, float z);
+LEINAD_FBUILDER leinad_chunk_t* leinad_chunk_create(float x, float y, float z, struct dimension* dimension);
 LEINAD_FCLEANER void leinad_chunk_free(leinad_chunk_t* chunk);
 
 LEINAD_FINITIALIZER leinad_chunk_t* leinad_chunk_setfromregion(leinad_region_t* region, leinad_chunk_t* chunk);
@@ -129,4 +131,4 @@ LEINAD_FRENDER void leinad_chunk_render_transparent(leinad_chunk_t *chunk, void*
  * @param chunk chunk to work over
  * @param data data to render the chunk with, this being a pointer to a `struct _chunkrenderdata`
  */
-LEINAD_FRENDER void leinad_chunk_render_front(leinad_chunk_t *chunk, void* ptr);
+LEINAD_FRENDER void leinad_chunk_render_front(leinad_chunk_t *chunk, void* data);

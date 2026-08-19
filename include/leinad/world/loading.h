@@ -99,6 +99,6 @@ enum load_direction {
 
 LEINAD_FINITIALIZER void leinad_chunk_generate(leinad_chunk_t* restrict reserved_space);
 
-LEINAD_FINITIALIZER int leinad_chunk_load(leinad_chunk_t** restrict chunk, float x, float y, float z);
+LEINAD_FINITIALIZER int leinad_chunk_load(leinad_chunk_t** restrict chunk, float x, float y, float z, struct dimension* dimension);
 
 LEINAD_FCLEANER void unload_chunk(leinad_chunk_t** chunk, enum load_direction dir);

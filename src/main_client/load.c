@@ -5,6 +5,7 @@
 #include <leinad/data/app.h>
 
 #include <leinad/player.h>
+#include <leinad/world.h>
 
 #include "../render/init.c"
 
@@ -68,7 +69,7 @@ SDL_AppResult SDL_AppInit(
 
   }
 
-    { // assign window to gpu
+  { // assign window to gpu
 
     if (!SDL_ClaimWindowForGPUDevice(APP.device, APP.window)) {
         SDL_Log("Couldn't claim window for GPU device: %s", SDL_GetError());
@@ -76,12 +77,25 @@ SDL_AppResult SDL_AppInit(
     }
   }
 
+
+  { // load_dimensions
+    WORLD.dimensions = SDL_malloc(sizeof(struct dimension*) * 3);
+    WORLD.dimension_amount = 3;
+
+    WORLD.dimensions[0] = SDL_malloc(sizeof(struct dimension));
+    WORLD.dimensions[0]->generator = SDL_malloc(sizeof(struct LEINAD_DIMENSION_GENERATOR_DEBUG));
+    WORLD.dimensions[0]->generator->generic.type = LEINAD_DIMENSION_GENERATOR_DEBUG;
+
+    WORLD.dimensions[1] = NULL;
+    WORLD.dimensions[2] = NULL;
+  }
+
   if (INIT_render()) {
         SDL_Log("Couldn't init rendering shaders\n > SDL_ERRROR [%s]", SDL_GetError());
         return SDL_APP_FAILURE;
-    }
+  }
 
-    { // init server and client
+  { // init server and client
 
     NET_Address** local_addrs;
     int addr_amount, i;
@@ -102,6 +116,7 @@ SDL_AppResult SDL_AppInit(
   { // load client player
     ENFORCE(leinad_load_player_client());
   }
+
 
 //   SDL_HideCursor();
 

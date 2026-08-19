@@ -1,5 +1,7 @@
 #pragma once
 
+#include <leinad/data/namespacing.h>
+
 #include "../data/tags.h"
 #include "../data/types.h"
 #include "../world/item.h"

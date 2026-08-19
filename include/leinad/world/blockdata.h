@@ -25,6 +25,8 @@ typedef enum {
     LEINAD_BLOCK_PINK_STAINED_GLASS,
     LEINAD_BLOCK_MAGENTA_STAINED_GLASS,
     LEINAD_BLOCK_PURPLE_STAINED_GLASS,
+    LEINAD_BLOCK_OAK_LOG,
+    LEINAD_BLOCK_BIRCH_LOG,
     LEINAD_BLOCK_end,
     
     LEINAD_BLOCK_default = LEINAD_BLOCK_end,
@@ -55,6 +57,10 @@ typedef enum {
     LEINAD_BLOCKTX_PINK_STAINED_GLASS,
     LEINAD_BLOCKTX_MAGENTA_STAINED_GLASS,
     LEINAD_BLOCKTX_PURPLE_STAINED_GLASS,
+    LEINAD_BLOCKTX_OAK_LOG_TOP,
+    LEINAD_BLOCKTX_OAK_LOG_SIDE,
+    LEINAD_BLOCKTX_BIRCH_LOG_TOP,
+    LEINAD_BLOCKTX_BIRCH_LOG_SIDE,
     LEINAD_BLOCKTX_end,
     
     LEINAD_BLOCKTX_default = LEINAD_BLOCKTX_end,
@@ -151,7 +157,7 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
         .block_render_category = LEINAD_BLOCKRENDER_FULL_NO_ROT,
         .data.full_single_texture = {
             .tx_index = LEINAD_BLOCKTX_GLASS,
-            1.f,1.f,1.f,1.f
+            0.3f,0.1f,0.4f,1.f
         }
     },
     { // LEINAD_BLOCK_WHITE_STAINED_GLASS
@@ -328,6 +334,24 @@ const struct block block_data[LEINAD_BLOCK_amount] = {
         .data.full_single_texture = {
             .tx_index = LEINAD_BLOCKTX_PURPLE_STAINED_GLASS,
             0.6f,0.f,0.6f,1.f
+        }
+    },
+    { // LEINAD_BLOCK_OAK_LOG
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock,
+        .block_render_category = LEINAD_BLOCKRENDER_FULL_SPECIFIC_ROT,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_OAK_LOG_SIDE,
+            0.4f,0.4f,0.2f,1.f
+        }
+    },
+    { // LEINAD_BLOCK_BIRCH_LOG
+        .flags = LEINAD_BLOCKFLAG_default
+               | LEINAD_BLOCKFLAG_isfullblock,
+        .block_render_category = LEINAD_BLOCKRENDER_FULL_SPECIFIC_ROT,
+        .data.full_single_texture = {
+            .tx_index = LEINAD_BLOCKTX_BIRCH_LOG_SIDE,
+            0.4f,0.4f,0.4f,1.f
         }
     },
     

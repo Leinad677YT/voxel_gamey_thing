@@ -1,3 +1,8 @@
+#pragma once
+
+#define cos(x) SDL_cos(x)
+#define sin(x) SDL_sin(x)
+
 /**
  * @param variable variable name to add the amount to, must be inside (-360,360)
  * @param amount amount to add IN DEGREES, must be inside (-360,360)
@@ -9,9 +14,6 @@
     } while(0)
 
 #define degree_to_radian(degree) ((degree) * SDL_PI_F / 180.0f)
-
-#define cos(x) SDL_cos(x)
-#define sin(x) SDL_sin(x)
 
 /**
  * @param yaw

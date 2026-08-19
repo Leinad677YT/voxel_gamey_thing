@@ -54,7 +54,7 @@ SDL_AppResult SDL_AppInit(
 
 
     leinad_chunk_t *chunk = NULL;
-    chunk = leinad_chunk_create(0,0,0);
+    chunk = leinad_chunk_create(0,0,0,NULL);
     leinad_chunk_setfromregion(&region_full, chunk);
     if (chunk == NULL) {printf("chunk not properly initialized"); return SDL_APP_FAILURE;}
 

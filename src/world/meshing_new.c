@@ -67,6 +67,9 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
 
         switch(_blockdata(x,y,z).block_render_category) {
             
+            case LEINAD_BLOCKRENDER_FULL_SPECIFIC_ROT:
+            // @todo
+
             case LEINAD_BLOCKRENDER_FULL_RANDOM_ROT:
                 
                 random_rot_offset_a = (short)(0.1*x*x + 0.02*y*y + 0.08*z*z) % 4;
@@ -179,7 +182,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                     .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                     .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                     .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                    .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nX)
+                                    .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nX)
                                 };
                                 buffer_vertex_translucent[ind_v_t+1] = (struct block_vertex) {
                                     .x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
@@ -188,7 +191,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                     .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                     .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                     .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                    .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nX)
+                                    .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nX)
                                 };
                                 buffer_vertex_translucent[ind_v_t+2] = (struct block_vertex) {
                                     .x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
@@ -197,7 +200,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                     .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                     .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                     .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                    .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nX)
+                                    .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nX)
                                 };
                                 buffer_vertex_translucent[ind_v_t+3] = (struct block_vertex) {
                                     .x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
@@ -206,7 +209,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                     .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                     .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                     .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                    .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nX)
+                                    .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nX)
                                 };
 
                                 // index
@@ -230,7 +233,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pX)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pX)
                                    };
                                 buffer_vertex_translucent[ind_v_t+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[1].u,
@@ -238,7 +241,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pX)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pX)
                                    };
                                 buffer_vertex_translucent[ind_v_t+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[3].u,
@@ -246,7 +249,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pX)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pX)
                                    };
                                 buffer_vertex_translucent[ind_v_t+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[0].u,
@@ -254,7 +257,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                     .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                     .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                     .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                    .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pX)
+                                    .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pX)
                                 };
 
                                 // index
@@ -279,7 +282,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nZ)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nZ)
                                    };
                                 buffer_vertex_translucent[ind_v_t+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[3].u,
@@ -287,7 +290,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nZ)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nZ)
                                    };
                                 buffer_vertex_translucent[ind_v_t+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[1].u,
@@ -295,7 +298,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nZ)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nZ)
                                    };
                                 buffer_vertex_translucent[ind_v_t+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[0].u,
@@ -303,7 +306,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nZ)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nZ)
                                    };
 
                                 // index
@@ -328,7 +331,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pZ)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pZ)
                                    };
                                 buffer_vertex_translucent[ind_v_t+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[0].u,
@@ -336,7 +339,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pZ)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pZ)
                                    };
                                 buffer_vertex_translucent[ind_v_t+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[2].u,
@@ -344,7 +347,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pZ)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pZ)
                                    };
                                 buffer_vertex_translucent[ind_v_t+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[3].u,
@@ -352,7 +355,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pZ)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pZ)
                                    };
 
                                 // index
@@ -377,7 +380,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nY)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nY)
                                    };
                                 buffer_vertex_translucent[ind_v_t+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[2].u,
@@ -385,7 +388,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nY)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nY)
                                    };
                                 buffer_vertex_translucent[ind_v_t+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[0].u,
@@ -393,7 +396,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nY)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nY)
                                    };
                                 buffer_vertex_translucent[ind_v_t+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[3].u,
@@ -401,7 +404,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nY)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nY)
                                    };
 
                                 // index
@@ -426,7 +429,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pY)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pY)
                                    };
                                 buffer_vertex_translucent[ind_v_t+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[2].u,
@@ -434,7 +437,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pY)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pY)
                                    };
                                 buffer_vertex_translucent[ind_v_t+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[0].u,
@@ -442,7 +445,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pY)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pY)
                                    };
                                 buffer_vertex_translucent[ind_v_t+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[3].u,
@@ -450,7 +453,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pY)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pY)
                                    };
 
                                 // index
@@ -485,7 +488,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nX)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nX)
                                    };
                                 buffer_vertex_opaque[ind_v_o+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[2].u,
@@ -493,7 +496,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nX)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nX)
                                    };
                                 buffer_vertex_opaque[ind_v_o+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[0].u,
@@ -501,7 +504,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nX)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nX)
                                    };
                                 buffer_vertex_opaque[ind_v_o+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[3].u,
@@ -509,7 +512,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nX)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nX)
                                    };
 
                                 // index
@@ -534,7 +537,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pX)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pX)
                                    };
                                 buffer_vertex_opaque[ind_v_o+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[1].u,
@@ -542,7 +545,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pX)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pX)
                                    };
                                 buffer_vertex_opaque[ind_v_o+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[3].u,
@@ -550,7 +553,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pX)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pX)
                                    };
                                 buffer_vertex_opaque[ind_v_o+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[0].u,
@@ -558,7 +561,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pX)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pX)
                                    };
 
                                 // index
@@ -583,7 +586,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nZ)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nZ)
                                    };
                                 buffer_vertex_opaque[ind_v_o+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[3].u,
@@ -591,7 +594,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nZ)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nZ)
                                    };
                                 buffer_vertex_opaque[ind_v_o+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[1].u,
@@ -599,7 +602,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nZ)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nZ)
                                    };
                                 buffer_vertex_opaque[ind_v_o+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[0].u,
@@ -607,7 +610,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nZ)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nZ)
                                    };
 
                                 // index
@@ -632,7 +635,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pZ)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pZ)
                                    };
                                 buffer_vertex_opaque[ind_v_o+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[0].u,
@@ -640,7 +643,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pZ)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pZ)
                                    };
                                 buffer_vertex_opaque[ind_v_o+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[2].u,
@@ -648,7 +651,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pZ)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pZ)
                                    };
                                 buffer_vertex_opaque[ind_v_o+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[3].u,
@@ -656,7 +659,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pZ)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pZ)
                                    };
 
                                 // index
@@ -681,7 +684,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nY)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nY)
                                    };
                                 buffer_vertex_opaque[ind_v_o+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[2].u,
@@ -689,7 +692,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nY)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nY)
                                    };
                                 buffer_vertex_opaque[ind_v_o+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[0].u,
@@ -697,7 +700,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nY)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nY)
                                    };
                                 buffer_vertex_opaque[ind_v_o+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+0), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[3].u,
@@ -705,7 +708,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nY)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_nY)
                                    };
 
                                 // index
@@ -730,7 +733,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pY)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pY)
                                    };
                                 buffer_vertex_opaque[ind_v_o+1] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+0),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[2].u,
@@ -738,7 +741,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pY)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pY)
                                    };
                                 buffer_vertex_opaque[ind_v_o+2] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+0),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[0].u,
@@ -746,7 +749,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pY)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pY)
                                    };
                                 buffer_vertex_opaque[ind_v_o+3] = (struct block_vertex) {.x= LEINAD_BLOCK_RENDER_SCALE*(x+1),.y= LEINAD_BLOCK_RENDER_SCALE*(y+1), .z=LEINAD_BLOCK_RENDER_SCALE*(z+1),
                                     .u = _blocktx_u(_tx_index(x,y,z)) + uv_maps[3].u,
@@ -754,7 +757,7 @@ LEINAD_FINITIALIZER struct chunk_mesh* leinad_chunk_create_mesh(leinad_chunk_t *
                                    .r=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.r,
                                    .g=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.g,
                                    .b=leinad_get_block_data(_block(x,y,z).id).data.full_single_texture.b,
-                                   .a=1-(0.1 + leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pY)
+                                   .a=1-(0.1 + (float)leinad_get_block_light(_block(x,y,z)) / LEINAD_BLOCK_MAX_LIGHT_LEVEL)*(1-LEINAD_BLOCK_SHADE_pY)
                                    };
 
                                 // index

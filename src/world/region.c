@@ -134,7 +134,7 @@ LEINAD_FGET struct blockdata leinad_region_getblock(int x, int y, int z, leinad_
     return data;
 }
 
-LEINAD_FBUILDER leinad_chunk_t* leinad_chunk_create(float x, float y, float z) {
+LEINAD_FBUILDER leinad_chunk_t* leinad_chunk_create(float x, float y, float z, struct dimension* restrict dimension) {
     leinad_chunk_t* chunk;
     Uint32 i;
 
@@ -152,7 +152,7 @@ LEINAD_FBUILDER leinad_chunk_t* leinad_chunk_create(float x, float y, float z) {
     }
 
     chunk->pos[0] = x; chunk->pos[1] = y; chunk->pos[2] = z;
-
+    chunk->dimension = dimension;
     return chunk;
 }
 

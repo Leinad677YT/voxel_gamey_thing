@@ -17,22 +17,6 @@ typedef Sint32 uuid_t[4];
 
 typedef Uint32 id_t;
 
-struct namespace {
-    char* namespace;
-    id_t id;
-};
-
-struct id {
-    char* name;
-    id_t id;
-};
-
-struct namespaced_id {
-    id_t namespace;
-    id_t id;
-};
-
-
 // gameplay related
 
 struct leinad_position {

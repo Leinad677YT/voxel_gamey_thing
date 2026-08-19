@@ -91,7 +91,7 @@ struct block_vertex {
 /**
  * Maximum light level a block can have, both for skylight and blocklight
  */
-#define LEINAD_BLOCK_MAX_LIGHT_LEVEL 16.f
+#define LEINAD_BLOCK_MAX_LIGHT_LEVEL 0xf
 
 /**
  * Returns if 2 blocks are identical
