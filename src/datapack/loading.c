@@ -6,24 +6,7 @@
 
 #include <assert.h>
 
-struct _load_namespaces {
-    char* root_directory;
-    struct _aux_namespace {
-        struct _aux_namespace* next;
-        struct _aux_id {
-            struct _aux_id *next;
-            void* data;
-            char* name_str;
-            int name_len;
-        } *ids[LEINAD_RESOURCETYPE_amount];
-        char* name_str;
-        int name_len;
-        int id_amounts[LEINAD_RESOURCETYPE_amount];
-    } *start;
-    enum resource_type type;
-
-};
-
+#include "_load_resource.c"
 
 static SDL_EnumerationResult single_namespace_load(void* userdata, const char *dirname, const char *fname) {
 
@@ -73,10 +56,10 @@ static SDL_EnumerationResult single_namespace_load(void* userdata, const char *d
     #define _load_type(_type,_location) { \
         data->type = _type ; \
         SDL_free(path); \
-        if (SDL_asprintf(&path, "%s/%s/data/" _location "/", dirname, fname) < 0) goto failure; \
-        if (!SDL_GetPathInfo(path,NULL)) SDL_EnumerateDirectory(path,NULL,userdata); \
+        if (SDL_asprintf(&path, "%s%s/" _location, dirname, fname) < 0) goto failure; \
+        if (SDL_GetPathInfo(path,&info) && info.type == SDL_PATHTYPE_DIRECTORY) if (!SDL_EnumerateDirectory(path,resource_load,userdata)) goto failure; \
     }
-    #define _START 80
+    #define _START 63
     static_assert(__LINE__ == _START,__FILE__": MOVED RESOURCETYPE LOAD START");
     _load_type(LEINAD_RESOURCETYPE_FUNCTION, "function");
     _load_type(LEINAD_RESOURCETYPE_STRUCTURE, "structure");
@@ -131,8 +114,40 @@ static SDL_EnumerationResult single_namespace_load(void* userdata, const char *d
     _load_type(LEINAD_RESOURCETYPE_WORLDGEN_WORLD_PRESET,"worldgen/world_preset");
     _load_type(LEINAD_RESOURCETYPE_WORLDGEN_FLAT_LEVEL_GENERATOR_PRESET,"worldgen/flat_level_generator_preset");
     _load_type(LEINAD_RESOURCETYPE_WORLDGEN_MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST,"worldgen/multi_noise_biome_source_parameter_list");
-    _load_type(LEINAD_RESOURCETYPE_TAG,"tags");
-    static_assert(__LINE__ - _START == LEINAD_RESOURCETYPE_amount,__FILE__":%d FORGOT RESOURCETYPE LOAD ELEMENTS");
+    static_assert(__LINE__ - _START == LEINAD_RESOURCETYPE_end_vanilla,__FILE__":%d FORGOT RESOURCETYPE LOAD ELEMENTS");
+
+    #undef _load_type
+    #define _load_type(_type,_location) { \
+        data->type = _type ; \
+        SDL_free(path); \
+        if (SDL_asprintf(&path, "%s%s/tags" _location, dirname, fname) < 0) goto failure; \
+        if (SDL_GetPathInfo(path,&info) && info.type == SDL_PATHTYPE_DIRECTORY) if (!SDL_EnumerateDirectory(path,tag_load,userdata)) goto failure; \
+    }
+
+    _load_type(LEINAD_RESOURCETYPE_BANNER_PATTERN, "banner_pattern");
+    _load_type(LEINAD_RESOURCETYPE_BLOCK, "block");
+    _load_type(LEINAD_RESOURCETYPE_DAMAGE_TYPE, "damage_type");
+    _load_type(LEINAD_RESOURCETYPE_DIALOG, "dialog");
+    _load_type(LEINAD_RESOURCETYPE_DIALOG, "enchantment");
+    _load_type(LEINAD_RESOURCETYPE_ENTITY_TYPE, "entity_type");
+    _load_type(LEINAD_RESOURCETYPE_FLUID, "fluid");
+    _load_type(LEINAD_RESOURCETYPE_FUNCTION, "function");
+    _load_type(LEINAD_RESOURCETYPE_GAME_EVENT, "game_event");
+    _load_type(LEINAD_RESOURCETYPE_INSTRUMENT, "instrument");
+    _load_type(LEINAD_RESOURCETYPE_ITEM, "item");
+    _load_type(LEINAD_RESOURCETYPE_PAINTING_VARIANT, "painting_variant");
+    _load_type(LEINAD_RESOURCETYPE_POINT_OF_INTEREST_TYPE, "point_of_interest_type");
+    _load_type(LEINAD_RESOURCETYPE_POTION, "potion");
+    _load_type(LEINAD_RESOURCETYPE_TIMELINE, "timeline");
+    _load_type(LEINAD_RESOURCETYPE_VILLAGER_TRADE, "villager_trade");
+    _load_type(LEINAD_RESOURCETYPE_WORLDGEN_BIOME,"worldgen/biome");
+    _load_type(LEINAD_RESOURCETYPE_WORLDGEN_CONFIGURED_FEATURE,"worldgen/feature");
+    _load_type(LEINAD_RESOURCETYPE_WORLDGEN_FLAT_LEVEL_GENERATOR_PRESET,"worldgen/flat_level_generator_preset");
+    _load_type(LEINAD_RESOURCETYPE_WORLDGEN_STRUCTURE,"worldgen/structure");
+    _load_type(LEINAD_RESOURCETYPE_WORLDGEN_WORLD_PRESET,"worldgen/world_preset");
+
+    #undef _START
+    #undef _load_type
 
     return SDL_ENUM_CONTINUE;
   failure:
@@ -140,6 +155,8 @@ static SDL_EnumerationResult single_namespace_load(void* userdata, const char *d
     return SDL_ENUM_FAILURE;
 
 }
+
+
 
 static int validate_packmcmeta (struct _load_namespaces *data, const char* pack_name) {
 
@@ -192,7 +209,7 @@ static SDL_EnumerationResult single_datapack_load(void *userdata, const char *di
 
     if (validate_packmcmeta(userdata, fname) == LEINAD_RETURN_FAILURE) goto end;
 
-    if (SDL_asprintf(&path, "%s/%s/data/", dirname, fname) < 0) goto failure;
+    if (SDL_asprintf(&path, "%s%s/data/", dirname, fname) < 0) goto failure;
     if (!SDL_GetPathInfo(path,NULL)) goto end;
     
     if (!SDL_EnumerateDirectory(path,single_namespace_load,userdata)) goto failure;
@@ -228,3 +245,31 @@ static int load_all() {
     SDL_free(root_path);
     return LEINAD_RETURN_CONTINUE;
 }
+
+
+/*
+ data
+File directory.png: Sprite image for directory in Minecraft tags
+    X File directory.png: Sprite image for directory in Minecraft banner_pattern
+    X File directory.png: Sprite image for directory in Minecraft block
+    X File directory.png: Sprite image for directory in Minecraft damage_type
+    File directory.png: Sprite image for directory in Minecraft dialog
+    File directory.png: Sprite image for directory in Minecraft enchantment
+    File directory.png: Sprite image for directory in Minecraft entity_type
+    File directory.png: Sprite image for directory in Minecraft fluid
+    File directory.png: Sprite image for directory in Minecraft function
+    File directory.png: Sprite image for directory in Minecraft game_event
+    File directory.png: Sprite image for directory in Minecraft instrument
+    File directory.png: Sprite image for directory in Minecraft item
+    File directory.png: Sprite image for directory in Minecraft painting_variant
+    File directory.png: Sprite image for directory in Minecraft point_of_interest_type
+    File directory.png: Sprite image for directory in Minecraft potion
+    File directory.png: Sprite image for directory in Minecraft timeline
+    File directory.png: Sprite image for directory in Minecraft villager_trade
+    X    File directory.png: Sprite image for directory in Minecraft biome
+    X    File directory.png: Sprite image for directory in Minecraft feature​[upcoming: JE 26.3]
+    X    File directory.png: Sprite image for directory in Minecraft flat_level_generator_preset
+    X    File directory.png: Sprite image for directory in Minecraft structure
+    X    File directory.png: Sprite image for directory in Minecraft world_preset
+
+*/

@@ -1,5 +1,7 @@
 #include <leinad/type/enbt.h>
 
+#define SNBT_PARSING_START_STACK_SIZE 100
+
 struct eNBT_compound* enbt_create_compound(char* name, Uint16 name_length, Uint32 flags) {
     struct eNBT_compound *new = SDL_malloc(sizeof(struct eNBT_compound));
     
@@ -86,19 +88,19 @@ bool enbt_merge_value(void* target, const void* input) {
     return true;
 }
 
-// assumes dir != NULL
+// reallocs the memory on 1.5 geometric series until size fits in, assumes dir != NULL and size > 0
 static int ensure_capacity(void** restrict dir, const size_t size, size_t* restrict current_max) {
     void* new_dir = NULL;
     bool req = false;
 
     while(size >= *current_max) {
-        *current_max *= 1.5;
+        *current_max = (size_t)(*current_max * 1.5);
         req = true;
     }
 
     if (!req) return false;
 
-    new_dir = SDL_realloc(dir, *current_max);
+    new_dir = SDL_realloc(*dir, *current_max);
 
     if (new_dir == NULL) return true;
 
@@ -296,15 +298,95 @@ char * enbt_to_snbt(const void *input, size_t* written){
         return NULL;
 }
 
+void enbt_read_key(const char* input, size_t len, ) {
 
-
-
-
-char * enbt_from_snbt(const char* input, size_t len){
-    return NULL;
 }
 
 
+struct eNBT_generic* enbt_from_snbt(const char* input, size_t len) {
+
+    enum scope {
+        _list = '[',
+        _compound = '{',
+        _after_key = 'k',
+        _none = '0'
+    } current_scope;
+
+    struct eNBT_generic *stack = NULL;
+    size_t stack_size = 0;
+    int stack_pos = 0;
+    
+    char* to_parse = NULL;
+    int to_parse_len = 0;
+
+
+    stack = SDL_malloc(sizeof(struct eNBT_generic*) * SNBT_PARSING_START_STACK_SIZE);
+    if (stack == NULL) goto failure;
+
+    for (int i = 0; i < len; i++) {
+        // read empty spaces
+        switch (input[i]) {
+            case ' ':
+            case '\n':
+            case '\t':
+            case '\r':
+                continue;
+                break;
+
+            case '{':
+                // START COMPOUND
+                current_scope = _compound;
+                 break;
+            case '}':
+                // END COMPOUND
+                break;
+            
+            case '[':
+                // START LIST **OR** ARRAY
+                current_scope = _list;
+                break;
+            case ']':
+                // END LIST **OR** ARRAY
+                break;
+
+            case ':':
+                // ALLOW TO START OBJECT AFTER KEY
+                current_scope = _after_key;
+                break;
+
+            case ',':
+                // NEXT ELEMENT
+                break;
+
+            default:
+                // this is either an object or a key
+                switch(current_scope) {
+                    case _compound:
+                    case _list:
+                    case _after_key:
+                    case _none:
+                        // START KEY
+                        if (input[i] == '"') {
+                            for (to_parse_len = 0; input[i] != '"' || input[i-1] != '\\'; to_parse_len++) i++;
+                            i++;
+                        }
+                        else {
+                            for (to_parse_len = 0; input[i] != ' ' && input[i] != '\t' && input[i] != '\r' && input[i] != '\n'; to_parse_len++) i++;
+                        }
+                        break;
+                }
+                break;
+        }
+    }
+
+
+    return NULL;
+
+
+  failure:
+    SDL_free(stack);
+    return NULL;
+}
 
 struct eNBT_generic* enbt_parse_nbt(Uint8 data[], Sint32 length) {
     return NULL;

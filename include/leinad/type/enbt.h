@@ -78,8 +78,8 @@ struct eNBT_list* enbt_create_list(Uint16 estimated_size, enum eNBT_Tag type, ch
 
 bool enbt_merge_value(void* target, const void* input);
 
-char * enbt_to_snbt(const void* input, size_t* written);
-char * enbt_from_snbt(const char* input, size_t len);
+char* enbt_to_snbt(const void* input, size_t* written);
+struct eNBT_generic* enbt_from_snbt(const char* input, size_t len);
 
 
 
