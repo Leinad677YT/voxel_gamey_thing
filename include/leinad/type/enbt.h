@@ -60,6 +60,7 @@ struct eNBT_generic {
     
     Uint32 flags;
     // on lists, contains the type of the elements
+    #define ENBT_FLAG_DEFAULT 0x0
     #define ENBT_FLAG_LIST_TYPE 0x000000ff
 };
 
@@ -78,8 +79,18 @@ struct eNBT_list* enbt_create_list(Uint16 estimated_size, enum eNBT_Tag type, ch
 
 bool enbt_merge_value(void* target, const void* input);
 
-char* enbt_to_snbt(const void* input, size_t* written);
-struct eNBT_generic* enbt_from_snbt(const char* input, size_t len);
+char* enbt_to_snbt(const struct eNBT_generic* input, size_t* written);
+
+/**
+ * Returns on @param enbt the nbt value contained in @param input, with an
+ *  empty string key.
+ * @param input must be of @param len length, as any remaining characters that
+ * are not whitespaces will report errors.
+ * 
+ * > [!NOTE]
+ * > Previous contents of @param enbt are undefined after this function. 
+ */
+enum string_parsing_return enbt_from_snbt(const char* input, size_t len, struct eNBT_generic** enbt);
 
 
 
@@ -164,4 +175,15 @@ struct eNBT_compound {
     struct eNBT_NODE** small;
     struct eNBT_NODE** medium;
     struct eNBT_NODE** big;
+};
+
+enum string_parsing_return {
+    success_string = 0,
+    err_string_empty,
+    err_string_invalid_character,
+    err_string_quote_not_escaped,
+    err_string_invalid_escaping,
+    err_string_incomplete_escaping,
+    err_string_out_of_memory,
+    err_string_invalid_number
 };

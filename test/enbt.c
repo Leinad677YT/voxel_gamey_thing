@@ -18,7 +18,7 @@ int main(void){
     char* string = NULL;
     size_t written = 0;
 
-    string = enbt_to_snbt(&t_byte, &written);
+    string = enbt_to_snbt((struct eNBT_generic*)(&t_byte), &written);
 
     SDL_assert(string);
     SDL_Log("BYTE: %s",string);
@@ -37,7 +37,7 @@ int main(void){
     SDL_free(string);
     written = 0;
 
-    string = enbt_to_snbt(&t_short, &written);
+    string = enbt_to_snbt((struct eNBT_generic*)&t_short, &written);
 
     SDL_assert(string);
     SDL_Log("SHORT: %s",string);
@@ -55,7 +55,7 @@ int main(void){
     SDL_free(string);
     written = 0;
 
-    string = enbt_to_snbt(&t_int, &written);
+    string = enbt_to_snbt((struct eNBT_generic*)&t_int, &written);
 
     SDL_assert(string);
     SDL_Log("INT: %s",string);
@@ -73,7 +73,7 @@ int main(void){
     SDL_free(string);
     written = 0;
 
-    string = enbt_to_snbt(&t_long, &written);
+    string = enbt_to_snbt((struct eNBT_generic*)&t_long, &written);
 
     SDL_assert(string);
     SDL_Log("LONG: %s",string);
@@ -91,7 +91,7 @@ int main(void){
     SDL_free(string);
     written = 0;
 
-    string = enbt_to_snbt(&t_float, &written);
+    string = enbt_to_snbt((struct eNBT_generic*)&t_float, &written);
 
     SDL_assert(string);
     SDL_Log("FLOAT: %s",string);
@@ -109,7 +109,7 @@ int main(void){
     SDL_free(string);
     written = 0;
 
-    string = enbt_to_snbt(&t_double, &written);
+    string = enbt_to_snbt((struct eNBT_generic*)&t_double, &written);
 
     SDL_assert(string);
     SDL_Log("DOUBLE: %s",string);
@@ -136,7 +136,7 @@ int main(void){
         t_byte_array->array[i] = i;
     t_byte_array->array[123-1] = -123; 
 
-    string = enbt_to_snbt(t_byte_array, &written);
+    string = enbt_to_snbt((void*)t_byte_array, &written);
     SDL_free(t_byte_array);
 
     SDL_assert(string);
@@ -160,7 +160,7 @@ int main(void){
         t_int_array->array[i] = i;
     t_int_array->array[5-1] = 123456789; 
 
-    string = enbt_to_snbt(t_int_array, &written);
+    string = enbt_to_snbt((void*)t_int_array, &written);
     SDL_free(t_int_array);
 
     SDL_assert(string);
@@ -184,7 +184,7 @@ int main(void){
         t_long_array->array[i] = i;
     t_long_array->array[10-1] = 12345678987654321; 
 
-    string = enbt_to_snbt(t_long_array, &written);
+    string = enbt_to_snbt((void*)t_long_array, &written);
     SDL_free(t_long_array);
 
     SDL_assert(string);
@@ -205,7 +205,7 @@ int main(void){
         .size = 6
     };
 
-    string = enbt_to_snbt(t_string, &written);
+    string = enbt_to_snbt((struct eNBT_generic*)t_string, &written);
     SDL_free(t_string);
 
     SDL_assert(string);
@@ -225,7 +225,7 @@ int main(void){
     SDL_free(string);
     written = 0;
 
-    string = enbt_to_snbt(t_list, &written);
+    string = enbt_to_snbt((struct eNBT_generic*)t_list, &written);
 
     SDL_assert(string);
     SDL_Log("LIST-empty: %s",string);
@@ -248,7 +248,7 @@ int main(void){
     t_list->list[0] = (void*)t_string1;
     t_list->size = 1;
 
-    string = enbt_to_snbt(t_list, &written);
+    string = enbt_to_snbt((struct eNBT_generic*)t_list, &written);
 
     SDL_assert(string);
     SDL_Log("LIST-one: %s",string);
@@ -271,7 +271,7 @@ int main(void){
     t_list->list[2] =t_list->list[1] = (void*)t_string2;
     t_list->size = 3;
 
-    string = enbt_to_snbt(t_list, &written);
+    string = enbt_to_snbt((struct eNBT_generic*)t_list, &written);
 
     SDL_assert(string);
     SDL_Log("LIST-multiple: %s",string);
@@ -281,7 +281,7 @@ int main(void){
     SDL_free(string);
     written = 0;
 
-    string = enbt_to_snbt(t_compound, &written);
+    string = enbt_to_snbt((struct eNBT_generic*)t_compound, &written);
 
     SDL_assert(string);
     SDL_Log("COMPOUND-empty: %s",string);
@@ -306,7 +306,7 @@ int main(void){
     t_compound->small[0] = &(struct eNBT_NODE){(void*)t_string11,NULL};
     t_compound->size = 1;
 
-    string = enbt_to_snbt(t_compound, &written);
+    string = enbt_to_snbt((struct eNBT_generic*)t_compound, &written);
 
     SDL_assert(string);
     SDL_Log("COMPOUND-one: %s",string);
@@ -342,7 +342,7 @@ int main(void){
     t_compound->big[3] = &(struct eNBT_NODE){(void*)t_list,&(struct eNBT_NODE){(void*)&t_long,NULL}};
     t_compound->size = 4;
 
-    string = enbt_to_snbt(t_compound, &written);
+    string = enbt_to_snbt((void*)t_compound, &written);
 
     SDL_assert(string);
     SDL_Log("COMPOUND-multiple: %s",string);

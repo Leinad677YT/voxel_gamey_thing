@@ -134,11 +134,11 @@ static int create_snbt_of_content(const void* input, char** res, size_t *current
             break;
         case TAG_Float:
             if (ensure_capacity((void**)res,*written + 21,current_max)) goto fail;
-            aux = SDL_snprintf(&(*res)[(*idx)],21,"%f",((struct eNBT_float*)input)->payload);
+            aux = SDL_snprintf(&(*res)[(*idx)],25,"%ff",((struct eNBT_float*)input)->payload);
             break;
         case TAG_Double:
             if (ensure_capacity((void**)res,*written + 21,current_max)) goto fail;
-            aux = SDL_snprintf(&(*res)[(*idx)],21,"%lf",((struct eNBT_double*)input)->payload);
+            aux = SDL_snprintf(&(*res)[(*idx)],25,"%lf",((struct eNBT_double*)input)->payload);
             break;
         case TAG_Byte_Array:
             if (ensure_capacity((void**)res,*written + ((struct eNBT_byte_array*)input)->len * 7 + 4,current_max)) goto fail;
@@ -262,7 +262,7 @@ static int create_snbt_of_compound(const void* input, char** res, size_t *curren
  * @todo check if the compiler separates the first iteration of arrays because
  *       of the use of `i?"NORMAL":"FIRST"`
  */
-char * enbt_to_snbt(const void *input, size_t* written){
+char * enbt_to_snbt(const struct eNBT_generic*input, size_t* written){
 
     char * res = SDL_malloc(sizeof(char) * BASE_MAX_SNBT_CHARS);
     if (res == NULL) {*written = -1; goto ret;}
@@ -296,96 +296,6 @@ char * enbt_to_snbt(const void *input, size_t* written){
     fail:
         if (res != NULL) SDL_free(res);
         return NULL;
-}
-
-void enbt_read_key(const char* input, size_t len, ) {
-
-}
-
-
-struct eNBT_generic* enbt_from_snbt(const char* input, size_t len) {
-
-    enum scope {
-        _list = '[',
-        _compound = '{',
-        _after_key = 'k',
-        _none = '0'
-    } current_scope;
-
-    struct eNBT_generic *stack = NULL;
-    size_t stack_size = 0;
-    int stack_pos = 0;
-    
-    char* to_parse = NULL;
-    int to_parse_len = 0;
-
-
-    stack = SDL_malloc(sizeof(struct eNBT_generic*) * SNBT_PARSING_START_STACK_SIZE);
-    if (stack == NULL) goto failure;
-
-    for (int i = 0; i < len; i++) {
-        // read empty spaces
-        switch (input[i]) {
-            case ' ':
-            case '\n':
-            case '\t':
-            case '\r':
-                continue;
-                break;
-
-            case '{':
-                // START COMPOUND
-                current_scope = _compound;
-                 break;
-            case '}':
-                // END COMPOUND
-                break;
-            
-            case '[':
-                // START LIST **OR** ARRAY
-                current_scope = _list;
-                break;
-            case ']':
-                // END LIST **OR** ARRAY
-                break;
-
-            case ':':
-                // ALLOW TO START OBJECT AFTER KEY
-                current_scope = _after_key;
-                break;
-
-            case ',':
-                // NEXT ELEMENT
-                break;
-
-            default:
-                // this is either an object or a key
-                switch(current_scope) {
-                    case _compound:
-                    case _list:
-                    case _after_key:
-                    case _none:
-                        // START KEY
-                        if (input[i] == '"') {
-                            for (to_parse_len = 0; input[i] != '"' || input[i-1] != '\\'; to_parse_len++) i++;
-                            i++;
-                        }
-                        else {
-                            for (to_parse_len = 0; input[i] != ' ' && input[i] != '\t' && input[i] != '\r' && input[i] != '\n'; to_parse_len++) i++;
-                        }
-                        break;
-                }
-                break;
-        }
-    }
-
-
-    return NULL;
-
-
-  failure:
-    SDL_free(stack);
-    return NULL;
 }
 
 struct eNBT_generic* enbt_parse_nbt(Uint8 data[], Sint32 length) {
@@ -511,6 +421,7 @@ void enbt_release_payload(void* enbt) {
 }
 
 void enbt_free(void* enbt) {
+    if (enbt == NULL) return;
     switch(((struct eNBT_generic*)enbt)->type){
         default:
             break;

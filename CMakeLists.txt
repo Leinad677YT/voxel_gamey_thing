@@ -23,6 +23,7 @@ include_directories(SYSTEM include)
 add_executable(window_template WIN32 src/client.c)
 add_executable(server_template WIN32 src/server.c)
 
+add_executable(debugging WIN32 under_development.c)
 add_executable(test_regionnblock WIN32 test/region_n_block.c)
 add_executable(test_enbt WIN32 test/enbt.c)
 
@@ -32,6 +33,8 @@ target_link_libraries(window_template PRIVATE SDL3_net::SDL3_net)
 
 target_link_libraries(server_template PRIVATE SDL3::SDL3)
 target_link_libraries(server_template PRIVATE SDL3_net::SDL3_net)
+
+target_link_libraries(debugging PRIVATE SDL3::SDL3)
 
 target_link_libraries(test_regionnblock PRIVATE SDL3::SDL3)
 target_link_libraries(test_regionnblock PRIVATE SDL3_net::SDL3_net)
