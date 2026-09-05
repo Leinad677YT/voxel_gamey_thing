@@ -229,22 +229,16 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
     struct snbt_return_key aux_key;
 
     enum number_data {
-        _negative       = 0b00001,
-        _exponent       = 0b00010,
-        _exponent_sign  = 0b00100,
-        _exponent_num   = 0b00100,
-        _decimal        = 0b01000,
-        _decimal_num    = 0b10000
+        _negative       = 0b0000001,
+        _exponent       = 0b0000010,
+        _exponent_sign  = 0b0000100,
+        _exponent_num   = 0b0001000,
+        _decimal        = 0b0010000,
+        _decimal_num    = 0b0100000,
+        _nonzero        = 0b1000000
     } number_data = 0;
     
-    union number {
-        Sint8  num_byte;
-        Sint16 num_short;
-        Sint32 num_int;
-        Sint64 num_long;
-        float  num_float;
-        double num_double;
-    } number_value;
+    Sint64 number_value;
 
     enum _possibility {
         _unknown,
@@ -260,7 +254,7 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
 
     char aux_str[26] = {0};
 
-    int i, j;
+    int i, j, k;
     for (i = initial_idx; i < len; i++) {
 
         switch (input[i]) {
@@ -335,12 +329,15 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
             case _compound:
                 break;
             case _number:
-                printf("number\n");
-                for (j = 0; i + j < len; j++) {
+                for (k = j = 0; i + j < len; j++) {
                     if (j  > 24) return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number};
-                    aux_str[(number_data & _negative) + j] = input[i+j];
+                    aux_str[(number_data & _negative) + j + k] = input[i+j];
                     switch (input[i+j]) {
                         case '0':
+                            if (!(number_data & _nonzero)) k--;
+                            if (!(number_data & _exponent)) number_data |= _decimal_num;
+                            else number_data |= _exponent_num;
+                            continue;
                         case '1':
                         case '2':
                         case '3':
@@ -350,6 +347,7 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                         case '7':
                         case '8':
                         case '9':
+                            number_data |= _nonzero;
                             if (!(number_data & _exponent)) number_data |= _decimal_num;
                             else number_data |= _exponent_num;
                             continue;
@@ -380,10 +378,15 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                             ret.enbt->type = TAG_Byte;
                          // byte
                             aux_str[(number_data & _negative)+j] = '\0';
-                            if (!SDL_sscanf(aux_str,"%hhi",&((struct eNBT_byte*)(ret.enbt))->payload))
-                                return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number};
-                            // fill data
+                            errno = 0;
+                            number_value = strtoll(aux_str, NULL, 0);
+                            if (errno == ERANGE || number_value > SDL_MAX_SINT8 || number_value < SDL_MIN_SINT8) {
+                                SDL_free(ret.enbt);
+                                return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_overflow_number};
+                            }
 
+                            ((struct eNBT_byte*)(ret.enbt))->payload = number_value;
+                            
                             goto exit_number_loop;
 
                         case 's':
@@ -393,9 +396,14 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                             ret.enbt->type = TAG_Short;
                          // short
                             aux_str[(number_data & _negative)+j] = '\0';
-                            if (!SDL_sscanf(aux_str,"%hi",&((struct eNBT_short*)(ret.enbt))->payload))
-                                return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number};
-                            // fill data
+                            errno = 0;
+                            number_value = strtoll(aux_str, NULL, 0);
+                            if (errno == ERANGE || number_value > SDL_MAX_SINT16 || number_value < SDL_MIN_SINT16) {
+                                SDL_free(ret.enbt);
+                                return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_overflow_number};
+                            }
+
+                            ((struct eNBT_short*)(ret.enbt))->payload = number_value;
                             
                             goto exit_number_loop;
                       
@@ -407,9 +415,14 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                             ret.enbt->type = TAG_Int;
                          // int
                             aux_str[(number_data & _negative)+j] = '\0';
-                            if (!SDL_sscanf(aux_str,"%i",&((struct eNBT_int*)(ret.enbt))->payload))
-                                return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number};
-                            // fill data
+                            errno = 0;
+                            number_value = strtoll(aux_str, NULL, 0);
+                            if (errno == ERANGE || number_value > SDL_MAX_SINT32 || number_value < SDL_MIN_SINT32) {
+                                SDL_free(ret.enbt);
+                                return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_overflow_number};
+                            }
+
+                            ((struct eNBT_int*)(ret.enbt))->payload = number_value;
                             
                             goto exit_number_loop;
                         case 'l':
@@ -417,11 +430,15 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                             ret.enbt = SDL_malloc(sizeof(struct eNBT_long));
                             if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
                             ret.enbt->type = TAG_Long;
-                         // long
-                            aux_str[(number_data & _negative)+j] = '\0';
-                            if (!SDL_sscanf(aux_str,"%li",&((struct eNBT_long*)(ret.enbt))->payload))
-                                return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number};
-                            // fill data
+                         // long                            aux_str[(number_data & _negative)+j] = '\0';
+                            errno = 0;
+                            number_value = strtoll(aux_str, NULL, 0);
+                            if (errno == ERANGE || number_value > SDL_MAX_SINT64 || number_value < SDL_MIN_SINT64) {
+                                SDL_free(ret.enbt);
+                                return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_overflow_number};
+                            }
+
+                            ((struct eNBT_long*)(ret.enbt))->payload = number_value;
 
                             goto exit_number_loop;
                       
@@ -451,6 +468,7 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                          // float
                             aux_str[(number_data & _negative)+j] = '\0';
                             if (number_data & _exponent){
+                                number_value = strtoll(aux_str,NULL,10);
                                 if (!SDL_sscanf(aux_str,"%e",&((struct eNBT_float*)(ret.enbt))->payload))
                                     return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number};
                             } else {
@@ -462,12 +480,14 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                             goto exit_number_loop;
 
 
+                        case '\0':
                         case ' ':
                         case '\t':
                         case '\n':
                         case '\r':
                         case ',':
-                        case '\0':
+                        case ']':
+                        case '}':
                          // int / double
                             if (number_data & _decimal || number_data & _exponent) goto case_double;
                             goto case_int;

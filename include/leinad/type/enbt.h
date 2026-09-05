@@ -1,6 +1,10 @@
 #pragma once
 
-#include <SDL3/SDL.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <errno.h>
+#include <SDL3/SDL.h> /* may be replaced carefully, currently in use on the string parsing stuff and error messages */
 
 #define BASE_MAX_SNBT_CHARS 4000
 
@@ -55,10 +59,10 @@ enum eNBT_Tag {
 
 struct eNBT_generic {
     char* name;
-    Uint16 name_length;
-    Uint16 type;
+    uint16_t name_length;
+    uint16_t type;
     
-    Uint32 flags;
+    uint32_t flags;
     // on lists, contains the type of the elements
     #define ENBT_FLAG_DEFAULT 0x0
     #define ENBT_FLAG_LIST_TYPE 0x000000ff
@@ -66,14 +70,14 @@ struct eNBT_generic {
 
 
 
-struct eNBT_compound* enbt_create_compound(char* name, Uint16 name_length, Uint32 flags);
+struct eNBT_compound* enbt_create_compound(char* name, uint16_t name_length, uint32_t flags);
 
 
 /**
  * 
  * @todo @param estimated_size is still WIP, use it as 0 as of now
  */
-struct eNBT_list* enbt_create_list(Uint16 estimated_size, enum eNBT_Tag type, char* name, Uint16 name_length, Uint32 flags);
+struct eNBT_list* enbt_create_list(uint16_t estimated_size, enum eNBT_Tag type, char* name, uint16_t name_length, uint32_t flags);
 
 
 
@@ -94,30 +98,30 @@ enum string_parsing_return enbt_from_snbt(const char* input, size_t len, struct 
 
 
 
-struct eNBT_generic* enbt_parse_nbt(Uint8 data[], Sint32 length);
-struct eNBT_generic* enbt_parse_enbt(Uint8 data[], Sint32 length);
+struct eNBT_generic* enbt_parse_nbt(uint8_t data[], int32_t length);
+struct eNBT_generic* enbt_parse_enbt(uint8_t data[], int32_t length);
 
 void enbt_free(void* enbt);
 
 
 struct eNBT_byte {
     struct eNBT_generic data;
-    Sint8 payload;
+    int8_t payload;
 };
 
 struct eNBT_short {
     struct eNBT_generic data;
-    Sint16 payload;
+    int16_t payload;
 };
 
 struct eNBT_int {
     struct eNBT_generic data;
-    Sint32 payload;
+    int32_t payload;
 };
 
 struct eNBT_long {
     struct eNBT_generic data;
-    Sint64 payload;
+    int64_t payload;
 };
 
 struct eNBT_float {
@@ -132,33 +136,33 @@ struct eNBT_double {
 
 struct eNBT_byte_array {
     struct eNBT_generic data;
-    Sint32 len;
-    Sint8 *array;
+    int32_t len;
+    int8_t *array;
 };
 
 struct eNBT_int_array {
     struct eNBT_generic data;
-    Sint32 len;
-    Sint32 *array;
+    int32_t len;
+    int32_t *array;
 };
 
 struct eNBT_long_array {
     struct eNBT_generic data;
-    Sint32 len;
-    Sint64 *array;
+    int32_t len;
+    int64_t *array;
 };
 
 
 struct eNBT_string {
     struct eNBT_generic data;
-    Uint16 size;
+    uint16_t size;
     char *array;
 };
 
 struct eNBT_list {
     struct eNBT_generic data;
-    Uint32 size;
-    Uint32 current_capacity;
+    uint32_t size;
+    uint32_t current_capacity;
     struct eNBT_generic **list;
 };
 
@@ -171,7 +175,7 @@ struct eNBT_NODE {
 
 struct eNBT_compound {
     struct eNBT_generic data;
-    Uint64 size;
+    uint64_t size;
     struct eNBT_NODE** small;
     struct eNBT_NODE** medium;
     struct eNBT_NODE** big;
@@ -185,5 +189,7 @@ enum string_parsing_return {
     err_string_invalid_escaping,
     err_string_incomplete_escaping,
     err_string_out_of_memory,
-    err_string_invalid_number
+    err_string_overflow_number,
+    err_string_invalid_number,
+
 };

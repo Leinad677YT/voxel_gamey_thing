@@ -2,7 +2,7 @@
 
 #define SNBT_PARSING_START_STACK_SIZE 100
 
-struct eNBT_compound* enbt_create_compound(char* name, Uint16 name_length, Uint32 flags) {
+struct eNBT_compound* enbt_create_compound(char* name, uint16_t name_length, uint32_t flags) {
     struct eNBT_compound *new = SDL_malloc(sizeof(struct eNBT_compound));
     
     if (new == NULL) goto ret;
@@ -25,7 +25,7 @@ ret:
 /**
  * @todo optimize lists to be only the data itself and not an entire nbt component
  */
-struct eNBT_list* enbt_create_list(Uint16 estimated_size, enum eNBT_Tag type, char* name, Uint16 name_length, Uint32 flags){
+struct eNBT_list* enbt_create_list(uint16_t estimated_size, enum eNBT_Tag type, char* name, uint16_t name_length, uint32_t flags){
     struct eNBT_list *new;
 
     const int list_item_size[TAG_amount] = {
@@ -298,11 +298,11 @@ char * enbt_to_snbt(const struct eNBT_generic*input, size_t* written){
         return NULL;
 }
 
-struct eNBT_generic* enbt_parse_nbt(Uint8 data[], Sint32 length) {
+struct eNBT_generic* enbt_parse_nbt(uint8_t data[], int32_t length) {
     return NULL;
 }
 
-struct eNBT_generic* enbt_parse_enbt(Uint8 data[], Sint32 length) {
+struct eNBT_generic* enbt_parse_enbt(uint8_t data[], int32_t length) {
     return NULL;
 }
 
@@ -379,7 +379,7 @@ void enbt_release_payload(void* enbt) {
             break;
         case TAG_Compound:
             if (((struct eNBT_compound*)enbt)->small != NULL) {
-                Uint64 remaining = ((struct eNBT_compound*)enbt)->size;
+                uint64_t remaining = ((struct eNBT_compound*)enbt)->size;
 
 
                 for(int i = 0; i < ENBT_COMPOUND_MAX_SMALL && remaining; i++ ) {
@@ -493,7 +493,7 @@ void enbt_free(void* enbt) {
             break;
         case TAG_Compound:
             if (((struct eNBT_compound*)enbt)->small != NULL) {
-                Uint64 remaining = ((struct eNBT_compound*)enbt)->size;
+                uint64_t remaining = ((struct eNBT_compound*)enbt)->size;
 
 
                 for(int i = 0; i < ENBT_COMPOUND_MAX_SMALL && remaining; i++ ) {
