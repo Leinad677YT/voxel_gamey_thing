@@ -94,7 +94,7 @@ char* enbt_to_snbt(const struct eNBT_generic* input, size_t* written);
  * > [!NOTE]
  * > Previous contents of @param enbt are undefined after this function. 
  */
-enum string_parsing_return enbt_from_snbt(const char* input, size_t len, struct eNBT_generic** enbt);
+struct string_parsing_return enbt_from_snbt(const char* input, size_t len, struct eNBT_generic** enbt);
 
 
 
@@ -181,15 +181,18 @@ struct eNBT_compound {
     struct eNBT_NODE** big;
 };
 
-enum string_parsing_return {
-    success_string = 0,
-    err_string_empty,
-    err_string_invalid_character,
-    err_string_quote_not_escaped,
-    err_string_invalid_escaping,
-    err_string_incomplete_escaping,
-    err_string_out_of_memory,
-    err_string_overflow_number,
-    err_string_invalid_number,
-
+struct string_parsing_return {
+    enum string_parsing_validation {
+        success_string = 0,
+        err_string_empty,
+        err_string_invalid_character,
+        err_string_quote_not_escaped,
+        err_string_invalid_escaping,
+        err_string_incomplete_escaping,
+        err_string_out_of_memory,
+        err_string_overflow_number,
+        err_string_invalid_number,
+        err_string_unsigned_number
+    } valid;
+    int idx;
 };
