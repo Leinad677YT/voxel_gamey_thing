@@ -1,7 +1,6 @@
 #include <leinad/type/enbt.h>
 
-#define SNBT_PARSING_START_STACK_SIZE 100
-
+// you can throw NULL into @param name if you want, this function will keep a copy of the pointer, not the contents 
 struct eNBT_compound* enbt_create_compound(char* name, uint16_t name_length, uint32_t flags) {
     struct eNBT_compound *new = SDL_malloc(sizeof(struct eNBT_compound));
     
@@ -66,26 +65,6 @@ struct eNBT_list* enbt_create_list(uint16_t estimated_size, enum eNBT_Tag type, 
 
 ret:
     return new;
-}
-
-
-
- 
-
-bool enbt_merge_value(void* target, const void* input) {
-
-    // if input type is not a compound and matches target's type, replace its payload with the new one
-    // otherwise, release old data and replace, or, in the case of compounds, replace all the matching fields
-    switch(((struct eNBT_generic*)input)->type){
-        case TAG_Byte:
-            if (((struct eNBT_generic*)target)->type == TAG_Byte) 
-                ((struct eNBT_byte*)target)->payload = ((struct eNBT_byte*)input)->payload;
-            else {
-                // PENDING
-            }
-    }
-
-    return true;
 }
 
 // reallocs the memory on 1.5 geometric series until size fits in, assumes dir != NULL and size > 0
@@ -421,6 +400,9 @@ void enbt_release_payload(void* enbt) {
 }
 
 void enbt_free(void* enbt) {
+
+    int i, j;
+
     if (enbt == NULL) return;
     switch(((struct eNBT_generic*)enbt)->type){
         default:
@@ -441,52 +423,78 @@ void enbt_free(void* enbt) {
         case TAG_List:
             switch(((struct eNBT_generic*)enbt)->flags & ENBT_FLAG_LIST_TYPE){
                 case TAG_Byte:
-                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                    for (i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
                         enbt_free(((struct eNBT_byte**)((struct eNBT_list*)enbt)->list)[i]);
                     break;
                 case TAG_Short:
-                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
-                    enbt_free(((struct eNBT_short**)((struct eNBT_list*)enbt)->list)[i]);
+                    for (i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                        enbt_free(((struct eNBT_short**)((struct eNBT_list*)enbt)->list)[i]);
                     break;
                 case TAG_Int:
-                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                    for (i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
                         enbt_free(((struct eNBT_int**)((struct eNBT_list*)enbt)->list)[i]);
                     break;
                 case TAG_Long:
-                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                    for (i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
                         enbt_free(((struct eNBT_long**)((struct eNBT_list*)enbt)->list)[i]);
                     break;
                 case TAG_Float:
-                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                    for (i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
                         enbt_free(((struct eNBT_float**)((struct eNBT_list*)enbt)->list)[i]);
                     break;
                 case TAG_Double:
-                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                    for (i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
                         enbt_free(((struct eNBT_double**)((struct eNBT_list*)enbt)->list)[i]);
                     break;
                 case TAG_Byte_Array:
-                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                    for (i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
                         enbt_free(((struct eNBT_byte_array**)((struct eNBT_list*)enbt)->list)[i]);
                     break;
                 case TAG_Int_Array:
-                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                    for (i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
                         enbt_free(((struct eNBT_int_array**)((struct eNBT_list*)enbt)->list)[i]);
                     break;
                 case TAG_Long_Array:
-                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                    for (i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
                         enbt_free(((struct eNBT_long_array**)((struct eNBT_list*)enbt)->list)[i]);
                     break;
                 case TAG_String:
-                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                    for (i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
                         enbt_free(((struct eNBT_string**)((struct eNBT_list*)enbt)->list)[i]);
                     break;
                 case TAG_List:
-                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
+                    for (i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
                         enbt_free(((struct eNBT_list**)((struct eNBT_list*)enbt)->list)[i]);
                     break;
                 case TAG_Compound:
-                    for (int i = 0; i < ((struct eNBT_list*)enbt)->size; i++)
-                        enbt_free(((struct eNBT_compound**)((struct eNBT_list*)enbt)->list)[i]);
+                    j = 0;
+                    if (((struct eNBT_compound*)enbt)->small != NULL && j < ((struct eNBT_compound*)enbt)->size) {
+                        for (i = 0; i < ENBT_COMPOUND_MAX_SMALL; i++){
+                            if (((struct eNBT_string**)((struct eNBT_compound*)enbt)->small)[i] != NULL) {
+                                enbt_free(((struct eNBT_string**)((struct eNBT_compound*)enbt)->small)[i]);
+                                ((struct eNBT_string**)((struct eNBT_compound*)enbt)->small)[i] = NULL;
+                                if (++j >= ((struct eNBT_compound*)enbt)->size) break;
+                            }
+                        }
+                    }
+                    if (((struct eNBT_compound*)enbt)->medium != NULL && j < ((struct eNBT_compound*)enbt)->size) {
+                        for (i = 0; i < ENBT_COMPOUND_MAX_SMALL; i++){
+                            if (((struct eNBT_string**)((struct eNBT_compound*)enbt)->medium)[i] != NULL) {
+                                enbt_free(((struct eNBT_string**)((struct eNBT_compound*)enbt)->medium)[i]);
+                                ((struct eNBT_string**)((struct eNBT_compound*)enbt)->medium)[i] = NULL;
+                                if (++j >= ((struct eNBT_compound*)enbt)->size) break;
+                            }
+                        }
+                    }
+                    if (((struct eNBT_compound*)enbt)->big != NULL && j < ((struct eNBT_compound*)enbt)->size) {
+                        for (i = 0; i < ENBT_COMPOUND_MAX_BIG; i++){
+                            if (((struct eNBT_string**)((struct eNBT_compound*)enbt)->big)[i] != NULL) {
+                                enbt_free(((struct eNBT_string**)((struct eNBT_compound*)enbt)->big)[i]);
+                                ((struct eNBT_string**)((struct eNBT_compound*)enbt)->big)[i] = NULL;
+                                if (++j >= ((struct eNBT_compound*)enbt)->size) break;
+                            }
+                        }
+                    }
                     break;
             }
             SDL_free(((struct eNBT_list*)enbt)->list);
@@ -537,4 +545,172 @@ void enbt_free(void* enbt) {
     SDL_free(enbt);
 
     return;
+}
+
+enum enbt_operation_validation enbt_merge_value(struct eNBT_compound* target, const struct eNBT_compound* input) {
+
+
+    return success_enbt;
+}
+
+enum enbt_operation_validation enbt_set_value(void** target, const void* input) {
+
+    struct eNBT_generic* new_ptr;
+
+
+    // if input type is not a compound and matches target's type, replace its payload with the new one
+    // otherwise, release old data and replace, or, in the case of compounds, replace all the matching fields
+    switch ((*(struct eNBT_generic**)input)->type) {
+        case TAG_Byte:
+            switch ((*(struct eNBT_generic**)target)->type) {
+                default:
+                    enbt_release_payload(*target);
+                    new_ptr = SDL_realloc(*target, sizeof(struct eNBT_byte));
+                    if (new_ptr == NULL) return err_enbt_out_of_memory;
+                    *target = new_ptr;
+                    
+                case TAG_Byte:
+                    ((struct eNBT_byte*)*target)->payload = ((struct eNBT_byte*)input)->payload;
+                    break;
+            } break;
+        case TAG_Short:
+            switch ((*(struct eNBT_generic**)target)->type) {
+                default:
+                    enbt_release_payload(*target);
+                    new_ptr = SDL_realloc(*target, sizeof(struct eNBT_short));
+                    if (new_ptr == NULL) return err_enbt_out_of_memory;
+                    *target = new_ptr;
+                    
+                case TAG_Short:
+                    ((struct eNBT_short*)*target)->payload = ((struct eNBT_short*)input)->payload;
+                    break;
+            } break;
+        case TAG_Int:
+            switch ((*(struct eNBT_generic**)target)->type) {
+                default:
+                    enbt_release_payload(*target);
+                    new_ptr = SDL_realloc(*target, sizeof(struct eNBT_int));
+                    if (new_ptr == NULL) return err_enbt_out_of_memory;
+                    *target = new_ptr;
+                    
+                case TAG_Int:
+                    ((struct eNBT_int*)*target)->payload = ((struct eNBT_int*)input)->payload;
+                    break;
+            } break;
+        case TAG_Long:
+            switch ((*(struct eNBT_generic**)target)->type) {
+                default:
+                    enbt_release_payload(*target);
+                    new_ptr = SDL_realloc(*target, sizeof(struct eNBT_long));
+                    if (new_ptr == NULL) return err_enbt_out_of_memory;
+                    *target = new_ptr;
+                    
+                case TAG_Long:
+                    ((struct eNBT_long*)*target)->payload = ((struct eNBT_long*)input)->payload;
+                    break;
+            } break;
+        case TAG_Float:
+            switch ((*(struct eNBT_generic**)target)->type) {
+                default:
+                    enbt_release_payload(*target);
+                    new_ptr = SDL_realloc(*target, sizeof(struct eNBT_float));
+                    if (new_ptr == NULL) return err_enbt_out_of_memory;
+                    *target = new_ptr;
+                    
+                case TAG_Short:
+                    ((struct eNBT_float*)*target)->payload = ((struct eNBT_float*)input)->payload;
+            } break;
+        case TAG_Double:
+            switch ((*(struct eNBT_generic**)target)->type) {
+                default:
+                    enbt_release_payload(*target);
+                    new_ptr = SDL_realloc(*target, sizeof(struct eNBT_double));
+                    if (new_ptr == NULL) return err_enbt_out_of_memory;
+                    *target = new_ptr;
+                    
+                case TAG_Double:
+                    ((struct eNBT_double*)*target)->payload = ((struct eNBT_double*)input)->payload;
+            } break;
+        case TAG_Byte_Array:
+                    enbt_release_payload(*target);
+                    new_ptr = SDL_realloc(*target, sizeof(struct eNBT_byte_array));
+                    if (new_ptr == NULL) return err_enbt_out_of_memory;
+                    *target = new_ptr;
+
+                    ((struct eNBT_byte_array*)*target)->array = SDL_malloc(sizeof(int8_t) * ((struct eNBT_byte_array*)input)->len);
+                    if (((struct eNBT_byte_array*)*target)->array == NULL) return err_enbt_out_of_memory;
+
+                    for (int i = 0; i < ((struct eNBT_byte_array*)input)->len; i++) {
+                        ((struct eNBT_byte_array*)*target)->array[i] = ((struct eNBT_byte_array*)input)->array[i];
+                    }
+
+                    ((struct eNBT_byte_array*)*target)->len = ((struct eNBT_byte_array*)input)->len;
+                    break;
+        case TAG_Int_Array:
+                    enbt_release_payload(*target);
+                    new_ptr = SDL_realloc(*target, sizeof(struct eNBT_int_array));
+                    if (new_ptr == NULL) return err_enbt_out_of_memory;
+                    *target = new_ptr;
+
+                    ((struct eNBT_int_array*)*target)->array = SDL_malloc(sizeof(int32_t) * ((struct eNBT_int_array*)input)->len);
+                    if (((struct eNBT_int_array*)*target)->array == NULL) return err_enbt_out_of_memory;
+
+                    for (int i = 0; i < ((struct eNBT_int_array*)input)->len; i++) {
+                        ((struct eNBT_int_array*)*target)->array[i] = ((struct eNBT_int_array*)input)->array[i];
+                    }
+
+                    ((struct eNBT_int_array*)*target)->len = ((struct eNBT_int_array*)input)->len;
+                    break;
+        case TAG_Long_Array:
+                    enbt_release_payload(*target);
+                    new_ptr = SDL_realloc(*target, sizeof(struct eNBT_long_array));
+                    if (new_ptr == NULL) return err_enbt_out_of_memory;
+                    *target = new_ptr;
+
+                    ((struct eNBT_long_array*)*target)->array = SDL_malloc(sizeof(int64_t) * ((struct eNBT_long_array*)input)->len);
+                    if (((struct eNBT_long_array*)*target)->array == NULL) return err_enbt_out_of_memory;
+
+                    for (int i = 0; i < ((struct eNBT_long_array*)input)->len; i++) {
+                        ((struct eNBT_long_array*)*target)->array[i] = ((struct eNBT_long_array*)input)->array[i];
+                    }
+
+                    ((struct eNBT_long_array*)*target)->len = ((struct eNBT_long_array*)input)->len;
+                    break;
+        case TAG_String:
+                    enbt_release_payload(*target);
+                    new_ptr = SDL_realloc(*target, sizeof(struct eNBT_string));
+                    if (new_ptr == NULL) return err_enbt_out_of_memory;
+                    *target = new_ptr;
+
+                    ((struct eNBT_string*)*target)->array = SDL_malloc(sizeof(char) * ((struct eNBT_string*)input)->size);
+                    if (((struct eNBT_string*)*target)->array == NULL) return err_enbt_out_of_memory;
+
+                    for (int i = 0; i < ((struct eNBT_string*)input)->size; i++) {
+                        ((struct eNBT_string*)*target)->array[i] = ((struct eNBT_string*)input)->array[i];
+                    }
+
+                    ((struct eNBT_string*)*target)->size = ((struct eNBT_string*)input)->size;
+                    break;
+        case TAG_List:
+                    enbt_release_payload(*target);
+                    new_ptr = SDL_realloc(*target, sizeof(struct eNBT_list));
+                    if (new_ptr == NULL) return err_enbt_out_of_memory;
+                    *target = new_ptr;
+
+                    ((struct eNBT_list*)*target)->list = SDL_malloc(sizeof(char) * ((struct eNBT_list*)input)->current_capacity);
+                    if (((struct eNBT_list*)*target)->list == NULL) return err_enbt_out_of_memory;
+
+                    for (int i = 0; i < ((struct eNBT_list*)input)->size; i++) {
+                        ((struct eNBT_list*)*target)->list[i] = ((struct eNBT_list*)input)->list[i];
+                    }
+
+                    ((struct eNBT_list*)*target)->size = ((struct eNBT_list*)input)->size;
+                    ((struct eNBT_list*)*target)->current_capacity = ((struct eNBT_list*)input)->current_capacity;
+                    break;
+        case TAG_Compound:
+            return false;    
+            break;
+    }
+
+    return true;
 }

@@ -170,58 +170,67 @@ static struct snbt_return_key read_key(const int initial_idx, const char* input,
     // char aux_holder = '\0';
     
     for (i = initial_idx; i < len; i++) {
+        switch(input[i]){
+            case '\0':
+                i = len+2;
+                goto exit_loop;
 
-        if (input[i] == '\0') {i = len+2; break;}
-        if (input[i] == ' ' || input[i] == '\t' || input[i] == '\r' || input[i] == '\n') continue;
+            case ' ':
+            case '\t':
+            case '\r':
+            case '\n':
+                continue;
 
-        // START KEY PARSING
-        if (input[i] == '\"') {
-            i++;
-            to_parse_len = 0;
-            while (
-                i < len && input[i + to_parse_len] != '\0' 
-             && !(input[i + to_parse_len] == '"' && input[i + to_parse_len -1] != '\\')
-            ) {
-                to_parse_len++;
-            }
-            // aux_holder = input[i + to_parse_len];
-            // input[i + to_parse_len] = '\0';
+            case '\"':
+                i++;
+                to_parse_len = 0;
+                while (
+                    i < len && input[i + to_parse_len] != '\0' 
+                && !(input[i + to_parse_len] == '"' && input[i + to_parse_len -1] != '\\')
+                ) {
+                    to_parse_len++;
+                }
+                // aux_holder = input[i + to_parse_len];
+                // input[i + to_parse_len] = '\0';
 
-            parse_return = is_valid_key_quote_double(&input[i], to_parse_len, empty_is_valid);
-            // input[i + to_parse_len] = aux_holder;
-            return (struct snbt_return_key){.start_idx=i,.key_len=to_parse_len,.valid=parse_return,.new_idx=i+to_parse_len+1};
-        }
-        else if (input[i] == '\'') {
-            i++;
-            to_parse_len = 0;
-            while (
-                i < len && input[i + to_parse_len] != '\0' 
-             && !(input[i + to_parse_len] == '\'' && input[i + to_parse_len -1] != '\\')
-            ) {
-                to_parse_len++;
-            }
-            // aux_holder = input[i + to_parse_len];
-            // input[i + to_parse_len] = '\0';
+                parse_return = is_valid_key_quote_double(&input[i], to_parse_len, empty_is_valid);
+                // input[i + to_parse_len] = aux_holder;
+                return (struct snbt_return_key){.start_idx=i,.key_len=to_parse_len,.valid=parse_return,.new_idx=i+to_parse_len+1};
+            
+            case '\'':
+                i++;
+                to_parse_len = 0;
+                while (
+                    i < len && input[i + to_parse_len] != '\0' 
+                && !(input[i + to_parse_len] == '\'' && input[i + to_parse_len -1] != '\\')
+                ) {
+                    to_parse_len++;
+                }
+                // aux_holder = input[i + to_parse_len];
+                // input[i + to_parse_len] = '\0';
 
-            parse_return = is_valid_key_quote_simple(&input[i], to_parse_len, empty_is_valid);
-            // input[i + to_parse_len] = aux_holder;
-            return (struct snbt_return_key){.start_idx=i,.key_len=to_parse_len,.valid=parse_return,.new_idx=i+to_parse_len+1};
-        } else {
-            to_parse_len = 0;
-            while (
-                i + to_parse_len < len && input[i + to_parse_len] != '\0'
-             && (input[i + to_parse_len] != ':' && input[i + to_parse_len] != ' ' && input[i + to_parse_len] != '\t' && input[i + to_parse_len] != '\r' && input[i + to_parse_len] != '\n')
-            ) {
-                to_parse_len++;
-            }
-            // aux_holder = input[i + to_parse_len];
-            // input[i + to_parse_len] = '\0';
+                parse_return = is_valid_key_quote_simple(&input[i], to_parse_len, empty_is_valid);
+                // input[i + to_parse_len] = aux_holder;
+                return (struct snbt_return_key){.start_idx=i,.key_len=to_parse_len,.valid=parse_return,.new_idx=i+to_parse_len+1};
 
-            parse_return = is_valid_key_quote_none(&input[i], to_parse_len, empty_is_valid);
-            // input[i + to_parse_len] = aux_holder;
-            return (struct snbt_return_key){.start_idx=i,.key_len=to_parse_len,.valid=parse_return,.new_idx=i+to_parse_len};
+            default:
+                to_parse_len = 0;
+                while (
+                    i + to_parse_len < len && input[i + to_parse_len] != '\0'
+                    && (input[i + to_parse_len] != ':' && input[i + to_parse_len] != ' ' && input[i + to_parse_len] != '\t' && input[i + to_parse_len] != '\r' && input[i + to_parse_len] != '\n')
+                ) {
+                    to_parse_len++;
+                }
+                // aux_holder = input[i + to_parse_len];
+                // input[i + to_parse_len] = '\0';
+
+                parse_return = is_valid_key_quote_none(&input[i], to_parse_len, empty_is_valid);
+                // input[i + to_parse_len] = aux_holder;
+                return (struct snbt_return_key){.start_idx=i,.key_len=to_parse_len,.valid=parse_return,.new_idx=i+to_parse_len};
+
         }
     }
+  exit_loop:
     if (i == len+2) return (struct snbt_return_key){.start_idx=-2,.key_len=-2,.valid=-2,.new_idx=-2};
     return (struct snbt_return_key){.start_idx=-1,.key_len=-1,.valid=-1,.new_idx=-1};
 }
@@ -231,28 +240,8 @@ static struct snbt_return_key read_key(const int initial_idx, const char* input,
  * validates a key of length @param len (assumes an extra '\0' char available after len) found on @param input
  */
 struct snbt_return_value snbt_read_value(const int initial_idx, const char* input, size_t len, struct snbt_return_key key) {
+
     struct snbt_return_value ret = {0};
-
-    enum eNBT_Tag test = TAG_Short;
-
-    struct snbt_return_key aux_key;
-
-    enum number_data {
-        _negative       = 0x1,
-        _exponent       = 0x2,
-        _exponent_sign  = 0x4,
-        _exponent_num   = 0x8,
-        _decimal        = 0x10,
-        _decimal_num    = 0x20,
-        _nonzero        = 0x40,
-        _firstzero      = 0x80,
-        _pre_num        = 0x100,
-        _underscore     = 0x200,
-        _unsigned       = 0x400
-    } number_data = 0;
-    
-    Sint64 number_value;
-    Sint32 base = 10;
 
     enum _possibility {
         _unknown,
@@ -264,11 +253,33 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
         _number,
         _string
     } possible_value = _unknown;
+
+    // compound
+        struct snbt_return_value aux_value;
+
+    // string
+    // compound
+        struct snbt_return_key aux_key;
     
+    // number
+      enum number_data {
+        _negative       = 0x1,
+        _exponent       = 0x2,
+        _exponent_sign  = 0x4,
+        _exponent_num   = 0x8,
+        _decimal        = 0x10,
+        _decimal_num    = 0x20,
+        _nonzero        = 0x40,
+        _firstzero      = 0x80,
+        _pre_num        = 0x100,
+        _underscore     = 0x200,
+        _unsigned       = 0x400
+      } number_data = 0;
+      Sint64 number_value;
+      Sint32 base = 10;    
+      char aux_str[30] = {0};
 
-    char aux_str[26] = {0};
-
-    int i, j, k;
+    int i = 0, j = 0, k = 0;
     for (i = initial_idx; i < len; i++) {
 
         switch (input[i]) {
@@ -340,8 +351,73 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
             case _byte_array:
             case _int_array:
             case _long_array:
-            case _compound:
                 break;
+            case _compound:
+
+                // create the base compound
+                ret.enbt = (struct eNBT_generic*) enbt_create_compound(SDL_malloc(sizeof(char) * (key.key_len +1)), key.key_len, ENBT_FLAG_DEFAULT);
+
+                // ensure allocations
+                if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+                if (ret.enbt->name == NULL) {
+                    SDL_free(ret.enbt);
+                    return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+                }
+
+                // fill key
+                for (int c = 0; c < key.key_len; c++) ret.enbt->name[c] = input[key.start_idx + c];
+                ret.enbt->name[key.key_len] = '\0';
+
+
+                // loop over contents
+                for (j = 1; i+j > len; j++) {
+
+
+
+                    // read key
+                    aux_key = read_key(i+j, input, len, false);
+
+                    if (aux_key.valid != success_string) {
+                        ret.new_idx = i + j;
+                        ret.valid = aux_key.valid;
+                        goto __compound_cleanup;
+                    }
+
+                    // read ':'
+                    for (j = j; i+j < len; j++) {
+                        switch (input[i+j]) {
+                            case ' ':
+                            case '\t':
+                            case '\n':
+                            case '\r':
+                                continue;
+                            case ':':
+                                j++;
+                                break;
+                            default:
+                                ret.valid = err_string_invalid_character;
+                                ret.new_idx = i+j;
+                                goto __compound_cleanup;
+                        }
+                    }
+
+                    // read value
+                    aux_value = snbt_read_value(i+j, input, len, aux_key);
+                    if (aux_value.valid != success_string) {
+                        ret.valid = aux_value.valid;
+                        ret.new_idx = aux_value.new_idx;
+                        goto __compound_cleanup;
+                    }
+
+                    
+                }
+                break;
+
+            __compound_cleanup:
+                enbt_free(ret.enbt);
+                ret.enbt = NULL;
+                return (ret);
+
             case _number:
                 for (k = j = 0; i + j < len; j++) {
                     if (j  > 24) return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number};
@@ -648,7 +724,7 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
 
               // read string
                 aux_key = read_key(i,input,len,true);
-                if (aux_key.valid != success_string) return (struct snbt_return_value){.valid = aux_key.valid, .enbt = NULL};
+                if (aux_key.valid != success_string) return (struct snbt_return_value){.valid = aux_key.valid, .enbt = NULL, .new_idx = i};
 
               // allocate string
                 ret.enbt = SDL_malloc(sizeof(struct eNBT_string));

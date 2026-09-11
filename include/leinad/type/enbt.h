@@ -81,7 +81,7 @@ struct eNBT_list* enbt_create_list(uint16_t estimated_size, enum eNBT_Tag type, 
 
 
 
-bool enbt_merge_value(void* target, const void* input);
+enum enbt_operation_validation enbt_merge_value(struct eNBT_compound* target, const struct eNBT_compound* input);
 
 char* enbt_to_snbt(const struct eNBT_generic* input, size_t* written);
 
@@ -195,4 +195,10 @@ struct string_parsing_return {
         err_string_unsigned_number
     } valid;
     int idx;
+};
+
+enum enbt_operation_validation {
+    success_enbt = 0,
+    err_enbt_out_of_memory,
+    err_enbt_invalid_operation
 };
