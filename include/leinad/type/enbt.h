@@ -64,8 +64,9 @@ struct eNBT_generic {
     
     uint32_t flags;
     // on lists, contains the type of the elements
-    #define ENBT_FLAG_DEFAULT 0x0
-    #define ENBT_FLAG_LIST_TYPE 0x000000ff
+    #define ENBT_FLAG_DEFAULT           0x0
+    #define ENBT_FLAG_LIST_TYPE         0x000000ff
+    #define ENBT_FLAG_COMPOUND_REFCOUNT 0x00ffffff
 };
 
 
