@@ -301,10 +301,10 @@ int main(void){
     SDL_free(string);
     written = 0;
 
-    t_compound->small = SDL_malloc(ENBT_COMPOUND_MAX_SMALL * sizeof(struct eNBT_NODE*));
-    SDL_memset(t_compound->small,0,ENBT_COMPOUND_MAX_SMALL * sizeof(struct eNBT_NODE*));
-    t_compound->small[0] = &(struct eNBT_NODE){(void*)t_string11,NULL};
-    t_compound->size = 1;
+    t_compound->payload->small = SDL_malloc(ENBT_COMPOUND_MAX_SMALL * sizeof(struct eNBT_NODE*));
+    SDL_memset(t_compound->payload->small,0,ENBT_COMPOUND_MAX_SMALL * sizeof(struct eNBT_NODE*));
+    t_compound->payload->small[0] = &(struct eNBT_NODE){(void*)t_string11,NULL};
+    t_compound->payload->size = 1;
 
     string = enbt_to_snbt((struct eNBT_generic*)t_compound, &written);
 
@@ -334,13 +334,13 @@ int main(void){
     SDL_free(string);
     written = 0;
 
-    t_compound->medium = SDL_malloc(ENBT_COMPOUND_MAX_MEDIUM * sizeof(struct eNBT_NODE*));
-    SDL_memset(t_compound->medium,0,ENBT_COMPOUND_MAX_MEDIUM * sizeof(struct eNBT_NODE*));
-    t_compound->medium[3] = &(struct eNBT_NODE){(void*)&t_double,NULL};
-    t_compound->big = SDL_malloc(ENBT_COMPOUND_MAX_BIG * sizeof(struct eNBT_NODE*));
-    SDL_memset(t_compound->big,0,ENBT_COMPOUND_MAX_BIG * sizeof(struct eNBT_NODE*));
-    t_compound->big[3] = &(struct eNBT_NODE){(void*)t_list,&(struct eNBT_NODE){(void*)&t_long,NULL}};
-    t_compound->size = 4;
+    t_compound->payload->medium = SDL_malloc(ENBT_COMPOUND_MAX_MEDIUM * sizeof(struct eNBT_NODE*));
+    SDL_memset(t_compound->payload->medium,0,ENBT_COMPOUND_MAX_MEDIUM * sizeof(struct eNBT_NODE*));
+    t_compound->payload->medium[3] = &(struct eNBT_NODE){(void*)&t_double,NULL};
+    t_compound->payload->big = SDL_malloc(ENBT_COMPOUND_MAX_BIG * sizeof(struct eNBT_NODE*));
+    SDL_memset(t_compound->payload->big,0,ENBT_COMPOUND_MAX_BIG * sizeof(struct eNBT_NODE*));
+    t_compound->payload->big[3] = &(struct eNBT_NODE){(void*)t_list,&(struct eNBT_NODE){(void*)&t_long,NULL}};
+    t_compound->payload->size = 4;
 
     string = enbt_to_snbt((void*)t_compound, &written);
 

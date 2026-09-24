@@ -17,6 +17,7 @@
 #define ENBT_COMPOUND_MAX_MEDIUM 61
 #define ENBT_COMPOUND_RANGE_MEDIUM 180
 #define ENBT_COMPOUND_MAX_BIG 601
+#define ENBT_COMPOUND_MAX_REFCOUNT 0xffffff
 
 #define ENBT_MIN_LIST_ALLOCATION 1
 #define ENBT_MIN_ARRAY_ALLOCATION 3
@@ -66,7 +67,6 @@ struct eNBT_generic {
     // on lists, contains the type of the elements
     #define ENBT_FLAG_DEFAULT           0x0
     #define ENBT_FLAG_LIST_TYPE         0x000000ff
-    #define ENBT_FLAG_COMPOUND_REFCOUNT 0x00ffffff
 };
 
 struct eNBT_byte {
@@ -140,10 +140,13 @@ struct eNBT_NODE {
 
 struct eNBT_compound {
     struct eNBT_generic data;
-    uint64_t size;
-    struct eNBT_NODE** small;
-    struct eNBT_NODE** medium;
-    struct eNBT_NODE** big;
+    struct eNBT_COMPOUND_PAYLOAD {
+        uint64_t size : 40;
+        uint64_t refcount : 24;
+        struct eNBT_NODE** small;
+        struct eNBT_NODE** medium;
+        struct eNBT_NODE** big;
+    } *payload;
 };
 
 struct string_parsing_return {
