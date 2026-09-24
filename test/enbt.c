@@ -220,7 +220,7 @@ int main(void){
     char* string = NULL;
     size_t written;
 
-    struct eNBT_list *t_list = enbt_create_list(3, TAG_String, "test_list", 9, 0); 
+    struct eNBT_list *t_list = (struct eNBT_list*) enbt_create_any("test_list", 9, ENBT_FLAG_DEFAULT,TAG_List);
 
     SDL_free(string);
     written = 0;
@@ -276,7 +276,7 @@ int main(void){
     SDL_assert(string);
     SDL_Log("LIST-multiple: %s",string);
     
-    struct eNBT_compound *t_compound = enbt_create_compound("test_compound",13,0); 
+    struct eNBT_compound *t_compound = (struct eNBT_compound*) enbt_create_any("test_compound",13,ENBT_FLAG_DEFAULT,TAG_Compound); 
 
     SDL_free(string);
     written = 0;

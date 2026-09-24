@@ -60,7 +60,7 @@ struct eNBT_generic* enbt_create_any(const char* restrict name, const uint16_t n
     if (target == NULL) return NULL;
 
     // allocate new name
-    new_name = SDL_malloc(sizeof(char) * name_length);
+    new_name = SDL_malloc(sizeof(char) * (name_length + 1));
 
     if (new_name == NULL) {
         SDL_free(target);
@@ -79,6 +79,20 @@ struct eNBT_generic* enbt_create_any(const char* restrict name, const uint16_t n
 
     // set type-specific data
     switch (type) {
+
+        case TAG_Byte_Array:
+            ((struct eNBT_byte_array*)(target))->array = NULL;
+            ((struct eNBT_byte_array*)(target))->len = 0;            
+            break;
+        case TAG_Int_Array:
+            ((struct eNBT_byte_array*)(target))->array = NULL;
+            ((struct eNBT_byte_array*)(target))->len = 0;            
+            break;
+        case TAG_Long_Array:
+            ((struct eNBT_byte_array*)(target))->array = NULL;
+            ((struct eNBT_byte_array*)(target))->len = 0;            
+            break;
+
         case TAG_List:
 
             ((struct eNBT_list*)(target))->list = SDL_malloc(ENBT_MIN_LIST_ALLOCATION * sizeof(void*));
@@ -91,7 +105,7 @@ struct eNBT_generic* enbt_create_any(const char* restrict name, const uint16_t n
 
 
             ((struct eNBT_list*)(target))->size = 0;
-            ((struct eNBT_list*)(target))->current_capacity = ENBT_MIN_LIST_ALLOCATION;
+            ((struct eNBT_list*)(target))->current_capacity = ENBT_MIN_LIST_ALLOCATION * sizeof(void*);
             
             break;
 
@@ -110,13 +124,15 @@ struct eNBT_generic* enbt_create_any(const char* restrict name, const uint16_t n
     return target;
 }
 
-// reallocs the memory on 1.5 geometric series until size fits in, assumes dir != NULL and size > 0
-static int ensure_capacity(void** restrict dir, const size_t size, size_t* restrict current_max) {
+// reallocs the memory on 1.5 geometric series until size fits in, assumes dir != NULL and size > 0.
+//  
+// returns true on failure and false on success
+static bool ensure_capacity(void** restrict dir, const size_t size, uint32_t* restrict current_max) {
     void* new_dir = NULL;
     bool req = false;
 
     while(size >= *current_max) {
-        *current_max = (size_t)(*current_max * 1.5);
+        *current_max = SDL_ceil(*current_max * 1.5);
         req = true;
     }
 
@@ -132,10 +148,10 @@ static int ensure_capacity(void** restrict dir, const size_t size, size_t* restr
 }
 
 /*auxiliary*/
-static int create_snbt_of_compound(const void* input, char** res, size_t *current_max, int *idx, size_t *written);
+static int create_snbt_of_compound(const void* input, char** res, uint32_t *current_max, int *idx, size_t *written);
 
 /*auxiliary*/
-static int create_snbt_of_content(const void* input, char** res, size_t *current_max, int *idx, size_t *written) {
+static int create_snbt_of_content(const void* input, char** res, uint32_t *current_max, int *idx, size_t *written) {
     int aux = 0;
     switch (((struct eNBT_generic*)input)->type) {
         case TAG_Byte:
@@ -165,22 +181,22 @@ static int create_snbt_of_content(const void* input, char** res, size_t *current
         case TAG_Byte_Array:
             if (ensure_capacity((void**)res,*written + ((struct eNBT_byte_array*)input)->len * 7 + 4,current_max)) goto fail;
             aux = 3; (*res)[(*idx)] = '['; (*res)[(*idx)+1] = 'B'; (*res)[(*idx)+2] = ';';
-            for (int i = 0; i < ((struct eNBT_byte_array*)input)->len; i++)
-                aux += SDL_snprintf(&(*res)[(*idx + aux)],7,i?",%db":"%db",((struct eNBT_byte_array*)input)->array[i]);
+            for (int i = 0; i < ((struct eNBT_byte_array*)input)->len / sizeof(uint8_t); i++)
+                aux += SDL_snprintf(&(*res)[(*idx + aux)],7,i?",%dB":"%dB",((struct eNBT_byte_array*)input)->array[i]);
             (*res)[(*idx)+aux] = ']'; aux++;
             break;
         case TAG_Int_Array:
             if (ensure_capacity((void**)res,*written + ((struct eNBT_byte_array*)input)->len * 13 + 4,current_max)) goto fail;
             aux = 3; (*res)[(*idx)] = '['; (*res)[(*idx)+1] = 'I'; (*res)[(*idx)+2] = ';';
-            for (int i = 0; i < ((struct eNBT_int_array*)input)->len; i++)
+            for (int i = 0; i < ((struct eNBT_int_array*)input)->len / sizeof(uint32_t); i++)
                 aux += SDL_snprintf(&(*res)[(*idx + aux)],13,i?",%d":"%d",((struct eNBT_int_array*)input)->array[i]);
             (*res)[(*idx)+aux] = ']'; aux++;
             break;
         case TAG_Long_Array:
             if (ensure_capacity((void**)res,*written + ((struct eNBT_byte_array*)input)->len * 23 + 4,current_max)) goto fail;
             aux = 3; (*res)[(*idx)] = '['; (*res)[(*idx)+1] = 'L'; (*res)[(*idx)+2] = ';';
-            for (int i = 0; i < ((struct eNBT_long_array*)input)->len; i++)
-                aux += SDL_snprintf(&(*res)[(*idx + aux)],23,i?",%ldl":"%ldl",((struct eNBT_long_array*)input)->array[i]);
+            for (int i = 0; i < ((struct eNBT_long_array*)input)->len / sizeof(uint64_t); i++)
+                aux += SDL_snprintf(&(*res)[(*idx + aux)],23,i?",%ldL":"%ldL",((struct eNBT_long_array*)input)->array[i]);
             (*res)[(*idx)+aux] = ']'; aux++;
             break;
         case TAG_String:
@@ -257,7 +273,7 @@ static int create_snbt_of_content(const void* input, char** res, size_t *current
 }
 
 /*auxiliary*/
-static int create_snbt_of_compound(const void* input, char** res, size_t *current_max, int *idx, size_t *written){
+static int create_snbt_of_compound(const void* input, char** res, uint32_t *current_max, int *idx, size_t *written){
 
     if (ensure_capacity((void**)&res,3+((struct eNBT_generic*)input)->name_length,current_max)) goto fail;
 
@@ -289,7 +305,7 @@ char * enbt_to_snbt(const struct eNBT_generic*input, size_t* written){
     char * res = SDL_malloc(sizeof(char) * BASE_MAX_SNBT_CHARS);
     if (res == NULL) {*written = -1; goto ret;}
 
-    size_t current_max = BASE_MAX_SNBT_CHARS;
+    uint32_t current_max = BASE_MAX_SNBT_CHARS;
     int idx = 0;
     *written = 0;
 
@@ -310,7 +326,8 @@ char * enbt_to_snbt(const struct eNBT_generic*input, size_t* written){
     (*written)++;
 
     // cut unused memory
-    res = SDL_realloc(res,*written);
+    res = SDL_realloc(res,*written + 1);
+    res[*written] = '\0';
 
     ret:
         return res;
@@ -320,11 +337,11 @@ char * enbt_to_snbt(const struct eNBT_generic*input, size_t* written){
         return NULL;
 }
 
-struct eNBT_generic* enbt_parse_nbt(uint8_t data[], int32_t length) {
+struct eNBT_generic* enbt_parse_nbt(uint8_t data[], uint32_t length) {
     return NULL;
 }
 
-struct eNBT_generic* enbt_parse_enbt(uint8_t data[], int32_t length) {
+struct eNBT_generic* enbt_parse_enbt(uint8_t data[], uint32_t length) {
     return NULL;
 }
 
@@ -443,7 +460,7 @@ void enbt_free(void* enbt) {
                         struct eNBT_NODE* aux_node;
                         
                         while (iter != NULL) {
-                            enbt_free(((struct eNBT_compound*)enbt)->small[i]->val);
+                            enbt_free(iter->val);
                             aux_node = iter->next;
                             SDL_free(iter);
                             iter = aux_node;
@@ -459,7 +476,7 @@ void enbt_free(void* enbt) {
                         struct eNBT_NODE* aux_node;
 
                         while (iter != NULL) {
-                            enbt_free(((struct eNBT_compound*)enbt)->medium[i]->val);
+                            enbt_free(iter->val);
                             aux_node = iter->next;
                             SDL_free(iter);
                             iter = aux_node;
@@ -475,7 +492,7 @@ void enbt_free(void* enbt) {
                         struct eNBT_NODE* aux_node;
                         
                         while (iter != NULL) {
-                            enbt_free(((struct eNBT_compound*)enbt)->big[i]->val);
+                            enbt_free(iter->val);
                             aux_node = iter->next;
                             SDL_free(iter);
                             iter = aux_node;
@@ -499,16 +516,16 @@ enum enbt_operation_validation enbt_merge_value(struct eNBT_compound* target, co
     return success_enbt;
 }
 
-static int _hash(const char* str, const int len, const int max) {
+static uint _hash(const char* str, const int len, const uint max) {
     int ret = 0;
     for (int i = 0; i < len;i++) ret = (ret << 5) + str[i];
     return ret % max;
 }
 
-static struct eNBT_NODE** _find_compound_hash(struct eNBT_NODE** restrict array, const char* restrict key_str, const uint16_t key_len, const int MAX) {
-    int idx = _hash(key_str, key_len, MAX);
+static struct eNBT_NODE** _find_compound_hash(struct eNBT_NODE** restrict array, const char* restrict key_str, const uint16_t key_len, const uint MAX) {
+    uint idx = _hash(key_str, key_len, MAX);
     struct eNBT_NODE** element = &array[idx];
-    while( *element != NULL) {
+    while(*element != NULL) {
         if ((*element)->val->name_length != key_len) goto fail;
         for (idx = 0; idx < key_len; idx++) {
             if (key_str[idx] != (*element)->val->name[idx]) 
@@ -524,30 +541,57 @@ static struct eNBT_NODE** _find_compound_hash(struct eNBT_NODE** restrict array,
     return element;
 }
 
-struct eNBT_NODE** enbt_compound_find_existing(const struct eNBT_compound* restrict compound, const char* restrict key_str, const uint16_t key_len) {
-    
-    int idx;
-    struct eNBT_NODE** element = NULL;
+struct eNBT_NODE** enbt_compound_find_pos(struct eNBT_compound* restrict compound, const char* restrict key_str, const uint16_t key_len) {
+        int idx;
+    struct eNBT_NODE** ptr_small = NULL;
+    struct eNBT_NODE** ptr_medium = NULL;
+    struct eNBT_NODE** ptr_big = NULL;
 
     if (compound == NULL) return NULL;
 
     if (compound->small != NULL) {
-        element = _find_compound_hash(compound->small,key_str, key_len,ENBT_COMPOUND_MAX_SMALL);
-        if (element != NULL) return element;
+        ptr_small = _find_compound_hash(compound->small,key_str, key_len,ENBT_COMPOUND_MAX_SMALL);
+        if (ptr_small != NULL) return ptr_small;
     }
 
     if (compound->medium != NULL) {
-        element = _find_compound_hash(compound->small,key_str, key_len,ENBT_COMPOUND_MAX_MEDIUM);
-        if (element != NULL) return element;
+        ptr_medium = _find_compound_hash(compound->medium,key_str, key_len,ENBT_COMPOUND_MAX_MEDIUM);
+        if (ptr_medium != NULL) return ptr_medium;
     }
 
-    if (compound->small != NULL) {
-        element = _find_compound_hash(compound->small,key_str, key_len,ENBT_COMPOUND_MAX_BIG);
+    if (compound->big != NULL) {
+        ptr_big = _find_compound_hash(compound->big,key_str, key_len,ENBT_COMPOUND_MAX_BIG);
+        if (ptr_medium != NULL) return ptr_big;
     }
 
-    return element;
+    if (compound->size < ENBT_COMPOUND_RANGE_SMALL) {
+        if (compound->small == NULL) {
+            compound->small = SDL_malloc(sizeof(struct eNBT_generic*) * ENBT_COMPOUND_MAX_SMALL);
+            if (compound->small == NULL) return NULL;
+            for (int i = 0; i < ENBT_COMPOUND_MAX_SMALL; i++) compound->small[i] = NULL;
+            ptr_small = _find_compound_hash(compound->small, key_str, key_len, ENBT_COMPOUND_MAX_SMALL);
+        }
+        return ptr_small;
+    }
+    else if (compound->size < ENBT_COMPOUND_RANGE_MEDIUM) {
+        if (compound->medium == NULL) {
+            compound->medium = SDL_malloc(sizeof(struct eNBT_generic*) * ENBT_COMPOUND_MAX_MEDIUM);
+            if (compound->medium == NULL) return NULL;
+            for (int i = 0; i < ENBT_COMPOUND_MAX_MEDIUM; i++) compound->medium[i] = NULL;
+            ptr_medium = _find_compound_hash(compound->medium, key_str, key_len, ENBT_COMPOUND_MAX_MEDIUM);
+        }
+        return ptr_medium;
+    }
+    else {
+        if (compound->big == NULL) {
+            compound->big = SDL_malloc(sizeof(struct eNBT_generic*) * ENBT_COMPOUND_MAX_BIG);
+            if (compound->big == NULL) return NULL;
+            for (int i = 0; i < ENBT_COMPOUND_MAX_BIG; i++) compound->big[i] = NULL;
+            ptr_big = _find_compound_hash(compound->big, key_str, key_len, ENBT_COMPOUND_MAX_BIG);
+        }
+        return ptr_big;   
+    }
 }
-
 /**
  * Sets the payload of the enbt pointer held by @param target to match the
  * contents of @param input
@@ -574,7 +618,7 @@ enum enbt_operation_validation enbt_set_value(void** target, const void* input) 
                     new_ptr = SDL_realloc(*target, sizeof(struct eNBT_byte));
                     if (new_ptr == NULL) return err_enbt_out_of_memory;
                     *target = new_ptr;
-                    
+
                 case TAG_Byte:
                     ((struct eNBT_byte*)*target)->payload = ((struct eNBT_byte*)input)->payload;
                     break;
@@ -586,7 +630,7 @@ enum enbt_operation_validation enbt_set_value(void** target, const void* input) 
                     new_ptr = SDL_realloc(*target, sizeof(struct eNBT_short));
                     if (new_ptr == NULL) return err_enbt_out_of_memory;
                     *target = new_ptr;
-                    
+
                 case TAG_Short:
                     ((struct eNBT_short*)*target)->payload = ((struct eNBT_short*)input)->payload;
                     break;
@@ -598,7 +642,7 @@ enum enbt_operation_validation enbt_set_value(void** target, const void* input) 
                     new_ptr = SDL_realloc(*target, sizeof(struct eNBT_int));
                     if (new_ptr == NULL) return err_enbt_out_of_memory;
                     *target = new_ptr;
-                    
+
                 case TAG_Int:
                     ((struct eNBT_int*)*target)->payload = ((struct eNBT_int*)input)->payload;
                     break;
@@ -610,7 +654,7 @@ enum enbt_operation_validation enbt_set_value(void** target, const void* input) 
                     new_ptr = SDL_realloc(*target, sizeof(struct eNBT_long));
                     if (new_ptr == NULL) return err_enbt_out_of_memory;
                     *target = new_ptr;
-                    
+
                 case TAG_Long:
                     ((struct eNBT_long*)*target)->payload = ((struct eNBT_long*)input)->payload;
                     break;
@@ -622,7 +666,7 @@ enum enbt_operation_validation enbt_set_value(void** target, const void* input) 
                     new_ptr = SDL_realloc(*target, sizeof(struct eNBT_float));
                     if (new_ptr == NULL) return err_enbt_out_of_memory;
                     *target = new_ptr;
-                    
+
                 case TAG_Short:
                     ((struct eNBT_float*)*target)->payload = ((struct eNBT_float*)input)->payload;
             } break;
@@ -633,7 +677,7 @@ enum enbt_operation_validation enbt_set_value(void** target, const void* input) 
                     new_ptr = SDL_realloc(*target, sizeof(struct eNBT_double));
                     if (new_ptr == NULL) return err_enbt_out_of_memory;
                     *target = new_ptr;
-                    
+
                 case TAG_Double:
                     ((struct eNBT_double*)*target)->payload = ((struct eNBT_double*)input)->payload;
             } break;
@@ -711,7 +755,7 @@ enum enbt_operation_validation enbt_set_value(void** target, const void* input) 
                 *target = new_ptr;
             }
 
-            ((struct eNBT_list*)*target)->list = SDL_malloc(sizeof(struct eNBT_generic*) * ((struct eNBT_list*)input)->current_capacity);
+            ((struct eNBT_list*)*target)->list = SDL_malloc(((struct eNBT_list*)input)->current_capacity);
             if (((struct eNBT_list*)*target)->list == NULL) return err_enbt_out_of_memory;
 
             for (int i = 0; i < ((struct eNBT_list*)input)->size; i++) ((struct eNBT_list*)input)->list[i] = NULL;
@@ -918,4 +962,51 @@ enum enbt_operation_validation enbt_set_value(void** target, const void* input) 
     }
 
     return true;
+}
+
+/**
+ * Moves @param input into @param target
+ * 
+ * Useful for inserting data into compounds as an auxiliary function
+ */
+enum enbt_operation_validation enbt_compound_set_insert(struct eNBT_compound* target, struct eNBT_generic* input) {
+
+    if (target == NULL || input == NULL) return err_enbt_invalid_operation;
+
+    struct eNBT_NODE** node = enbt_compound_find_pos(target,input->name,input->name_length);
+
+    if (*node == NULL) {
+        // create node
+        *node = SDL_malloc(sizeof(struct eNBT_NODE));
+        if (*node == NULL) return err_enbt_out_of_memory;
+        
+        // fill node
+        (*node)->next = NULL;
+
+        target->size++;
+    }
+    else {
+        enbt_free((*node)->val);
+    }
+    
+    (*node)->val = input;
+    return success_enbt;
+}
+
+/**
+ * Moves @param input into @param target
+ * 
+ * Useful for inserting data into lists as an auxiliary function
+ */
+enum enbt_operation_validation enbt_list_append(struct eNBT_list* target, struct eNBT_generic* input) {
+
+    if (target == NULL || input == NULL) return err_enbt_invalid_operation;
+
+    if (ensure_capacity((void**)&target->list, sizeof(struct eNBT_generic*) * (target->size +1), &target->current_capacity)) {
+        return err_enbt_out_of_memory;
+    }
+
+    target->list[target->size++] = input;
+
+    return success_enbt;
 }

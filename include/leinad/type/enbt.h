@@ -19,7 +19,7 @@
 #define ENBT_COMPOUND_MAX_BIG 601
 
 #define ENBT_MIN_LIST_ALLOCATION 1
-
+#define ENBT_MIN_ARRAY_ALLOCATION 3
 /**
  * Self implementation of NBT specs
  */
@@ -69,42 +69,6 @@ struct eNBT_generic {
     #define ENBT_FLAG_COMPOUND_REFCOUNT 0x00ffffff
 };
 
-
-
-struct eNBT_compound* enbt_create_compound(char* name, uint16_t name_length, uint32_t flags);
-
-
-/**
- * 
- * @todo @param estimated_size is still WIP, use it as 0 as of now
- */
-struct eNBT_list* enbt_create_list(uint16_t estimated_size, enum eNBT_Tag type, char* name, uint16_t name_length, uint32_t flags);
-
-
-
-enum enbt_operation_validation enbt_merge_value(struct eNBT_compound* target, const struct eNBT_compound* input);
-
-char* enbt_to_snbt(const struct eNBT_generic* input, size_t* written);
-
-/**
- * Returns on @param enbt the nbt value contained in @param input, with an
- *  empty string key.
- * @param input must be of @param len length, as any remaining characters that
- * are not whitespaces will report errors.
- * 
- * > [!NOTE]
- * > Previous contents of @param enbt are undefined after this function. 
- */
-struct string_parsing_return enbt_from_snbt(const char* input, size_t len, struct eNBT_generic** enbt);
-
-
-
-struct eNBT_generic* enbt_parse_nbt(uint8_t data[], int32_t length);
-struct eNBT_generic* enbt_parse_enbt(uint8_t data[], int32_t length);
-
-void enbt_free(void* enbt);
-
-
 struct eNBT_byte {
     struct eNBT_generic data;
     int8_t payload;
@@ -137,19 +101,19 @@ struct eNBT_double {
 
 struct eNBT_byte_array {
     struct eNBT_generic data;
-    int32_t len;
+    uint32_t len;
     int8_t *array;
 };
 
 struct eNBT_int_array {
     struct eNBT_generic data;
-    int32_t len;
+    uint32_t len;
     int32_t *array;
 };
 
 struct eNBT_long_array {
     struct eNBT_generic data;
-    int32_t len;
+    uint32_t len;
     int64_t *array;
 };
 
@@ -193,7 +157,8 @@ struct string_parsing_return {
         err_string_out_of_memory,
         err_string_overflow_number,
         err_string_invalid_number,
-        err_string_unsigned_number
+        err_string_unsigned_number,
+        err_string_empty_array
     } valid;
     int idx;
 };
@@ -203,3 +168,29 @@ enum enbt_operation_validation {
     err_enbt_out_of_memory,
     err_enbt_invalid_operation
 };
+
+struct eNBT_generic* enbt_create_any(const char* restrict name, const uint16_t name_length, const uint32_t flags, const enum eNBT_Tag type);
+
+
+
+enum enbt_operation_validation enbt_merge_value(struct eNBT_compound* target, const struct eNBT_compound* input);
+
+char* enbt_to_snbt(const struct eNBT_generic* input, size_t* written);
+
+/**
+ * Returns on @param enbt the nbt value contained in @param input, with an
+ *  empty string key.
+ * @param input must be of @param len length, as any remaining characters that
+ * are not whitespaces will report errors.
+ * 
+ * > [!NOTE]
+ * > Previous contents of @param enbt are undefined after this function. 
+ */
+struct string_parsing_return enbt_from_snbt(const char* input, size_t len, struct eNBT_generic** enbt);
+
+
+
+struct eNBT_generic* enbt_parse_nbt(uint8_t data[], uint32_t length);
+struct eNBT_generic* enbt_parse_enbt(uint8_t data[], uint32_t length);
+
+void enbt_free(void* enbt);

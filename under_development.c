@@ -186,7 +186,7 @@ static struct snbt_return_key read_key(const int initial_idx, const char* input,
                 to_parse_len = 0;
                 while (
                     i < len && input[i + to_parse_len] != '\0' 
-                && !(input[i + to_parse_len] == '"' && input[i + to_parse_len -1] != '\\')
+                && !(input[i + to_parse_len] == '\"' && input[i + to_parse_len -1] != '\\')
                 ) {
                     to_parse_len++;
                 }
@@ -215,14 +215,25 @@ static struct snbt_return_key read_key(const int initial_idx, const char* input,
 
             default:
                 to_parse_len = 0;
-                while (
-                    i + to_parse_len < len && input[i + to_parse_len] != '\0'
-                    && (input[i + to_parse_len] != ':' && input[i + to_parse_len] != ' ' && input[i + to_parse_len] != '\t' && input[i + to_parse_len] != '\r' && input[i + to_parse_len] != '\n')
-                ) {
-                    to_parse_len++;
+                while (i + to_parse_len < len) {
+                    switch (input[i+to_parse_len]) {
+                        case '\0':
+                        case '\t':
+                        case '\r':
+                        case '\n':
+                        case ' ':
+                        case ':':
+                        case '}':
+                        case ']':
+                            break;
+                        case ',':
+                            if (empty_is_valid) break;
+                        default:
+                            to_parse_len++;
+                            continue;
+                    }
+                    break;
                 }
-                // aux_holder = input[i + to_parse_len];
-                // input[i + to_parse_len] = '\0';
 
                 parse_return = is_valid_key_quote_none(&input[i], to_parse_len, empty_is_valid);
                 // input[i + to_parse_len] = aux_holder;
@@ -233,6 +244,337 @@ static struct snbt_return_key read_key(const int initial_idx, const char* input,
   exit_loop:
     if (i == len+2) return (struct snbt_return_key){.start_idx=-2,.key_len=-2,.valid=-2,.new_idx=-2};
     return (struct snbt_return_key){.start_idx=-1,.key_len=-1,.valid=-1,.new_idx=-1};
+}
+
+/**
+ * reads from *_idx the starting index and from *_num the expected target type (0 - Byte, 1 - Short, 2 - Int, 3 - Long).
+ * 
+ * on success, it writes on *_num the read number and on *_idx the next index.
+ * on failure, *_idx is set to the character that caused the error.
+*/
+static enum string_parsing_validation read_long(const char* input, const size_t len, int *_idx, int64_t* _num) {
+
+    enum number_data {
+        _negative       = 0x1,
+        _decimal_num    = 0x2,
+        _nonzero        = 0x4,
+        _firstzero      = 0x8,
+        _pre_num        = 0x10,
+        _underscore     = 0x20,
+        _unsigned       = 0x40,
+        _finished       = 0x80
+    } number_data = 0;
+
+    Sint64 number_value;
+    Sint32 base = 10;    
+
+    char aux_str[30] = {0};
+
+    int i = 0, j = 0, k = 0;
+
+        for (i = *_idx; i < len; i++) {
+
+        switch (input[i]) {
+
+            // whitespaces
+            case ' ':
+            case '\t':
+            case '\n':
+            case '\r':
+                continue;
+
+            case '-':
+                number_data |= _negative;
+                aux_str[0] = '-';
+            case '+':
+                i++;
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                break;
+
+            default:
+                *_idx = i;
+                return err_string_invalid_character;
+                break;
+        }
+
+        for (k = j = 0; i + j < len; j++) {
+            if (j+k > 24) {
+                *_idx = i+j;
+                return err_string_overflow_number;
+            }
+            aux_str[(number_data & _negative) + j + k] = input[i+j];
+            switch (input[i+j]) {
+                case '0':
+                    if (number_data & _unsigned) {
+                        *_idx = i+j;
+                        return err_string_invalid_character;
+                    }
+                    if (!(number_data & _nonzero) && j == 0) {
+                        switch (input[i+j+1]) {
+                            default:
+                                number_data |= _firstzero;
+                                k--;
+                                break;
+                            case 'x':
+                            case 'X':
+                                k-=2;
+                                j++;
+                                base = 16;
+                                break;
+                            case 'b':
+                            case 'B':
+                                k-=2;
+                                j++;
+                                base = 2;
+                                break;
+                        }
+                    } else {
+                        if (!(number_data & _nonzero)) {
+                            number_data |= _firstzero;
+                            k--;
+                        }
+                        number_data |= _pre_num;
+                        number_data &= ~_underscore;
+                    }
+                    goto __eval_digit;
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    if ((base <= input[i+j] - '0') || (number_data & _unsigned)) {
+                        *_idx = i+j;
+                        return err_string_invalid_character;
+                    }
+                    number_data |= _nonzero | _pre_num;
+                    number_data &= ~_underscore;
+                __eval_digit:
+                    number_data |= _decimal_num;
+                    continue;
+                case 'a':
+                case 'A':
+                // case 'b':
+                // case 'B':
+                case 'c':
+                case 'C':
+                case 'd':
+                case 'D':
+                case 'e':
+                case 'E':
+                case 'f':
+                case 'F':
+
+                    if ((base !=16) || (number_data & _unsigned)) {
+                        *_idx = i+j;
+                        return err_string_invalid_character;
+                    }
+                    else goto __eval_digit;
+                
+                case '_':
+                    if (!(number_data & _pre_num) || (number_data & _unsigned)) {
+                        *_idx = i+j;
+                        return err_string_invalid_character;
+                    }
+                    number_data |= _underscore;
+                    k--;
+                    continue;
+                // signedness notation
+                // case 's':
+                // case 'S':
+                case 'u':
+                case 'U':
+                    if ((number_data & _negative)) {
+                        *_idx = i+j;
+                        return err_string_unsigned_number;
+                    }
+                    if (!(number_data & _decimal_num)) {
+                        *_idx = i+j;
+                        return err_string_invalid_character;
+                    }
+                    number_data |= _unsigned;
+                    k--;
+                    continue;
+
+                case_byte:
+                case 'b':
+                case 'B':
+                    if (base == 16 && !(number_data & _unsigned)) goto __eval_digit;
+                    if (
+                        (base == 10 && (number_data & _firstzero))
+                        || (base != 10 && (number_data & (_underscore)))
+                    ) {
+                        *_idx = i+j;
+                        return err_string_invalid_number;
+                    }
+
+                    aux_str[(number_data & _negative) +j +k] = '\0';
+                    errno = 0;
+                    if (number_data & _unsigned) number_value = strtoull(aux_str, NULL, base);
+                    else number_value = strtoll(aux_str, NULL, base);
+                    if (errno == ERANGE || ((number_data&_unsigned)?(number_value > SDL_MAX_UINT8):(number_value > SDL_MAX_SINT8)) || number_value < SDL_MIN_SINT8) {
+                        *_idx = i+j;
+                        return err_string_overflow_number;
+                    }
+
+                    goto exit_number_loop;
+
+                case_short:
+                case 's':
+                case 'S':
+
+                    if (*_num < 1) {
+                        *_idx = i+j;
+                        return err_string_invalid_number;
+                    }
+
+                    if (!(number_data & _unsigned)) switch (input[i+j+1]) {
+                        case 'b':
+                        case 'B':
+                            j++; k--;
+                            goto case_byte;
+                        case 's':
+                        case 'S':
+                            j++; k--;
+                        default:
+                            break;
+                        case 'i':
+                        case 'I':
+                            j++; k--;
+                            goto case_int;
+                        case 'l':
+                        case 'L':
+                            j++; k--;
+                            goto case_long;
+                    }
+
+                    if (
+                        ((number_data & _unsigned) && number_data & _negative)
+                        || (base == 10 && (number_data & _firstzero))
+                        || (base != 10 && (number_data & (_underscore)))
+                    ) {
+                        *_idx = i+j;
+                        return err_string_invalid_number;
+                    }
+
+                    aux_str[(number_data & _negative) +j +k] = '\0';
+                    errno = 0;
+                    if (number_data & _unsigned) number_value = strtoull(aux_str, NULL, base);
+                    else number_value = strtoll(aux_str, NULL, base);
+                    if (errno == ERANGE || ((number_data&_unsigned)?(number_value > SDL_MAX_UINT16):(number_value > SDL_MAX_SINT16)) || number_value < SDL_MIN_SINT16) {
+                        *_idx = i+j;
+                        return err_string_overflow_number;
+                    }
+
+                    goto exit_number_loop;
+                
+                case_int:
+                case 'i':
+                case 'I':
+
+                    if (
+                        *_num < 2
+                        || (base == 10 && (number_data & _firstzero))
+                        || (base != 10 && (number_data & (_underscore)))
+                    ) {
+                        *_idx = i+j;
+                        return err_string_invalid_number;
+                    }
+
+                    aux_str[(number_data & _negative) +j +k] = '\0';
+                    errno = 0;
+                    if (number_data & _unsigned) number_value = strtoull(aux_str, NULL, base);
+                    else number_value = strtoll(aux_str, NULL, base);
+                    if (errno == ERANGE || ((number_data&_unsigned)?(number_value > SDL_MAX_UINT32):(number_value > SDL_MAX_SINT32)) || number_value < SDL_MIN_SINT32) {
+                        *_idx = i+j;
+                        return err_string_overflow_number;
+                    }
+
+                    goto exit_number_loop;
+
+                case_long:
+                case 'l':
+                case 'L':
+
+                    if (
+                        *_num < 3
+                        || (base == 10 && (number_data & _firstzero))
+                        || (base != 10 && (number_data & (_underscore)))
+                    ) {
+                        *_idx = i+j;
+                        return err_string_invalid_number;
+                    }
+
+                    aux_str[(number_data & _negative) +j +k] = '\0';
+                    errno = 0;
+                    if (number_data & _unsigned) number_value = strtoull(aux_str, NULL, base);
+                    else number_value = strtoll(aux_str, NULL, base);
+                    if (errno == ERANGE) {
+                        *_idx = i+j;
+                        return err_string_overflow_number;
+                    }
+
+                    goto exit_number_loop;
+                
+                case '\0':
+                case ' ':
+                case '\t':
+                case '\n':
+                case '\r':
+                case ',':
+                case ']':
+                case '}':
+                    // int / double
+                    number_data |= _finished;
+
+                    switch(*_num) {
+                        case 0 : goto case_byte;
+                        case 2 : goto case_int;
+                        case 3 : goto case_long;
+                        default: break;
+                    }
+                
+
+                default: return err_string_invalid_character;
+            }
+
+        }
+    }
+    
+  exit_number_loop:
+    *_idx = i+j+1;
+    if (number_data & _finished) (*_idx)--;
+
+    switch(input[*_idx]){
+        case '\0':
+        case ' ':
+        case '\t':
+        case '\n':
+        case '\r':
+        case ',':
+        case ']':
+        case '}':
+            break;
+
+        default:
+            return err_string_invalid_character;
+    }
+
+    *_num = number_value;
+    return success_string;
+
 }
 
 /**
@@ -262,7 +604,7 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
         struct snbt_return_key aux_key;
     
     // number
-      enum number_data {
+    enum number_data {
         _negative       = 0x1,
         _exponent       = 0x2,
         _exponent_sign  = 0x4,
@@ -273,11 +615,14 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
         _firstzero      = 0x80,
         _pre_num        = 0x100,
         _underscore     = 0x200,
-        _unsigned       = 0x400
-      } number_data = 0;
-      Sint64 number_value;
-      Sint32 base = 10;    
-      char aux_str[30] = {0};
+        _unsigned       = 0x400,
+        _finished       = 0x800
+    } number_data = 0;
+    int64_t number_value;
+    int32_t base = 10;
+    char aux_str[30] = {0};
+
+    void* new_ptr;
 
     int i = 0, j = 0, k = 0;
     for (i = initial_idx; i < len; i++) {
@@ -330,10 +675,10 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                 break;
 
             // @todo special true/false cases
-            case 't':
-                if (i+3 < len && input[i+1] == 'r' && input[i+2] == 'u' && input[i+3] == 'e' && (input[i+1] == 'r')) break;
-            case 'f':
-                if (i+4 < len && input[i+1] == 'a' && input[i+2] == 'l' && input[i+3] == 's' && input[i+4] == 'e' && (input[i+1] == 'r')) break;
+            // case 't':
+            //     if (i+3 < len && input[i+1] == 'r' && input[i+2] == 'u' && input[i+3] == 'e' && (input[i+1] == 'r')) break;
+            // case 'f':
+            //     if (i+4 < len && input[i+1] == 'a' && input[i+2] == 'l' && input[i+3] == 's' && input[i+4] == 'e' && (input[i+1] == 'r')) break;
             // string
             default:
                 if (check_valid_snbt_string_char(input[i] & 0xff) != 1) break;
@@ -347,41 +692,276 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
             case _unknown:
                 return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_character, .new_idx = i};
             
-            case _list:
             case _byte_array:
+                // create the base arary
+                ret.enbt = (struct eNBT_generic*) enbt_create_any(&input[key.start_idx], key.key_len, ENBT_FLAG_DEFAULT,TAG_Byte_Array);
+                if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+
+                number_value = base = 0;
+                number_data = 0;
+                ((struct eNBT_byte_array*)ret.enbt)->len = ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint8_t);
+                ((struct eNBT_byte_array*)ret.enbt)->array = SDL_malloc(ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint8_t));
+                if (((struct eNBT_byte_array*)ret.enbt)->array == NULL) {
+                    ret.valid = err_string_out_of_memory;
+                    goto __cleanup;
+                }
+
+                goto __array_loop;
             case _int_array:
+                // create the base arary
+                ret.enbt = (struct eNBT_generic*) enbt_create_any(&input[key.start_idx], key.key_len, ENBT_FLAG_DEFAULT,TAG_Int_Array);
+                if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+
+                number_value = base = 2;
+                number_data = 0;
+                ((struct eNBT_int_array*)ret.enbt)->len = ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint32_t);
+                ((struct eNBT_int_array*)ret.enbt)->array = SDL_malloc(ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint32_t));
+                if (((struct eNBT_int_array*)ret.enbt)->array == NULL) {
+                    ret.valid = err_string_out_of_memory;
+                    goto __cleanup;
+                }
+                goto __array_loop;
             case _long_array:
+                // create the base arary
+                ret.enbt = (struct eNBT_generic*) enbt_create_any(&input[key.start_idx], key.key_len, ENBT_FLAG_DEFAULT,TAG_Long_Array);
+                if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+
+                number_value = base = 3;
+                number_data = 0;
+                ((struct eNBT_long_array*)ret.enbt)->len = ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint64_t);
+                ((struct eNBT_long_array*)ret.enbt)->array = SDL_malloc(ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint64_t));
+                if (((struct eNBT_long_array*)ret.enbt)->array == NULL) {
+                    ret.valid = err_string_out_of_memory;
+                    goto __cleanup;
+                }
+
+            
+              __array_loop:
+                i+=3;
+                // loop over contents
+                for (j = 0; i+j < len; j++) {
+
+                    for (j = j; i+j < len; j++) {
+                        switch (input[i+j]) {
+                            case ' ':
+                            case '\t':
+                            case '\n':
+                            case '\r':
+                                continue;
+                            case ']':
+                                goto __array_end;
+                            default:
+                                break;
+                        }
+
+                        break;
+                    }
+
+                    // read value
+                    k = i+j;
+                    number_value = base;
+                    ret.valid = read_long(input, len, &k, &number_value);
+                    if (ret.valid != success_string) {
+                        ret.new_idx = k;
+                        goto __cleanup;
+                    }
+
+                    j = k - i;
+
+                    switch (base) {
+                        case 0:
+                            if (ensure_capacity((void**)&((struct eNBT_byte_array*)ret.enbt)->array, (number_data +1) * sizeof(uint8_t), &((struct eNBT_byte_array*)ret.enbt)->len)){
+                                ret.valid = err_string_out_of_memory;
+                                goto __cleanup;
+                            };
+                            ((struct eNBT_byte_array*)ret.enbt)->array[number_data] = number_value;
+                            break;
+                        case 2:
+                            if (ensure_capacity((void**)&((struct eNBT_int_array*)ret.enbt)->array, (number_data +1) * sizeof(uint32_t), &((struct eNBT_int_array*)ret.enbt)->len)){
+                                ret.valid = err_string_out_of_memory;
+                                goto __cleanup;
+                            };
+                            ((struct eNBT_int_array*)ret.enbt)->array[number_data] = number_value;
+                            break;
+                        case 3:
+                        default:
+                            if (ensure_capacity((void**)&((struct eNBT_long_array*)ret.enbt)->array, (number_data +1) * sizeof(uint64_t),&((struct eNBT_long_array*)ret.enbt)->len)){
+                                ret.valid = err_string_out_of_memory;
+                                goto __cleanup;
+                            };
+                            ((struct eNBT_long_array*)ret.enbt)->array[number_data] = number_value;
+                            break;
+                    }
+
+                    number_data++;
+
+                    // read ',' or ']'
+                    for (j = j; i+j < len; j++) {
+                        switch (input[i+j]) {
+                            case ' ':
+                            case '\t':
+                            case '\n':
+                            case '\r':
+                                continue;
+                            case ',':
+                                break;
+                            case ']':
+                                goto __array_end;
+                            default:
+                                ret.valid = err_string_invalid_character;
+                                ret.new_idx = i+j;
+                                goto __cleanup;
+                        }
+
+                        break;
+                    }
+
+                }
+              __array_end:
+                if (number_data == 0) {
+                    ret.valid = err_string_empty_array;
+                    ret.new_idx = i+j;
+                }
+
+                switch(base) {
+                    case 0:
+                        new_ptr = SDL_realloc(((struct eNBT_byte_array*)ret.enbt)->array,number_data * sizeof(uint8_t));
+                        if (new_ptr == NULL) {
+                            ret.valid = err_string_out_of_memory;
+                            goto __cleanup;
+                        }
+
+                        ((struct eNBT_byte_array*)ret.enbt)->array = new_ptr;
+                        ((struct eNBT_byte_array*)ret.enbt)->len = number_data * sizeof(uint8_t);
+                        break;
+                    case 2:
+                        new_ptr = SDL_realloc(((struct eNBT_int_array*)ret.enbt)->array,number_data * sizeof(uint32_t));
+                        if (new_ptr == NULL) {
+                            ret.valid = err_string_out_of_memory;
+                            goto __cleanup;
+                        }
+
+                        ((struct eNBT_int_array*)ret.enbt)->array = new_ptr;
+                        ((struct eNBT_int_array*)ret.enbt)->len = number_data * sizeof(uint32_t);
+                        break;
+                    case 3:
+                    default:
+                        new_ptr = SDL_realloc(((struct eNBT_long_array*)ret.enbt)->array,number_data * sizeof(uint64_t));
+                        if (new_ptr == NULL) {
+                            ret.valid = err_string_out_of_memory;
+                            goto __cleanup;
+                        }
+
+                        ((struct eNBT_long_array*)ret.enbt)->array = new_ptr;
+                        ((struct eNBT_long_array*)ret.enbt)->len = number_data * sizeof(uint64_t);
+                        break;
+                }
+                goto __return;
+
+
                 break;
+            case _list:
+            
+                // create the base list
+                ret.enbt = (struct eNBT_generic*) enbt_create_any(&input[key.start_idx], key.key_len, ENBT_FLAG_DEFAULT,TAG_List);
+                if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+
+                // loop over contents
+                for (j = 1; i+j < len; j++) {
+
+                    for (j = j; i+j < len; j++) {
+                        switch (input[i+j]) {
+                            case ' ':
+                            case '\t':
+                            case '\n':
+                            case '\r':
+                                continue;
+                            case ']':
+                                goto __return;
+                            default:
+                                break;
+                        }
+
+                        break;
+                    }
+
+                    // read value
+                    aux_key = (struct snbt_return_key){.valid = success_string, .start_idx = 0, .key_len = 0, .new_idx = 0};
+
+                    aux_value = snbt_read_value(i+j, input, len, aux_key);
+                    if (aux_value.valid != success_string) {
+                        ret.valid = aux_value.valid;
+                        ret.new_idx = aux_value.new_idx;
+                        goto __cleanup;
+                    }
+
+                    j = aux_value.new_idx - i;
+
+                    enum enbt_operation_validation valid = enbt_list_append((struct eNBT_list*)ret.enbt,aux_value.enbt);
+
+                    if (valid != success_enbt) {
+                        ret.valid = err_string_out_of_memory;
+                        goto __cleanup;
+                    }
+
+                    // read ',' or ']'
+                    for (j = j; i+j < len; j++) {
+                        switch (input[i+j]) {
+                            case ' ':
+                            case '\t':
+                            case '\n':
+                            case '\r':
+                                continue;
+                            case ',':
+                                break;
+                            case ']':
+                                goto __return;
+                            default:
+                                ret.valid = err_string_invalid_character;
+                                ret.new_idx = i+j;
+                                goto __cleanup;
+                        }
+
+                        break;
+                    }
+                }
+                break;
+
             case _compound:
 
                 // create the base compound
-                ret.enbt = (struct eNBT_generic*) enbt_create_compound(SDL_malloc(sizeof(char) * (key.key_len +1)), key.key_len, ENBT_FLAG_DEFAULT);
-
-                // ensure allocations
+                ret.enbt = (struct eNBT_generic*) enbt_create_any(&input[key.start_idx], key.key_len, ENBT_FLAG_DEFAULT,TAG_Compound);
                 if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
-                if (ret.enbt->name == NULL) {
-                    SDL_free(ret.enbt);
-                    return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
-                }
-
-                // fill key
-                for (int c = 0; c < key.key_len; c++) ret.enbt->name[c] = input[key.start_idx + c];
-                ret.enbt->name[key.key_len] = '\0';
-
 
                 // loop over contents
-                for (j = 1; i+j > len; j++) {
+                for (j = 1; i+j < len; j++) {
 
+                    for (j = j; i+j < len; j++) {
+                        switch (input[i+j]) {
+                            case ' ':
+                            case '\t':
+                            case '\n':
+                            case '\r':
+                                continue;
+                            case '}':
+                                goto __return;
+                            default:
+                                break;
+                        }
 
+                        break;
+                    }
 
                     // read key
                     aux_key = read_key(i+j, input, len, false);
 
                     if (aux_key.valid != success_string) {
-                        ret.new_idx = i + j;
+                        ret.new_idx = aux_key.new_idx;
                         ret.valid = aux_key.valid;
-                        goto __compound_cleanup;
+                        goto __cleanup;
                     }
+
+                    j = aux_key.new_idx - i;
 
                     // read ':'
                     for (j = j; i+j < len; j++) {
@@ -397,8 +977,10 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                             default:
                                 ret.valid = err_string_invalid_character;
                                 ret.new_idx = i+j;
-                                goto __compound_cleanup;
+                                goto __cleanup;
                         }
+
+                        break;
                     }
 
                     // read value
@@ -406,17 +988,50 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                     if (aux_value.valid != success_string) {
                         ret.valid = aux_value.valid;
                         ret.new_idx = aux_value.new_idx;
-                        goto __compound_cleanup;
+                        goto __cleanup;
                     }
 
-                    
+                    j = aux_value.new_idx - i;
+
+                    enum enbt_operation_validation valid = enbt_compound_set_insert((struct eNBT_compound*)ret.enbt,aux_value.enbt);
+
+                    if (valid != success_enbt) {
+                        ret.valid = err_string_out_of_memory;
+                        goto __cleanup;
+                    }
+
+                    // read ',' or '}'
+                    for (j = j; i+j < len; j++) {
+                        switch (input[i+j]) {
+                            case ' ':
+                            case '\t':
+                            case '\n':
+                            case '\r':
+                                continue;
+                            case ',':
+                                break;
+                            case '}':
+                                goto __return;
+                            default:
+                                ret.valid = err_string_invalid_character;
+                                ret.new_idx = i+j;
+                                goto __cleanup;
+                        }
+
+                        break;
+                    }
                 }
                 break;
 
-            __compound_cleanup:
+            __return:
+                ret.new_idx = i+j+1;
+                ret.valid = success_string;
+                return ret;
+
+            __cleanup:
                 enbt_free(ret.enbt);
                 ret.enbt = NULL;
-                return (ret);
+                return ret;
 
             case _number:
                 for (k = j = 0; i + j < len; j++) {
@@ -697,6 +1312,7 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                         case ']':
                         case '}':
                          // int / double
+                            number_data |= _finished;
                             if (number_data & _decimal || number_data & _exponent) goto case_double;
                             goto case_int;
                         
@@ -753,12 +1369,15 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                 ret.enbt->name_length = key.key_len;
                 for (int c = 0; c < key.key_len; c++) ret.enbt->name[c] = input[key.start_idx + c];
                 ret.enbt->name[key.key_len] = '\0';
-
+                i = aux_key.new_idx -1;
                 #undef _enbt
                 break;
         }
+        
+        ret.new_idx = i+j+1;
+        if (possible_value == _number &&  number_data & _finished) ret.new_idx--;
 
-        switch(input[i+j+1]){
+        switch(input[ret.new_idx]){
             case '\0':
             case ' ':
             case '\t':
@@ -771,10 +1390,9 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
 
             default:
                 enbt_free(ret.enbt);
-                return (struct snbt_return_value){.enbt = NULL, .valid = err_string_invalid_character,.new_idx = i+j+1};
+                return (struct snbt_return_value){.enbt = NULL, .valid = err_string_invalid_character,.new_idx = ret.new_idx};
         }
 
-        ret.new_idx = i+j+1;
         return ret;
     }
 
