@@ -58,6 +58,24 @@ enum eNBT_Tag {
  *  :works_as_intended: from files
  */
 
+
+typedef union enbt {
+    struct eNBT_generic *_generic;
+
+    struct eNBT_byte *_byte;
+    struct eNBT_short *_short;
+    struct eNBT_int *_int;
+    struct eNBT_long *_long;
+    struct eNBT_float *_float;
+    struct eNBT_double *_double;
+    struct eNBT_byte_array *_byte_array;
+    struct eNBT_string *_string;
+    struct eNBT_list *_list;
+    struct eNBT_compound *_compound;
+    struct eNBT_int_array *_int_array;
+    struct eNBT_long_array *_long_array;
+} enbt_t;
+
 struct eNBT_generic {
     char* name;
     uint16_t name_length;
@@ -128,13 +146,13 @@ struct eNBT_list {
     struct eNBT_generic data;
     uint32_t size;
     uint32_t current_capacity;
-    struct eNBT_generic **list;
+    union enbt *list;
 };
 
 
 
 struct eNBT_NODE {
-    struct eNBT_generic *val;
+    union enbt val;
     struct eNBT_NODE *next;
 };
 
@@ -148,6 +166,24 @@ struct eNBT_compound {
         struct eNBT_NODE** big;
     } *payload;
 };
+
+typedef union enbt_static {
+    struct eNBT_generic _generic;
+
+    struct eNBT_byte _byte;
+    struct eNBT_short _short;
+    struct eNBT_int _int;
+    struct eNBT_long _long;
+    struct eNBT_float _float;
+    struct eNBT_float _double;
+    struct eNBT_byte_array _byte_array;
+    struct eNBT_string _string;
+    struct eNBT_list _list;
+    struct eNBT_compound _compound;
+    struct eNBT_int_array _int_array;
+    struct eNBT_long_array _long_array;
+} enbt_static_t;
+
 
 struct string_parsing_return {
     enum string_parsing_validation {
@@ -172,13 +208,41 @@ enum enbt_operation_validation {
     err_enbt_invalid_operation
 };
 
-struct eNBT_generic* enbt_create_any(const char* restrict name, const uint16_t name_length, const uint32_t flags, const enum eNBT_Tag type);
+/**
+ * Allocates space for the specfied enbt type
+ * 
+ * @param name null-terminated string to copy the name from
+ * @param name_length length of the name excluding the null-termination
+ * @param flags flags to set on the enbt
+ * @param type type to create the 
+ * 
+ * @return pointer to the allocated memory for the type-specific enbt or NULL
+ * on error
+ */
+enbt_t enbt_create_any(const char* restrict name, const uint16_t name_length, const uint32_t flags, const enum eNBT_Tag type);
 
-
-
+/**
+ * Merges the contents of @param input with the ones on @param target
+ * 
+ * For example, considering the following arguments as snbt:
+ * @param input {a:1, b:{c:[1,2], d:{e:2}}, f:2}
+ * @param target {a:3, b:{c:2, d:{}}, g:1} 
+ *
+ * Then, @param target will become {a:3, b:{c:2, d:{e:2}}, f:2, g:1}
+ * 
+ * @return success_enbt on success, an error code on failure
+ */
 enum enbt_operation_validation enbt_merge_value(struct eNBT_compound* target, const struct eNBT_compound* input);
 
-char* enbt_to_snbt(const struct eNBT_generic* input, size_t* written);
+/**
+ * Creates a string for the snbt representation of the given @param input
+ *
+ * @param input enbt to create the snbt of
+ * @param written where the amount of bytes written will be stored
+ * 
+ * @return string of the snbt on success, NULL on failure
+ */
+char* enbt_to_snbt(const enbt_t input, size_t* written);
 
 /**
  * Returns on @param enbt the nbt value contained in @param input, with an
@@ -189,11 +253,13 @@ char* enbt_to_snbt(const struct eNBT_generic* input, size_t* written);
  * > [!NOTE]
  * > Previous contents of @param enbt are undefined after this function. 
  */
-struct string_parsing_return enbt_from_snbt(const char* input, size_t len, struct eNBT_generic** enbt);
+struct string_parsing_return enbt_from_snbt(const char* input, size_t len, enbt_t* enbt);
 
-
-
-struct eNBT_generic* enbt_parse_nbt(uint8_t data[], uint32_t length);
-struct eNBT_generic* enbt_parse_enbt(uint8_t data[], uint32_t length);
-
-void enbt_free(void* enbt);
+/**
+ * Frees the memory previously allocated by a @sa enbt_create_any() call
+ * After the execution of this call, the pointer will be invalidated.
+ *
+ * If the pointer was to a compound with multiple references active, it's count
+ * will be disminished by 1.
+ */
+void enbt_free(enbt_t enbt);

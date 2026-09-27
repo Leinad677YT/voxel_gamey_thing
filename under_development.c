@@ -40,7 +40,7 @@ struct snbt_return_key {
 
 struct snbt_return_value {
     enum string_parsing_validation valid;
-    struct eNBT_generic* enbt;
+    enbt_t enbt;
     int new_idx;
 };
 
@@ -694,14 +694,14 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
             
             case _byte_array:
                 // create the base arary
-                ret.enbt = (struct eNBT_generic*) enbt_create_any(&input[key.start_idx], key.key_len, ENBT_FLAG_DEFAULT,TAG_Byte_Array);
-                if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+                ret.enbt = enbt_create_any(&input[key.start_idx], key.key_len, ENBT_FLAG_DEFAULT,TAG_Byte_Array);
+                if (ret.enbt._generic == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
 
                 number_value = base = 0;
                 number_data = 0;
-                ((struct eNBT_byte_array*)ret.enbt)->len = ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint8_t);
-                ((struct eNBT_byte_array*)ret.enbt)->array = SDL_malloc(ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint8_t));
-                if (((struct eNBT_byte_array*)ret.enbt)->array == NULL) {
+                ret.enbt._byte_array->len = ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint8_t);
+                ret.enbt._byte_array->array = SDL_malloc(ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint8_t));
+                if (ret.enbt._byte_array->array == NULL) {
                     ret.valid = err_string_out_of_memory;
                     goto __cleanup;
                 }
@@ -709,28 +709,28 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                 goto __array_loop;
             case _int_array:
                 // create the base arary
-                ret.enbt = (struct eNBT_generic*) enbt_create_any(&input[key.start_idx], key.key_len, ENBT_FLAG_DEFAULT,TAG_Int_Array);
-                if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+                ret.enbt = enbt_create_any(&input[key.start_idx], key.key_len, ENBT_FLAG_DEFAULT,TAG_Int_Array);
+                if (ret.enbt._generic == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
 
                 number_value = base = 2;
                 number_data = 0;
-                ((struct eNBT_int_array*)ret.enbt)->len = ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint32_t);
-                ((struct eNBT_int_array*)ret.enbt)->array = SDL_malloc(ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint32_t));
-                if (((struct eNBT_int_array*)ret.enbt)->array == NULL) {
+                ret.enbt._int_array->len = ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint32_t);
+                ret.enbt._int_array->array = SDL_malloc(ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint32_t));
+                if (ret.enbt._int_array->array == NULL) {
                     ret.valid = err_string_out_of_memory;
                     goto __cleanup;
                 }
                 goto __array_loop;
             case _long_array:
                 // create the base arary
-                ret.enbt = (struct eNBT_generic*) enbt_create_any(&input[key.start_idx], key.key_len, ENBT_FLAG_DEFAULT,TAG_Long_Array);
-                if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+                ret.enbt = enbt_create_any(&input[key.start_idx], key.key_len, ENBT_FLAG_DEFAULT,TAG_Long_Array);
+                if (ret.enbt._generic == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
 
                 number_value = base = 3;
                 number_data = 0;
-                ((struct eNBT_long_array*)ret.enbt)->len = ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint64_t);
-                ((struct eNBT_long_array*)ret.enbt)->array = SDL_malloc(ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint64_t));
-                if (((struct eNBT_long_array*)ret.enbt)->array == NULL) {
+                ret.enbt._long_array->len = ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint64_t);
+                ret.enbt._long_array->array = SDL_malloc(ENBT_MIN_ARRAY_ALLOCATION * sizeof(uint64_t));
+                if (ret.enbt._long_array->array == NULL) {
                     ret.valid = err_string_out_of_memory;
                     goto __cleanup;
                 }
@@ -770,26 +770,26 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
 
                     switch (base) {
                         case 0:
-                            if (ensure_capacity((void**)&((struct eNBT_byte_array*)ret.enbt)->array, (number_data +1) * sizeof(uint8_t), &((struct eNBT_byte_array*)ret.enbt)->len)){
+                            if (ensure_capacity((void**)&ret.enbt._byte_array->array, (number_data +1) * sizeof(uint8_t), &ret.enbt._byte_array->len)){
                                 ret.valid = err_string_out_of_memory;
                                 goto __cleanup;
                             };
-                            ((struct eNBT_byte_array*)ret.enbt)->array[number_data] = number_value;
+                            ret.enbt._byte_array->array[number_data] = number_value;
                             break;
                         case 2:
-                            if (ensure_capacity((void**)&((struct eNBT_int_array*)ret.enbt)->array, (number_data +1) * sizeof(uint32_t), &((struct eNBT_int_array*)ret.enbt)->len)){
+                            if (ensure_capacity((void**)&ret.enbt._int_array->array, (number_data +1) * sizeof(uint32_t), &ret.enbt._int_array->len)){
                                 ret.valid = err_string_out_of_memory;
                                 goto __cleanup;
                             };
-                            ((struct eNBT_int_array*)ret.enbt)->array[number_data] = number_value;
+                            ret.enbt._int_array->array[number_data] = number_value;
                             break;
                         case 3:
                         default:
-                            if (ensure_capacity((void**)&((struct eNBT_long_array*)ret.enbt)->array, (number_data +1) * sizeof(uint64_t),&((struct eNBT_long_array*)ret.enbt)->len)){
+                            if (ensure_capacity((void**)&ret.enbt._long_array->array, (number_data +1) * sizeof(uint64_t),&ret.enbt._long_array->len)){
                                 ret.valid = err_string_out_of_memory;
                                 goto __cleanup;
                             };
-                            ((struct eNBT_long_array*)ret.enbt)->array[number_data] = number_value;
+                            ret.enbt._long_array->array[number_data] = number_value;
                             break;
                     }
 
@@ -825,35 +825,35 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
 
                 switch(base) {
                     case 0:
-                        new_ptr = SDL_realloc(((struct eNBT_byte_array*)ret.enbt)->array,number_data * sizeof(uint8_t));
+                        new_ptr = SDL_realloc(ret.enbt._byte_array->array,number_data * sizeof(uint8_t));
                         if (new_ptr == NULL) {
                             ret.valid = err_string_out_of_memory;
                             goto __cleanup;
                         }
 
-                        ((struct eNBT_byte_array*)ret.enbt)->array = new_ptr;
-                        ((struct eNBT_byte_array*)ret.enbt)->len = number_data * sizeof(uint8_t);
+                        ret.enbt._byte_array->array = new_ptr;
+                        ret.enbt._byte_array->len = number_data * sizeof(uint8_t);
                         break;
                     case 2:
-                        new_ptr = SDL_realloc(((struct eNBT_int_array*)ret.enbt)->array,number_data * sizeof(uint32_t));
+                        new_ptr = SDL_realloc(ret.enbt._int_array->array,number_data * sizeof(uint32_t));
                         if (new_ptr == NULL) {
                             ret.valid = err_string_out_of_memory;
                             goto __cleanup;
                         }
 
-                        ((struct eNBT_int_array*)ret.enbt)->array = new_ptr;
-                        ((struct eNBT_int_array*)ret.enbt)->len = number_data * sizeof(uint32_t);
+                        ret.enbt._int_array->array = new_ptr;
+                        ret.enbt._int_array->len = number_data * sizeof(uint32_t);
                         break;
                     case 3:
                     default:
-                        new_ptr = SDL_realloc(((struct eNBT_long_array*)ret.enbt)->array,number_data * sizeof(uint64_t));
+                        new_ptr = SDL_realloc(ret.enbt._long_array->array,number_data * sizeof(uint64_t));
                         if (new_ptr == NULL) {
                             ret.valid = err_string_out_of_memory;
                             goto __cleanup;
                         }
 
-                        ((struct eNBT_long_array*)ret.enbt)->array = new_ptr;
-                        ((struct eNBT_long_array*)ret.enbt)->len = number_data * sizeof(uint64_t);
+                        ret.enbt._long_array->array = new_ptr;
+                        ret.enbt._long_array->len = number_data * sizeof(uint64_t);
                         break;
                 }
                 goto __return;
@@ -863,8 +863,8 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
             case _list:
             
                 // create the base list
-                ret.enbt = (struct eNBT_generic*) enbt_create_any(&input[key.start_idx], key.key_len, ENBT_FLAG_DEFAULT,TAG_List);
-                if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+                ret.enbt = enbt_create_any(&input[key.start_idx], key.key_len, ENBT_FLAG_DEFAULT,TAG_List);
+                if (ret.enbt._generic == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
 
                 // loop over contents
                 for (j = 1; i+j < len; j++) {
@@ -897,7 +897,7 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
 
                     j = aux_value.new_idx - i;
 
-                    enum enbt_operation_validation valid = enbt_list_append((struct eNBT_list*)ret.enbt,aux_value.enbt);
+                    enum enbt_operation_validation valid = enbt_list_append((struct eNBT_list*)ret.enbt._generic,aux_value.enbt);
 
                     if (valid != success_enbt) {
                         ret.valid = err_string_out_of_memory;
@@ -930,8 +930,8 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
             case _compound:
 
                 // create the base compound
-                ret.enbt = (struct eNBT_generic*) enbt_create_any(&input[key.start_idx], key.key_len, ENBT_FLAG_DEFAULT,TAG_Compound);
-                if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+                ret.enbt = enbt_create_any(&input[key.start_idx], key.key_len, ENBT_FLAG_DEFAULT,TAG_Compound);
+                if (ret.enbt._generic == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
 
                 // loop over contents
                 for (j = 1; i+j < len; j++) {
@@ -993,7 +993,7 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
 
                     j = aux_value.new_idx - i;
 
-                    enum enbt_operation_validation valid = enbt_compound_set_insert((struct eNBT_compound*)ret.enbt,aux_value.enbt);
+                    enum enbt_operation_validation valid = enbt_compound_set_insert(ret.enbt._compound,aux_value.enbt);
 
                     if (valid != success_enbt) {
                         ret.valid = err_string_out_of_memory;
@@ -1030,7 +1030,7 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
 
             __cleanup:
                 enbt_free(ret.enbt);
-                ret.enbt = NULL;
+                ret.enbt._generic= NULL;
                 return ret;
 
             case _number:
@@ -1150,20 +1150,20 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                              || (base != 10 && (number_data & (_underscore | _exponent | _decimal)))
                             ) return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number, .new_idx = i};
 
-                            ret.enbt = SDL_malloc(sizeof(struct eNBT_byte));
-                            if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
-                            ret.enbt->type = TAG_Byte;
+                            ret.enbt._generic= SDL_malloc(sizeof(struct eNBT_byte));
+                            if (ret.enbt._generic== NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+                            ret.enbt._generic->type = TAG_Byte;
                          // byte
                             aux_str[(number_data & _negative) +j +k] = '\0';
                             errno = 0;
                             if (number_data & _unsigned) number_value = strtoull(aux_str, NULL, base);
                             else number_value = strtoll(aux_str, NULL, base);
                             if (errno == ERANGE || ((number_data&_unsigned)?(number_value > SDL_MAX_UINT8):(number_value > SDL_MAX_SINT8)) || number_value < SDL_MIN_SINT8) {
-                                SDL_free(ret.enbt);
+                                SDL_free(ret.enbt._generic);
                                 return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_overflow_number, .new_idx = i};
                             }
 
-                            ((struct eNBT_byte*)(ret.enbt))->payload = number_value;
+                            ret.enbt._byte->payload = number_value;
                             
                             goto exit_number_loop;
 
@@ -1197,20 +1197,20 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                              || (base != 10 && (number_data & (_underscore | _exponent | _decimal)))
                             ) return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number, .new_idx = i};
                             
-                            ret.enbt = SDL_malloc(sizeof(struct eNBT_short));
-                            if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
-                            ret.enbt->type = TAG_Short;
+                            ret.enbt._generic= SDL_malloc(sizeof(struct eNBT_short));
+                            if (ret.enbt._generic== NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+                            ret.enbt._generic->type = TAG_Short;
                          // short
                             aux_str[(number_data & _negative) +j +k] = '\0';
                             errno = 0;
                             if (number_data & _unsigned) number_value = strtoull(aux_str, NULL, base);
                             else number_value = strtoll(aux_str, NULL, base);
                             if (errno == ERANGE || ((number_data&_unsigned)?(number_value > SDL_MAX_UINT16):(number_value > SDL_MAX_SINT16)) || number_value < SDL_MIN_SINT16) {
-                                SDL_free(ret.enbt);
+                                SDL_free(ret.enbt._generic);
                                 return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_overflow_number, .new_idx = i};
                             }
 
-                            ((struct eNBT_short*)(ret.enbt))->payload = number_value;
+                            ret.enbt._short->payload = number_value;
                             
                             goto exit_number_loop;
                       
@@ -1221,20 +1221,20 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                                 (base == 10 && (number_data & _firstzero))
                              || (base != 10 && (number_data & (_underscore | _exponent | _decimal)))
                             ) return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number, .new_idx = i};
-                            ret.enbt = SDL_malloc(sizeof(struct eNBT_int));
-                            if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
-                            ret.enbt->type = TAG_Int;
+                            ret.enbt._generic= SDL_malloc(sizeof(struct eNBT_int));
+                            if (ret.enbt._generic== NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+                            ret.enbt._generic->type = TAG_Int;
                          // int
                             aux_str[(number_data & _negative) +j +k] = '\0';
                             errno = 0;
                             if (number_data & _unsigned) number_value = strtoull(aux_str, NULL, base);
                             else number_value = strtoll(aux_str, NULL, base);
                             if (errno == ERANGE || ((number_data&_unsigned)?(number_value > SDL_MAX_UINT32):(number_value > SDL_MAX_SINT32)) || number_value < SDL_MIN_SINT32) {
-                                SDL_free(ret.enbt);
+                                SDL_free(ret.enbt._generic);
                                 return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_overflow_number, .new_idx = i};
                             }
 
-                            ((struct eNBT_int*)(ret.enbt))->payload = number_value;
+                            ret.enbt._int->payload = number_value;
                             
                             goto exit_number_loop;
 
@@ -1245,20 +1245,20 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                                 (base == 10 && (number_data & _firstzero))
                              || (base != 10 && (number_data & (_underscore | _exponent | _decimal)))
                             ) return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number, .new_idx = i};
-                            ret.enbt = SDL_malloc(sizeof(struct eNBT_long));
-                            if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
-                            ret.enbt->type = TAG_Long;
+                            ret.enbt._generic= SDL_malloc(sizeof(struct eNBT_long));
+                            if (ret.enbt._generic== NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+                            ret.enbt._generic->type = TAG_Long;
                          // long
                             aux_str[(number_data & _negative) +j +k] = '\0';
                             errno = 0;
                             if (number_data & _unsigned) number_value = strtoull(aux_str, NULL, base);
                             else number_value = strtoll(aux_str, NULL, base);
                             if (errno == ERANGE) {
-                                SDL_free(ret.enbt);
+                                SDL_free(ret.enbt._generic);
                                 return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_overflow_number, .new_idx = i};
                             }
 
-                            ((struct eNBT_long*)(ret.enbt))->payload = number_value;
+                            ret.enbt._long->payload = number_value;
 
                             goto exit_number_loop;
                       
@@ -1267,16 +1267,16 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                         case 'd':
                             if (base == 16) goto __eval_digit; 
                             if (number_data & (_underscore)) return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number, .new_idx = i};
-                            ret.enbt = SDL_malloc(sizeof(struct eNBT_double));
-                            if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
-                            ret.enbt->type = TAG_Double;
+                            ret.enbt._generic= SDL_malloc(sizeof(struct eNBT_double));
+                            if (ret.enbt._generic== NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+                            ret.enbt._generic->type = TAG_Double;
                          // double
                             aux_str[(number_data & _negative)+j] = '\0';
                             if (number_data & _exponent){
-                                if (!SDL_sscanf(aux_str,"%le",&((struct eNBT_double*)(ret.enbt))->payload))
+                                if (!SDL_sscanf(aux_str,"%le",&ret.enbt._double->payload))
                                     return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number, .new_idx = i};
                             } else {
-                                if (!SDL_sscanf(aux_str,"%le",&((struct eNBT_double*)(ret.enbt))->payload))
+                                if (!SDL_sscanf(aux_str,"%le",&ret.enbt._double->payload))
                                     return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number, .new_idx = i};
                             }
                             // fill data
@@ -1286,16 +1286,16 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                         case 'F':
                             if (base == 16) goto __eval_digit;
                             if (number_data & (_underscore)) return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number, .new_idx = i};
-                            ret.enbt = SDL_malloc(sizeof(struct eNBT_float));
-                            if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
-                            ret.enbt->type = TAG_Float;
+                            ret.enbt._generic= SDL_malloc(sizeof(struct eNBT_float));
+                            if (ret.enbt._generic== NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+                            ret.enbt._generic->type = TAG_Float;
                          // float
                             aux_str[(number_data & _negative)+j] = '\0';
                             if (number_data & _exponent){
-                                if (!SDL_sscanf(aux_str,"%e",&((struct eNBT_float*)(ret.enbt))->payload))
+                                if (!SDL_sscanf(aux_str,"%e",&ret.enbt._float->payload))
                                     return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number, .new_idx = i};
                             } else {
-                                if (!SDL_sscanf(aux_str,"%f",&((struct eNBT_float*)(ret.enbt))->payload))
+                                if (!SDL_sscanf(aux_str,"%f",&ret.enbt._float->payload))
                                     return (struct snbt_return_value) {.enbt = NULL, .valid = err_string_invalid_number, .new_idx = i};
                             }
                             // fill data
@@ -1322,55 +1322,53 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
                 }
               exit_number_loop:
               // fill generic data
-                ret.enbt->flags = ENBT_FLAG_DEFAULT;
+                ret.enbt._generic->flags = ENBT_FLAG_DEFAULT;
               // fill key
-                ret.enbt->name = SDL_malloc(sizeof(char) * (key.key_len +1));
-                if (ret.enbt->name == NULL) {
-                    SDL_free(ret.enbt);
+                ret.enbt._generic->name = SDL_malloc(sizeof(char) * (key.key_len +1));
+                if (ret.enbt._generic->name == NULL) {
+                    SDL_free(ret.enbt._generic);
                     return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
                 }
-                ret.enbt->name_length = key.key_len;
-                for (int c = 0; c < key.key_len; c++) ret.enbt->name[c] = input[key.start_idx + c];
-                ret.enbt->name[key.key_len] = '\0';
+                ret.enbt._generic->name_length = key.key_len;
+                for (int c = 0; c < key.key_len; c++) ret.enbt._generic->name[c] = input[key.start_idx + c];
+                ret.enbt._generic->name[key.key_len] = '\0';
 
                 break;
 
             case _string:
-                #define _enbt ((struct eNBT_string*)(ret.enbt))
 
               // read string
                 aux_key = read_key(i,input,len,true);
                 if (aux_key.valid != success_string) return (struct snbt_return_value){.valid = aux_key.valid, .enbt = NULL, .new_idx = i};
 
               // allocate string
-                ret.enbt = SDL_malloc(sizeof(struct eNBT_string));
-                if (ret.enbt == NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
+                ret.enbt._generic= SDL_malloc(sizeof(struct eNBT_string));
+                if (ret.enbt._generic== NULL) return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
 
               // fill string
-                _enbt->array = SDL_malloc(sizeof(char) * (aux_key.key_len +1));
-                if (_enbt->array == NULL) {
-                    SDL_free(ret.enbt);
+                ret.enbt._string->array = SDL_malloc(sizeof(char) * (aux_key.key_len +1));
+                if (ret.enbt._string->array == NULL) {
+                    SDL_free(ret.enbt._generic);
                     return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
                 }
-                _enbt->size = aux_key.key_len;
-                for (int c = 0; c < aux_key.key_len; c++) _enbt->array[c] = input[aux_key.start_idx + c];
-                _enbt->array[aux_key.key_len] = '\0';
+                ret.enbt._string->size = aux_key.key_len;
+                for (int c = 0; c < aux_key.key_len; c++) ret.enbt._string->array[c] = input[aux_key.start_idx + c];
+                ret.enbt._string->array[aux_key.key_len] = '\0';
 
               // fill generic data
-                ret.enbt->type = TAG_String;
-                ret.enbt->flags = ENBT_FLAG_DEFAULT;
+                ret.enbt._generic->type = TAG_String;
+                ret.enbt._generic->flags = ENBT_FLAG_DEFAULT;
               // fill key
-                ret.enbt->name = SDL_malloc(sizeof(char) * (key.key_len +1));
-                if (ret.enbt->name == NULL) {
-                    SDL_free(ret.enbt);
-                    SDL_free(_enbt->array);
+                ret.enbt._generic->name = SDL_malloc(sizeof(char) * (key.key_len +1));
+                if (ret.enbt._generic->name == NULL) {
+                    SDL_free(ret.enbt._generic);
+                    SDL_free(ret.enbt._string->array);
                     return (struct snbt_return_value){.valid= err_string_out_of_memory, .enbt = NULL};
                 }
-                ret.enbt->name_length = key.key_len;
-                for (int c = 0; c < key.key_len; c++) ret.enbt->name[c] = input[key.start_idx + c];
-                ret.enbt->name[key.key_len] = '\0';
+                ret.enbt._generic->name_length = key.key_len;
+                for (int c = 0; c < key.key_len; c++) ret.enbt._generic->name[c] = input[key.start_idx + c];
+                ret.enbt._generic->name[key.key_len] = '\0';
                 i = aux_key.new_idx -1;
-                #undef _enbt
                 break;
         }
         
@@ -1409,7 +1407,7 @@ struct snbt_return_value snbt_read_value(const int initial_idx, const char* inpu
  * > [!NOTE]
  * > Previous contents of @param enbt are undefined after this function. 
  */
-struct string_parsing_return enbt_from_snbt(const char* input, size_t len, struct eNBT_generic** enbt) {
+struct string_parsing_return enbt_from_snbt(const char* input, size_t len, enbt_t* enbt) {
     int idx;
 
     struct snbt_return_key key = {
@@ -1432,7 +1430,7 @@ struct string_parsing_return enbt_from_snbt(const char* input, size_t len, struc
 int main(void){
     char input[input_size+1] = {0};
     
-    struct eNBT_generic* enbt = NULL;
+    enbt_t enbt; enbt._generic = NULL;
     char* output_str;
     size_t output_len;
     char fake = '\0';
@@ -1459,14 +1457,14 @@ int main(void){
         );
 
 
-        if (parse_return.valid == success_string && enbt != NULL) output_str = enbt_to_snbt(enbt, &output_len);
+        if (parse_return.valid == success_string && enbt._generic != NULL) output_str = enbt_to_snbt(enbt, &output_len);
         else output_str = &fake;
         printf(
             """"""
             "type: %d\n"
             "enbt: %s\n"
             """""",
-            enbt?enbt->type : TAG_End,output_str
+            enbt._generic?enbt._generic->type : TAG_End,output_str
         );
 
         enbt_free(enbt);
