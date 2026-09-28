@@ -531,12 +531,6 @@ void enbt_free(enbt_t enbt) {
     return;
 }
 
-enum enbt_operation_validation enbt_merge_value(struct eNBT_compound* target, const struct eNBT_compound* input) {
-
-
-    return success_enbt;
-}
-
 static uint _hash(const char* str, const int len, const uint max) {
     int ret = 0;
     for (int i = 0; i < len;i++) ret = (ret << 5) + str[i];
@@ -613,6 +607,7 @@ struct eNBT_NODE** enbt_compound_find_pos(struct eNBT_compound* restrict compoun
         return ptr_big;   
     }
 }
+
 /**
  * Sets the payload of the enbt pointer held by @param target to match the
  * contents of @param input
@@ -978,7 +973,7 @@ enum enbt_operation_validation enbt_set_value(enbt_t* target, const enbt_t input
  * 
  * Useful for inserting data into compounds as an auxiliary function
  */
-enum enbt_operation_validation enbt_compound_set_insert(struct eNBT_compound* target, enbt_t input) {
+enum enbt_operation_validation enbt_compound_set_insert(struct eNBT_compound* target, const enbt_t input) {
 
     if (target == NULL || input._generic == NULL) return err_enbt_invalid_operation;
 
@@ -1002,12 +997,123 @@ enum enbt_operation_validation enbt_compound_set_insert(struct eNBT_compound* ta
     return success_enbt;
 }
 
+
+static enum enbt_operation_validation _compound_merge_map(struct eNBT_compound* target, struct eNBT_NODE** input_array, int32_t input_size) {
+    enum enbt_operation_validation valid;
+
+    for (int i = 0; i < input_size; i++) {
+        struct eNBT_NODE* node_in = input_array[i];
+
+        while (node_in != NULL) {
+            struct eNBT_NODE** node_out = enbt_compound_find_pos(
+                target,
+                node_in->val._generic->name,
+                node_in->val._generic->name_length
+            );
+
+            // no memory
+            if (node_out == NULL) return err_enbt_out_of_memory;
+            // doesnt exist on target
+            else if (*node_out == NULL) {
+                // create node
+                *node_out = SDL_malloc(sizeof(struct eNBT_NODE));
+                if (*node_out == NULL) return err_enbt_out_of_memory;
+                
+                // fill node
+                (*node_out)->next = NULL;
+                
+                (*node_out)->val = enbt_create_any(
+                    node_in->val._generic->name,
+                    node_in->val._generic->name_length,
+                    node_in->val._generic->flags,
+                    node_in->val._generic->type
+                );
+
+                if ((*node_out)->val._generic == NULL) {
+                    SDL_free((*node_out));
+                    *node_out = NULL;
+                    return err_enbt_out_of_memory;
+                }
+                valid = enbt_set_value(&(*node_out)->val, node_in->val);
+                if (valid != success_enbt) {
+                    enbt_free((*node_out)->val);
+                    SDL_free((*node_out));
+                    *node_out = NULL;
+                    return valid;
+                }
+
+                target->payload->size++;
+            }
+            // exists on target but both are a compound
+            else if (node_in->val._generic->type == TAG_Compound && (*node_out)->val._generic->type == TAG_Compound) {
+                valid = enbt_merge_value((*node_out)->val._compound, node_in->val._compound);
+                if (valid != success_enbt) return valid;
+            }
+            // exists on target
+            else {
+                valid = enbt_set_value(&(*node_out)->val, node_in->val);
+                if (valid != success_enbt) return valid;
+            }
+            node_in = node_in->next;
+        }
+    }
+    return success_enbt;
+}
+
+enum enbt_operation_validation enbt_merge_value(struct eNBT_compound* restrict target, const struct eNBT_compound* restrict input) {
+    enum enbt_operation_validation valid;
+
+    if (input == NULL || target == NULL) return err_enbt_invalid_operation;
+
+    if (input->payload == target->payload) return success_enbt;
+
+    if (input->payload->small != NULL) {
+        valid = _compound_merge_map(target, input->payload->small, ENBT_COMPOUND_MAX_SMALL);
+        if (valid != success_enbt) return valid;
+    }
+
+    if (input->payload->medium != NULL) {
+        valid = _compound_merge_map(target, input->payload->medium, ENBT_COMPOUND_MAX_MEDIUM);
+        if (valid != success_enbt) return valid;
+    }
+
+    if (input->payload->big != NULL) {
+        valid = _compound_merge_map(target, input->payload->big, ENBT_COMPOUND_MAX_BIG);
+        if (valid != success_enbt) return valid;
+    }
+
+    return success_enbt;
+}
+
 /**
  * Moves @param input into @param target
  * 
  * Useful for inserting data into lists as an auxiliary function
  */
-enum enbt_operation_validation enbt_list_append(struct eNBT_list* target, enbt_t input) {
+enum enbt_operation_validation enbt_list_insert(struct eNBT_list* restrict target, const enbt_t input, const int32_t idx) {
+
+    if (target == NULL || input._generic == NULL) return err_enbt_invalid_operation;
+    if (idx >= target->size || idx < -target->size) return err_enbt_invalid_index;
+
+    if (ensure_capacity((void**)&target->list, sizeof(struct eNBT_generic*) * (target->size +1), &target->current_capacity)) {
+        return err_enbt_out_of_memory;
+    }
+
+    int j = (idx + target->size) % target->size;
+    for (int i = target->size; i > j; i--) target->list[i] = target->list[i-1];
+
+    target->list[j] = input;
+    target->size++;
+
+    return success_enbt;
+}
+
+/**
+ * Moves @param input into @param target
+ * 
+ * Useful for inserting data into lists as an auxiliary function
+ */
+enum enbt_operation_validation enbt_list_append(struct eNBT_list* restrict target, const enbt_t input) {
 
     if (target == NULL || input._generic == NULL) return err_enbt_invalid_operation;
 
@@ -1018,4 +1124,14 @@ enum enbt_operation_validation enbt_list_append(struct eNBT_list* target, enbt_t
     target->list[target->size++] = input;
 
     return success_enbt;
+}
+
+/**
+ * Moves @param input into @param target
+ * 
+ * Useful for inserting data into lists as an auxiliary function
+ */
+enum enbt_operation_validation enbt_list_prepend(struct eNBT_list* restrict target, const enbt_t input) {
+
+    return enbt_list_insert(target,input,0);
 }

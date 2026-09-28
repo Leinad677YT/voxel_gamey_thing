@@ -205,7 +205,8 @@ struct string_parsing_return {
 enum enbt_operation_validation {
     success_enbt = 0,
     err_enbt_out_of_memory,
-    err_enbt_invalid_operation
+    err_enbt_invalid_operation,
+    err_enbt_invalid_index
 };
 
 /**

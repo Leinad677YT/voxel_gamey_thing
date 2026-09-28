@@ -167,7 +167,6 @@ static struct snbt_return_key read_key(const int initial_idx, const char* input,
     int parse_return;
     int to_parse_len;
     int i;
-    // char aux_holder = '\0';
     
     for (i = initial_idx; i < len; i++) {
         switch(input[i]){
@@ -185,7 +184,7 @@ static struct snbt_return_key read_key(const int initial_idx, const char* input,
                 i++;
                 to_parse_len = 0;
                 while (
-                    i < len && input[i + to_parse_len] != '\0' 
+                    i < len // && input[i + to_parse_len] != '\0' /* wouldnt you believe it, snbt allows \x0000 inside strings! how convenient! */ 
                 && !(input[i + to_parse_len] == '\"' && input[i + to_parse_len -1] != '\\')
                 ) {
                     to_parse_len++;
@@ -201,7 +200,7 @@ static struct snbt_return_key read_key(const int initial_idx, const char* input,
                 i++;
                 to_parse_len = 0;
                 while (
-                    i < len && input[i + to_parse_len] != '\0' 
+                    i < len // && input[i + to_parse_len] != '\0' /* wouldnt you believe it, snbt allows \x0000 inside strings! how convenient! */ 
                 && !(input[i + to_parse_len] == '\'' && input[i + to_parse_len -1] != '\\')
                 ) {
                     to_parse_len++;
